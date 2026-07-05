@@ -214,6 +214,48 @@ BACKUP_DB_URL = _env("CHECKAL_BACKUP_DB_URL", "")     # DSN Postgres p/ pg_dump;
 BACKUP_PGDUMP_BIN = _env("CHECKAL_PGDUMP_BIN", "pg_dump")
 BACKUP_RETENCAO_DIAS = int(_env("CHECKAL_BACKUP_RETENCAO_DIAS", "30"))
 
+# ==========================================================================
+#  FDS 6 — motor de campanhas: prospeção a frio B2B (HARD-GATED)
+# ==========================================================================
+# Aditivo (SPEC-FDS6.md §config, AUTOMACAO.md §7, LEGAL.md §1). O canal de email
+# frio é PROIBIDO até o dono ter o parecer favorável do jurista RGPD — e isto é
+# CÓDIGO, não disciplina humana: `CHECKAL_PARECER_RGPD_OK` é o PORTÃO e nasce
+# False; enquanto for False, nenhum email frio sai (`pode_enviar_frio_global`).
+#
+# Fronteira DURA (SPEC-RESEND §0): o cold usa o domínio irmão `getcheckal.com` +
+# SMTP dedicado (`COLD_SMTP_*`), NUNCA a Resend nem `checkal.pt` — a AUP da Resend
+# proíbe cold e partilhar reputação suspenderia a conta transacional, derrubando
+# os alertas dos clientes pagantes. Por isso o cold tem env vars PRÓPRIAS, jamais
+# reutiliza `RESEND_*`/`EMAIL_FROM`, e o `COLD_FROM` sai sempre de getcheckal.com.
+#
+# Os SEGREDOS (host/user/pass) têm default VAZIO ⇒ LIVE-GATED: sem eles,
+# `cold_smtp_ativo()` é False e nenhum seam de envio frio toca a rede. O envio é
+# TRIPLAMENTE gated por `pode_enviar_frio_global()` (fundo do ficheiro): parecer
+# OK  E  modo de teste OFF  E  SMTP de cold configurado. Este gate global é a
+# MONTANTE do núcleo de compliance por-contacto (`app.compliance.*`); mesmo com
+# ele aberto, cada contacto ainda tem de passar nif/email/minimizacao/optout.
+
+# 🚦 PORTÃO BLOQUEANTE — parecer de jurista RGPD sobre reutilizar o RNAL para
+# prospeção. Default False (inviolável): sem parecer, o canal frio não abre.
+CHECKAL_PARECER_RGPD_OK = _env_bool("CHECKAL_PARECER_RGPD_OK", False)
+
+# SMTP dedicado do canal frio (domínio irmão getcheckal.com) — SEPARADO da Resend.
+# Segredos com default vazio ⇒ live-gate; a porta 587 (submissão STARTTLS) e o
+# remetente getcheckal.com não são segredos.
+COLD_SMTP_HOST = _env("COLD_SMTP_HOST", "")           # host SMTP de cold (segredo/infra)
+COLD_SMTP_PORT = int(_env("COLD_SMTP_PORT", "587"))   # submissão STARTTLS por omissão
+COLD_SMTP_USER = _env("COLD_SMTP_USER", "")           # utilizador SMTP (segredo)
+COLD_SMTP_PASS = _env("COLD_SMTP_PASS", "")           # password SMTP (segredo)
+# Remetente do canal frio: SEMPRE getcheckal.com, NUNCA checkal.pt (fronteira
+# dura — a reputação de checkal.pt é ativo a proteger). Não é segredo.
+COLD_FROM = _env("COLD_FROM", "CheckAL <geral@getcheckal.com>")
+
+# Política de campanha (não são segredos). `CAMPANHA_JANELA_H` é o SLA "registo
+# novo → prospeção correspondente" (72h). `CAMPANHA_CAP_DIARIO` é o teto humano
+# por dia (warm-up do domínio irmão — dezenas/dia, não centenas; SPEC-RESEND §7.3).
+CAMPANHA_JANELA_H = int(_env("CHECKAL_CAMPANHA_JANELA_H", "72"))
+CAMPANHA_CAP_DIARIO = int(_env("CHECKAL_CAMPANHA_CAP_DIARIO", "20"))
+
 
 def cookie_secure() -> bool:
     """Cookie de sessão só por HTTPS em produção; relaxado sob pytest."""
@@ -238,6 +280,32 @@ def telegram_ativo() -> bool:
 def backups_ativo() -> bool:
     """O pg_dump real só corre com DSN de origem definido (live-gate)."""
     return bool(BACKUP_DB_URL)
+
+
+def cold_smtp_ativo() -> bool:
+    """O canal frio (getcheckal.com) só liga com host+user+password de SMTP dedicado (live-gate).
+
+    Espelha `imap_ativo`: sem os três segredos, nenhum seam de envio frio abre
+    ligação SMTP. NÃO depende do parecer nem do modo de teste — esses somam-se em
+    `pode_enviar_frio_global`.
+    """
+    return bool(COLD_SMTP_HOST and COLD_SMTP_USER and COLD_SMTP_PASS)
+
+
+def pode_enviar_frio_global() -> bool:
+    """Portão GLOBAL do canal frio — o único caminho para um email de prospeção sair.
+
+    True SÓ se, CUMULATIVAMENTE (SPEC-FDS6.md §portão bloqueante):
+      1. `CHECKAL_PARECER_RGPD_OK` — o dono tem parecer favorável do jurista RGPD;
+      2. `CHECKAL_MODO_TESTE` está OFF — não se dispara em teste/sandbox;
+      3. `cold_smtp_ativo()` — o SMTP dedicado de getcheckal.com está configurado.
+
+    É o gate a MONTANTE do núcleo de compliance por-contacto (nif/email/
+    minimizacao/optout): mesmo com isto True, cada contacto ainda tem de passar
+    esse núcleo antes de ser contactado. Enquanto o parecer não chegar (o
+    default), devolve sempre False — nenhum email frio sai.
+    """
+    return CHECKAL_PARECER_RGPD_OK and not CHECKAL_MODO_TESTE and cold_smtp_ativo()
 
 
 def assert_seguro() -> None:
