@@ -179,10 +179,65 @@ BREAKER_PCT_CONCELHO = 0.03          # >3% da base do concelho desaparecida → 
 # --- Cache do dashboard ---
 CACHE_TTL_S = 60
 
+# ==========================================================================
+#  FDS 5 — fiabilidade: observabilidade, suporte IMAP, escalação, backups
+# ==========================================================================
+# Aditivo (AUTOMACAO.md §6). Todos os SEGREDOS (chaves/tokens/passwords/hosts)
+# têm default VAZIO ⇒ LIVE-GATED: sem eles, nenhum seam toca a rede/IMAP/
+# subprocess. Os únicos defaults não-vazios são endpoints públicos e políticas
+# locais (base do Healthchecks, base da API Telegram, porta IMAP, retenção) —
+# não são segredos. Os predicados `*_ativo()` (fundo do ficheiro) exprimem o gate.
+
+# --- Healthchecks.io (dead-man switch de cada cron) ---
+# Ping por slug: {base}/{ping_key}/{slug}[/fail|/start]. Sem PING_KEY ⇒ inativo.
+HEALTHCHECKS_BASE_URL = _env("HEALTHCHECKS_BASE_URL", "https://hc-ping.com")
+HEALTHCHECKS_PING_KEY = _env("HEALTHCHECKS_PING_KEY", "")   # ping key da conta (segredo)
+HEALTHCHECKS_TIMEOUT_S = float(_env("HEALTHCHECKS_TIMEOUT_S", "10"))
+
+# --- IMAP (mailbox apoio@ para o suporte de 1.ª linha por IA) ---
+IMAP_HOST = _env("IMAP_HOST", "")            # ex.: imap.gmail.com (segredo/infra)
+IMAP_PORT = int(_env("IMAP_PORT", "993"))    # IMAPS por omissão
+IMAP_USER = _env("IMAP_USER", "")            # apoio@checkal.pt
+IMAP_PASSWORD = _env("IMAP_PASSWORD", "")    # app-password (segredo)
+IMAP_MAILBOX = _env("IMAP_MAILBOX", "INBOX")
+IMAP_SSL = _env_bool("IMAP_SSL", True)
+
+# --- Telegram (escalação ao dono: breaker ambíguo, suporte escalado, cron falhado) ---
+TELEGRAM_API_BASE = _env("TELEGRAM_API_BASE", "https://api.telegram.org")
+TELEGRAM_BOT_TOKEN = _env("TELEGRAM_BOT_TOKEN", "")   # token do bot (segredo)
+TELEGRAM_CHAT_ID = _env("TELEGRAM_CHAT_ID", "")       # chat_id do dono (segredo/infra)
+TELEGRAM_TIMEOUT_S = float(_env("TELEGRAM_TIMEOUT_S", "10"))
+
+# --- Backups (pg_dump noturno + retenção; Storage Box Hetzner) ---
+BACKUP_DIR = Path(_env("CHECKAL_BACKUP_DIR", str(DATA_DIR / "backups")))
+BACKUP_DB_URL = _env("CHECKAL_BACKUP_DB_URL", "")     # DSN Postgres p/ pg_dump; vazio ⇒ inativo
+BACKUP_PGDUMP_BIN = _env("CHECKAL_PGDUMP_BIN", "pg_dump")
+BACKUP_RETENCAO_DIAS = int(_env("CHECKAL_BACKUP_RETENCAO_DIAS", "30"))
+
 
 def cookie_secure() -> bool:
     """Cookie de sessão só por HTTPS em produção; relaxado sob pytest."""
     return not a_testar()
+
+
+def healthchecks_ativo() -> bool:
+    """O dead-man switch só pinga com ping key configurada (live-gate)."""
+    return bool(HEALTHCHECKS_PING_KEY)
+
+
+def imap_ativo() -> bool:
+    """O suporte por IMAP só liga com host+user+password (live-gate)."""
+    return bool(IMAP_HOST and IMAP_USER and IMAP_PASSWORD)
+
+
+def telegram_ativo() -> bool:
+    """A escalação Telegram só dispara com token+chat_id (live-gate)."""
+    return bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+
+
+def backups_ativo() -> bool:
+    """O pg_dump real só corre com DSN de origem definido (live-gate)."""
+    return bool(BACKUP_DB_URL)
 
 
 def assert_seguro() -> None:
