@@ -2,20 +2,21 @@
 
 Contrato (SPEC-FDS2.md §fulfillment):
 
-    processar_checkout(sessao, *, ix_http) -> Resultado
+    processar_checkout(sessao, *, emitir_fatura) -> Resultado
       · lê NIF + nº de registo dos `custom_fields`, email de `customer_details`
       · faz match contra `registos` (por nr_registo; fallback fuzzy nome+concelho)
       · cria/atualiza `clientes` + `clientes_registos`
-      · emite a fatura-recibo (InvoiceXpress) e guarda ix_fatura_id/ix_atcud/ix_permalink
+      · emite a fatura-recibo (via emissor agnóstico) e guarda ix_fatura_id/ix_atcud/ix_permalink
       · IDEMPOTENTE por `stripe_session_id` (repetir a sessão não duplica cliente nem fatura)
 
-    processar_renovacao(invoice, *, ix_http)  · G1: só `billing_reason=subscription_cycle`
-    marcar_cancelado(subscription)            · estado → 'cancelado'
-    registar_falha_pagamento(invoice)         · estado → 'em_dunning' (dunning é FDS 5)
+    processar_renovacao(invoice, *, emitir_fatura)  · G1: só `billing_reason=subscription_cycle`
+    marcar_cancelado(subscription)                  · estado → 'cancelado'
+    registar_falha_pagamento(invoice)               · estado → 'em_dunning' (dunning é FDS 5)
 
-DISCIPLINA (inviolável): MODO DE TESTE, LIVE-GATED. **Zero** rede: o `ix_http` é um
-`FakeCliente` injetado que dirige o adaptador InvoiceXpress real; nada de emails; nada de
-cold. O `dormir` do polling do PDF é neutralizado. Escrito ANTES da implementação (TDD).
+DISCIPLINA (inviolável): MODO DE TESTE, LIVE-GATED. **Zero** rede: o `emitir_fatura` é um
+`FakeEmissor` injetado — um *callable* agnóstico que devolve uma `FaturaRecibo` certificada
+sem tocar em HTTP nem no fornecedor. Nada de emails, nada de cold. O `dormir` do polling do
+PDF é neutralizado. Escrito ANTES da implementação (TDD).
 """
 from __future__ import annotations
 
@@ -27,73 +28,47 @@ from sqlalchemy.orm import Session, sessionmaker
 
 import app.db as db
 import app.models as models
+from app.faturacao.base import FaturaRecibo
 
 
 # ==========================================================================
-#  Duplo de teste do InvoiceXpress: FakeCliente HTTP (igual ao do adaptador)
-#  — dirige o `emitir_fatura_recibo` REAL sem tocar na rede.
+#  Duplo de teste do emissor: FakeEmissor (callable agnóstico) — devolve uma
+#  FaturaRecibo certificada sem HTTP, e conta as emissões.
 # ==========================================================================
-class FakeResposta:
-    def __init__(self, status_code: int = 200, payload: object | None = None):
-        self.status_code = status_code
-        self._payload = payload if payload is not None else {}
+class FakeEmissor:
+    """Emissor falso à laia de `app.faturacao.obter_emissor()`.
 
-    def json(self) -> object:
-        return self._payload
-
-    def raise_for_status(self) -> None:
-        if self.status_code >= 400:
-            raise RuntimeError(f"HTTP {self.status_code}")
-
-
-class FakeIX:
-    """Router de respostas por método/caminho + contador de chamadas.
-
-    Cada emissão dá: 1 POST (criar) + 1 PUT (finalizar) + N GET (pdf) + 1 GET (detalhes).
+    Assinatura do contrato: `emitir(*, nome, nif, email, itens, codigo_cliente=None,
+    dormir=...)`. Cada chamada conta uma emissão e devolve uma `FaturaRecibo` com
+    `id`/`atcud`/`permalink` derivados de `doc_id` (para as asserções de ligação).
     """
 
-    def __init__(self, *, doc_id=998877, total=49.0):
-        self.doc_id = doc_id
+    def __init__(self, *, doc_id=998877, total=49.0, atcud="ABCD1234-6"):
+        self.doc_id = str(doc_id)
         self.total = total
-        self.chamadas: list[tuple[str, str]] = []
+        self.atcud = atcud
+        self.emissoes = 0
+        self.chamadas: list[dict] = []
 
-    # -- helpers de payload --
-    def _criar(self):
-        return FakeResposta(201, {"invoice_receipt": {"id": self.doc_id, "status": "draft"}})
-
-    def _finalizar(self):
-        return FakeResposta(200, {"invoice_receipt": {"id": self.doc_id, "status": "finalized"}})
-
-    def _pdf(self):
-        return FakeResposta(200, {"output": {"pdfUrl": f"https://ix/pdf/{self.doc_id}.pdf"}})
-
-    def _detalhes(self):
-        return FakeResposta(200, {"invoice_receipt": {
-            "id": self.doc_id,
-            "status": "finalized",
-            "sequence_number": f"6/CKL",
-            "total": self.total,
-            "atcud": "ABCD1234-6",
-            "saft_hash": "a1b2c3d4e5",
-            "permalink": f"https://cosmicoasis.app.invoicexpress.com/i/{self.doc_id}",
-        }})
-
-    def post(self, url, **kw):
-        self.chamadas.append(("POST", url))
-        return self._criar()
-
-    def put(self, url, **kw):
-        self.chamadas.append(("PUT", url))
-        return self._finalizar()
-
-    def get(self, url, **kw):
-        self.chamadas.append(("GET", url))
-        if "/api/pdf/" in url:
-            return self._pdf()
-        return self._detalhes()
+    def __call__(self, *, nome, nif, email, itens, codigo_cliente=None, dormir=None):
+        self.emissoes += 1
+        self.chamadas.append({
+            "nome": nome, "nif": nif, "email": email,
+            "itens": itens, "codigo_cliente": codigo_cliente,
+        })
+        return FaturaRecibo(
+            id=self.doc_id,
+            sequence_number="6/CKL",
+            atcud=self.atcud,
+            saft_hash="a1b2c3d4e5",
+            total=self.total,
+            permalink=f"https://cosmicoasis.app.invoicexpress.com/i/{self.doc_id}",
+            pdf_url=f"https://ix/pdf/{self.doc_id}.pdf",
+            estado="finalized",
+        )
 
     def n_emissoes(self) -> int:
-        return sum(1 for m, u in self.chamadas if m == "POST" and u.endswith("/invoice_receipts.json"))
+        return self.emissoes
 
 
 # ==========================================================================
@@ -176,8 +151,8 @@ def _invoice(*, billing_reason="subscription_cycle", customer="cus_1", invoice_i
 def test_checkout_cria_cliente_associacao_e_fatura(bd):
     from app import fulfillment
 
-    ix = FakeIX(total=49.0)
-    res = fulfillment.processar_checkout(_sessao(), ix_http=ix, dormir=lambda _s: None)
+    emissor = FakeEmissor(total=49.0)
+    res = fulfillment.processar_checkout(_sessao(), emitir_fatura=emissor, dormir=lambda _s: None)
 
     assert res.accao == fulfillment.ACCAO_CHECKOUT
     assert res.idempotente is False
@@ -193,7 +168,7 @@ def test_checkout_cria_cliente_associacao_e_fatura(bd):
         assert c.estado == "ativo"
         assert c.stripe_session_id == "cs_test_1"
         assert c.stripe_customer_id == "cus_1"
-        # ligação Stripe ↔ InvoiceXpress persistida
+        # ligação Stripe ↔ faturação persistida
         assert c.ix_fatura_id == "998877"
         assert c.ix_atcud == "ABCD1234-6"
         assert c.ix_permalink.endswith("/i/998877")
@@ -204,39 +179,30 @@ def test_checkout_cria_cliente_associacao_e_fatura(bd):
         assert assoc[0].nr_registo == 100031
 
     # exatamente uma emissão de fatura
-    assert ix.n_emissoes() == 1
+    assert emissor.n_emissoes() == 1
+    # o código de cliente estável (evita duplicar clientes na conta) deriva do id local
+    assert emissor.chamadas[0]["codigo_cliente"] == f"checkal-{res.cliente_id}"
 
 
 def test_checkout_nif_vai_para_fatura(bd):
     from app import fulfillment
-    from app.faturacao import invoicexpress_client as ixc
 
-    capturado = {}
-    orig = ixc.emitir_fatura_recibo
+    emissor = FakeEmissor()
+    fulfillment.processar_checkout(
+        _sessao(nif="508000000"), emitir_fatura=emissor, dormir=lambda _s: None
+    )
 
-    def espia(**kw):
-        capturado.update(kw)
-        return orig(**kw)
-
-    import app.fulfillment as f
-    f.emitir_fatura_recibo = espia  # type: ignore
-    try:
-        fulfillment.processar_checkout(
-            _sessao(nif="508000000"), ix_http=FakeIX(), dormir=lambda _s: None
-        )
-    finally:
-        f.emitir_fatura_recibo = orig  # type: ignore
-
-    assert capturado["nif"] == "508000000"
-    assert capturado["email"] == "cliente@exemplo.pt"
+    chamada = emissor.chamadas[0]
+    assert chamada["nif"] == "508000000"
+    assert chamada["email"] == "cliente@exemplo.pt"
     # o item faturado corresponde ao plano anual (49,00 € IVA incl.)
-    assert capturado["itens"][0]["preco"] == 49.0
+    assert chamada["itens"][0]["preco"] == 49.0
 
 
 def test_checkout_nr_com_sufixo_al(bd):
     from app import fulfillment
     res = fulfillment.processar_checkout(
-        _sessao(nr="100031/AL"), ix_http=FakeIX(), dormir=lambda _s: None
+        _sessao(nr="100031/AL"), emitir_fatura=FakeEmissor(), dormir=lambda _s: None
     )
     assert res.nr_registo == 100031
     assert res.correspondido is True
@@ -247,11 +213,11 @@ def test_checkout_nr_com_sufixo_al(bd):
 # ==========================================================================
 def test_checkout_idempotente_por_session_id(bd):
     from app import fulfillment
-    ix = FakeIX()
+    emissor = FakeEmissor()
     sessao = _sessao(session_id="cs_test_dup")
 
-    r1 = fulfillment.processar_checkout(sessao, ix_http=ix, dormir=lambda _s: None)
-    r2 = fulfillment.processar_checkout(sessao, ix_http=ix, dormir=lambda _s: None)
+    r1 = fulfillment.processar_checkout(sessao, emitir_fatura=emissor, dormir=lambda _s: None)
+    r2 = fulfillment.processar_checkout(sessao, emitir_fatura=emissor, dormir=lambda _s: None)
 
     assert r1.idempotente is False
     assert r2.idempotente is True
@@ -262,7 +228,7 @@ def test_checkout_idempotente_por_session_id(bd):
         assert s.query(models.Cliente).count() == 1
         assert s.query(models.ClienteRegisto).count() == 1
     # a fatura foi emitida UMA só vez apesar das duas entregas
-    assert ix.n_emissoes() == 1
+    assert emissor.n_emissoes() == 1
 
 
 # ==========================================================================
@@ -276,7 +242,7 @@ def test_checkout_fallback_fuzzy_nome_concelho(bd):
         nome="Joana Martins Pereira", concelho="Lagos",
         email="joana@ex.pt", customer="cus_z", plano="anual",
     )
-    res = fulfillment.processar_checkout(sessao, ix_http=FakeIX(), dormir=lambda _s: None)
+    res = fulfillment.processar_checkout(sessao, emitir_fatura=FakeEmissor(), dormir=lambda _s: None)
     assert res.correspondido is True
     assert res.nr_registo == 555000
 
@@ -293,7 +259,7 @@ def test_checkout_sem_match_cria_cliente_sem_associacao(bd):
         nome="Empresa Totalmente Desconhecida XPTO", concelho="Bragança",
         email="novo@ex.pt", customer="cus_new",
     )
-    res = fulfillment.processar_checkout(sessao, ix_http=FakeIX(), dormir=lambda _s: None)
+    res = fulfillment.processar_checkout(sessao, emitir_fatura=FakeEmissor(), dormir=lambda _s: None)
     assert res.correspondido is False
     assert res.nr_registo is None
     assert res.fatura is not None  # o cliente pagou → fatura na mesma
@@ -313,7 +279,7 @@ def test_checkout_chama_ponto_extensao_boas_vindas_sem_enviar(bd, monkeypatch):
         fulfillment, "_agendar_boas_vindas",
         lambda cliente_id, fatura, **kw: registos.append((cliente_id, fatura)),
     )
-    res = fulfillment.processar_checkout(_sessao(), ix_http=FakeIX(), dormir=lambda _s: None)
+    res = fulfillment.processar_checkout(_sessao(), emitir_fatura=FakeEmissor(), dormir=lambda _s: None)
     assert len(registos) == 1
     assert registos[0][0] == res.cliente_id
     assert registos[0][1] is not None  # recebe a fatura para anexar (FDS 3)
@@ -333,17 +299,17 @@ def test_renovacao_emite_segunda_fatura(bd):
     # 1) compra inicial cria o cliente cus_ren
     fulfillment.processar_checkout(
         _sessao(session_id="cs_ren", customer="cus_ren"),
-        ix_http=FakeIX(), dormir=lambda _s: None,
+        emitir_fatura=FakeEmissor(), dormir=lambda _s: None,
     )
     # 2) renovação (subscription_cycle) → emite a 2.ª fatura-recibo
-    ix2 = FakeIX(doc_id=1112223, total=49.0)
+    emissor2 = FakeEmissor(doc_id=1112223, total=49.0)
     res = fulfillment.processar_renovacao(
         _invoice(customer="cus_ren", invoice_id="in_ren"),
-        ix_http=ix2, dormir=lambda _s: None,
+        emitir_fatura=emissor2, dormir=lambda _s: None,
     )
     assert res.accao == fulfillment.ACCAO_RENOVACAO
     assert res.fatura is not None
-    assert ix2.n_emissoes() == 1
+    assert emissor2.n_emissoes() == 1
 
     with db.get_session() as s:
         c = s.query(models.Cliente).filter_by(stripe_customer_id="cus_ren").one()
@@ -356,27 +322,27 @@ def test_renovacao_ignora_se_nao_for_subscription_cycle(bd):
     from app import fulfillment
     fulfillment.processar_checkout(
         _sessao(session_id="cs_first", customer="cus_first"),
-        ix_http=FakeIX(), dormir=lambda _s: None,
+        emitir_fatura=FakeEmissor(), dormir=lambda _s: None,
     )
-    ix2 = FakeIX()
+    emissor2 = FakeEmissor()
     # billing_reason=subscription_create é a fatura da 1.ª compra → NÃO refaturar
     res = fulfillment.processar_renovacao(
         _invoice(billing_reason="subscription_create", customer="cus_first"),
-        ix_http=ix2, dormir=lambda _s: None,
+        emitir_fatura=emissor2, dormir=lambda _s: None,
     )
     assert res.accao == fulfillment.ACCAO_IGNORADO
     assert res.fatura is None
-    assert ix2.n_emissoes() == 0
+    assert emissor2.n_emissoes() == 0
 
 
 def test_renovacao_de_cliente_desconhecido_e_ignorada(bd):
     from app import fulfillment
-    ix2 = FakeIX()
+    emissor2 = FakeEmissor()
     res = fulfillment.processar_renovacao(
-        _invoice(customer="cus_inexistente"), ix_http=ix2, dormir=lambda _s: None
+        _invoice(customer="cus_inexistente"), emitir_fatura=emissor2, dormir=lambda _s: None
     )
     assert res.accao == fulfillment.ACCAO_IGNORADO
-    assert ix2.n_emissoes() == 0
+    assert emissor2.n_emissoes() == 0
 
 
 # ==========================================================================
@@ -386,7 +352,7 @@ def test_marcar_cancelado(bd):
     from app import fulfillment
     fulfillment.processar_checkout(
         _sessao(session_id="cs_cxl", customer="cus_cxl"),
-        ix_http=FakeIX(), dormir=lambda _s: None,
+        emitir_fatura=FakeEmissor(), dormir=lambda _s: None,
     )
     res = fulfillment.marcar_cancelado({"id": "sub_1", "customer": "cus_cxl"})
     assert res.accao == fulfillment.ACCAO_CANCELADO
@@ -399,7 +365,7 @@ def test_registar_falha_pagamento(bd):
     from app import fulfillment
     fulfillment.processar_checkout(
         _sessao(session_id="cs_fail", customer="cus_fail"),
-        ix_http=FakeIX(), dormir=lambda _s: None,
+        emitir_fatura=FakeEmissor(), dormir=lambda _s: None,
     )
     res = fulfillment.registar_falha_pagamento(_invoice(customer="cus_fail"))
     assert res.accao == fulfillment.ACCAO_FALHA

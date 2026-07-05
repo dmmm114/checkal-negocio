@@ -8,10 +8,10 @@ idempotência por `event.id` e despachar para as funções daqui.
 
 Funções públicas (mapeadas 1:1 aos eventos Stripe — SPEC-STRIPE §2.5):
 
-    processar_checkout(sessao, *, ix_http)   ← checkout.session.completed  (anual e trienal)
-    processar_renovacao(invoice, *, ix_http) ← invoice.paid  (G1: só subscription_cycle)
-    marcar_cancelado(subscription)           ← customer.subscription.deleted
-    registar_falha_pagamento(invoice)        ← invoice.payment_failed
+    processar_checkout(sessao, *, emitir_fatura)   ← checkout.session.completed  (anual e trienal)
+    processar_renovacao(invoice, *, emitir_fatura) ← invoice.paid  (G1: só subscription_cycle)
+    marcar_cancelado(subscription)                 ← customer.subscription.deleted
+    registar_falha_pagamento(invoice)              ← invoice.payment_failed
 
 **Idempotência.** Duas camadas complementares (SPEC-FDS2 §disciplina):
   - por `event.id` — no webhook (tabela `webhook_eventos`), que garante que cada evento
@@ -27,10 +27,13 @@ do mesmo concelho). Um cliente que pagou é sempre materializado, com ou sem mat
 associação `clientes_registos` só se cria quando há registo correspondente.
 
 DISCIPLINA (inviolável): **MODO DE TESTE, LIVE-GATED.** Este módulo **não** cria clientes
-HTTP: o `ix_http` (cliente à laia de `httpx.Client` do InvoiceXpress) é sempre **injetado**
-por quem chama (mock nos testes). Nada de emails, nada de cold. O email de boas-vindas +
-selo é FDS 3: fica aqui um **ponto de extensão** (`_agendar_boas_vindas`) — no FDS 2 é um
-no-op deliberado, para não haver envios.
+HTTP nem conhece o fornecedor de faturação: depende de um **emissor agnóstico**
+`emitir_fatura(*, nome, nif, email, itens, ...) -> FaturaRecibo` **injetado** por quem
+chama (o webhook compõe-o via :func:`app.faturacao.obter_emissor`; os testes injetam um
+falso). A composição do cliente HTTP (e do Bearer OAuth, no TOConline) vive toda em
+`app.faturacao` — aqui só se chama o *callable*. Nada de emails, nada de cold. O email de
+boas-vindas + selo é FDS 3: fica aqui um **ponto de extensão** (`_agendar_boas_vindas`) —
+no FDS 2 é um no-op deliberado, para não haver envios.
 """
 from __future__ import annotations
 
@@ -48,7 +51,13 @@ from sqlalchemy.exc import IntegrityError
 import app.config as config
 import app.db as db
 import app.models as models
-from app.faturacao.invoicexpress_client import FaturaRecibo, emitir_fatura_recibo
+from app.faturacao import obter_emissor
+from app.faturacao.base import FaturaRecibo
+
+# Emissor agnóstico de faturas: `emitir(*, nome, nif, email, itens, codigo_cliente=None,
+# dormir=time.sleep) -> FaturaRecibo`. Composto em `app.faturacao.obter_emissor` (o único
+# sítio com HTTP real) ou injetado falso nos testes.
+Emissor = Callable[..., FaturaRecibo]
 
 # --- Constantes de comportamento -------------------------------------------
 PLANO_PADRAO = "anual"              # plano assumido se a sessão não o revelar (SPEC-STRIPE)
@@ -281,22 +290,22 @@ def _emitir_e_guardar(
     nif: str,
     email: str,
     itens: Sequence[Mapping[str, Any]],
-    ix_http: Any,
+    emitir_fatura: Emissor,
     dormir: Callable[[float], None],
 ) -> FaturaRecibo:
     """Emite a fatura-recibo certificada e grava a ligação no cliente.
 
     Corre dentro da transação de quem chama: se a emissão levantar (G2/G3), o
     rollback desfaz o cliente — nunca fica um assinante sem fatura certificada.
-    O `client.code` do InvoiceXpress deriva do id local do cliente (id estável,
-    evita duplicar clientes na conta — SPEC-INVOICEXPRESS §2.2).
+    O `codigo_cliente` (código estável do cliente na conta de faturação — evita
+    duplicá-lo) deriva do id local do cliente, seja qual for o fornecedor por trás
+    do emissor (SPEC-INVOICEXPRESS §2.2 / SPEC-TOCONLINE §8).
     """
-    fatura = emitir_fatura_recibo(
+    fatura = emitir_fatura(
         nome=nome or "Consumidor final",
         nif=nif or NIF_CONSUMIDOR_FINAL,
         email=email or "",
         itens=itens,
-        cliente_http=ix_http,
         codigo_cliente=f"checkal-{cliente.id}",
         dormir=dormir,
     )
@@ -312,7 +321,7 @@ def _emitir_e_guardar(
 def processar_checkout(
     sessao: Mapping[str, Any],
     *,
-    ix_http: Any,
+    emitir_fatura: Emissor | None = None,
     dormir: Callable[[float], None] = time.sleep,
 ) -> Resultado:
     """Materializa um pagamento confirmado (checkout.session.completed).
@@ -320,7 +329,15 @@ def processar_checkout(
     Idempotente por `stripe_session_id`: reprocessar a mesma sessão devolve o cliente
     existente sem reemitir fatura. Serve os dois modos (subscription/payment) — a
     diferença de recorrência é da Stripe; aqui o fluxo é o mesmo.
+
+    `emitir_fatura` é o emissor agnóstico (default: :func:`app.faturacao.obter_emissor`);
+    injeta-se um falso nos testes. LIVE-GATED: em modo de teste o default resolve para
+    ``None`` — só se emite quando quem chama injeta um emissor (real em produção, falso
+    nos testes).
     """
+    if emitir_fatura is None:
+        emitir_fatura = obter_emissor()
+
     session_id = _id_de(sessao.get("id"))
     nif = _custom_field(sessao, CF_NIF) or ""
     nr_registo = _nr_registo_de_texto(_custom_field(sessao, CF_NR_REGISTO))
@@ -367,7 +384,7 @@ def processar_checkout(
             fatura = _emitir_e_guardar(
                 s, cliente,
                 nome=cliente.nome or "", nif=nif, email=email,
-                itens=_itens_do_plano(plano), ix_http=ix_http, dormir=dormir,
+                itens=_itens_do_plano(plano), emitir_fatura=emitir_fatura, dormir=dormir,
             )
 
             cliente_id = cliente.id
@@ -399,7 +416,7 @@ def processar_checkout(
 def processar_renovacao(
     invoice: Mapping[str, Any],
     *,
-    ix_http: Any,
+    emitir_fatura: Emissor | None = None,
     dormir: Callable[[float], None] = time.sleep,
 ) -> Resultado:
     """Fatura uma renovação anual/portfólio (invoice.paid).
@@ -408,9 +425,15 @@ def processar_renovacao(
     compra já saiu no checkout; qualquer outro motivo (`subscription_create`, etc.) é
     ignorado para não duplicar. O plano e o NIF vêm do cliente local (guardados no
     checkout; a Stripe não repete os custom fields nas renovações — SPEC-STRIPE §5.5).
+
+    `emitir_fatura` é o emissor agnóstico (default: :func:`app.faturacao.obter_emissor`);
+    injeta-se um falso nos testes.
     """
     if invoice.get("billing_reason") != BILLING_REASON_RENOVACAO:
         return Resultado(accao=ACCAO_IGNORADO)
+
+    if emitir_fatura is None:
+        emitir_fatura = obter_emissor()
 
     customer_id = _id_de(invoice.get("customer"))
     with db.get_session() as s:
@@ -422,7 +445,7 @@ def processar_renovacao(
         fatura = _emitir_e_guardar(
             s, cliente,
             nome=cliente.nome or "", nif=cliente.nif or "", email=cliente.email or "",
-            itens=_itens_do_plano(plano), ix_http=ix_http, dormir=dormir,
+            itens=_itens_do_plano(plano), emitir_fatura=emitir_fatura, dormir=dormir,
         )
         cliente.estado = ESTADO_ATIVO
         cliente_id = cliente.id

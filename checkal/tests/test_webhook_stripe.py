@@ -7,18 +7,18 @@ Contrato do endpoint `POST /webhooks/stripe`:
   - **idempotência por `event.id`** (tabela `webhook_eventos`): reentrega do mesmo
     evento → 200 sem reprocessar;
   - despacha por `type` para a ação de fulfillment certa:
-      · `checkout.session.completed`   → `processar_checkout(obj, ix_http=...)`
-      · `invoice.paid`                 → `processar_renovacao(obj, ix_http=...)`
+      · `checkout.session.completed`   → `processar_checkout(obj, emitir_fatura=...)`
+      · `invoice.paid`                 → `processar_renovacao(obj, emitir_fatura=...)`
       · `invoice.payment_failed`       → `registar_falha_pagamento(obj)`
       · `customer.subscription.deleted`→ `marcar_cancelado(obj)`
   - evento não-tratado → **200** (ignora), sem despachar.
 
 DISCIPLINA (inviolável): MODO DE TESTE, LIVE-GATED. Zero rede. As ações de
 fulfillment são substituídas por espiões (monkeypatch em `app.fulfillment`), pelo
-que o cliente HTTP do InvoiceXpress nunca é usado; o único teste ponta-a-ponta
-injeta um `FakeIX` via `webhook_stripe._cliente_ix`. A assinatura VÁLIDA é gerada
-aqui nos testes com o mesmo HMAC-SHA256 nativo do adaptador (nunca com o SDK).
-Escrito ANTES da implementação (TDD).
+que o emissor de faturas nunca é usado; o único teste ponta-a-ponta injeta um
+emissor falso (um *callable* que devolve uma `FaturaRecibo`) via
+`webhook_stripe._emissor`. A assinatura VÁLIDA é gerada aqui nos testes com o mesmo
+HMAC-SHA256 nativo do adaptador (nunca com o SDK). Escrito ANTES da implementação (TDD).
 """
 from __future__ import annotations
 
@@ -137,8 +137,8 @@ def test_checkout_despacha_processar_checkout(client, spies):
     assert r.status_code == 200
     assert len(spies["checkout"]) == 1
     assert spies["checkout"][0]["obj"]["id"] == "cs_1"
-    # o webhook injeta o cliente IX (None em modo de teste) — o kwarg tem de existir
-    assert "ix_http" in spies["checkout"][0]["kw"]
+    # o webhook injeta o emissor de faturas (None em modo de teste) — o kwarg tem de existir
+    assert "emitir_fatura" in spies["checkout"][0]["kw"]
     # nenhuma outra ação foi tocada
     assert spies["renovacao"] == spies["falha"] == spies["cancelado"] == []
 
@@ -149,7 +149,7 @@ def test_invoice_paid_despacha_processar_renovacao(client, spies):
     assert r.status_code == 200
     assert len(spies["renovacao"]) == 1
     assert spies["renovacao"][0]["obj"]["id"] == "in_1"
-    assert "ix_http" in spies["renovacao"][0]["kw"]
+    assert "emitir_fatura" in spies["renovacao"][0]["kw"]
 
 
 def test_payment_failed_despacha_registar_falha(client, spies):
@@ -158,7 +158,7 @@ def test_payment_failed_despacha_registar_falha(client, spies):
     assert r.status_code == 200
     assert len(spies["falha"]) == 1
     assert spies["falha"][0]["obj"]["id"] == "in_2"
-    # esta ação não recebe ix_http (não emite fatura)
+    # esta ação não recebe emitir_fatura (não emite fatura)
     assert spies["falha"][0]["kw"] == {}
 
 
@@ -245,48 +245,33 @@ def test_evento_nao_tratado_200_e_nao_despacha(client, spies):
 
 
 # ==========================================================================
-#  Ponta-a-ponta: checkout real → cliente + fatura (ix_http injetado = FakeIX)
+#  Ponta-a-ponta: checkout real → cliente + fatura (emissor falso injetado)
 # ==========================================================================
-class _FakeResp:
-    def __init__(self, status_code: int, payload: dict):
-        self.status_code = status_code
-        self._payload = payload
-
-    def json(self) -> dict:
-        return self._payload
-
-    def raise_for_status(self) -> None:
-        if self.status_code >= 400:
-            raise RuntimeError(f"HTTP {self.status_code}")
-
-
-class _FakeIX:
-    """Duplo do InvoiceXpress: 1 POST (criar) + 1 PUT (finalizar) + GET pdf/detalhes."""
+class _FakeEmissor:
+    """Emissor falso (callable agnóstico) — devolve uma `FaturaRecibo` certificada."""
 
     def __init__(self, doc_id: int = 424242, total: float = 49.0):
-        self.doc_id = doc_id
+        self.doc_id = str(doc_id)
         self.total = total
 
-    def post(self, url, **kw):
-        return _FakeResp(201, {"invoice_receipt": {"id": self.doc_id, "status": "draft"}})
-
-    def put(self, url, **kw):
-        return _FakeResp(200, {"invoice_receipt": {"id": self.doc_id, "status": "finalized"}})
-
-    def get(self, url, **kw):
-        if "/api/pdf/" in url:
-            return _FakeResp(200, {"output": {"pdfUrl": f"https://ix/pdf/{self.doc_id}.pdf"}})
-        return _FakeResp(200, {"invoice_receipt": {
-            "id": self.doc_id, "status": "finalized", "sequence_number": "7/CKL",
-            "total": self.total, "atcud": "WXYZ9876-7", "saft_hash": "deadbeef",
-            "permalink": f"https://cosmicoasis.app.invoicexpress.com/i/{self.doc_id}",
-        }})
+    def __call__(self, *, nome, nif, email, itens, codigo_cliente=None, dormir=None):
+        from app.faturacao.base import FaturaRecibo
+        return FaturaRecibo(
+            id=self.doc_id,
+            sequence_number="7/CKL",
+            atcud="WXYZ9876-7",
+            saft_hash="deadbeef",
+            total=self.total,
+            permalink=f"https://cosmicoasis.app.invoicexpress.com/i/{self.doc_id}",
+            pdf_url=f"https://ix/pdf/{self.doc_id}.pdf",
+            estado="finalizado",
+        )
 
 
 def test_end_to_end_checkout_emite_fatura(client, monkeypatch):
     from app.web import webhook_stripe
 
-    monkeypatch.setattr(webhook_stripe, "_cliente_ix", lambda: _FakeIX())
+    monkeypatch.setattr(webhook_stripe, "_emissor", lambda: _FakeEmissor())
 
     sessao = {
         "id": "cs_e2e",

@@ -6,7 +6,7 @@ ficar registado como cliente E receber fatura-recibo certificada"*. Percurso:
 
   1. Semeia um registo do espelho RNAL (nr 100031, Faro).
   2. Compõe a app com os três routers (`criar_app`) e um `TestClient`.
-  3. Injeta um duplo do InvoiceXpress (`FakeIX`) via `webhook_stripe._cliente_ix`
+  3. Injeta um emissor falso (`_FakeEmissor`) via `webhook_stripe._emissor`
      — devolve uma fatura com ATCUD + saft_hash + total corretos (certificada).
   4. Entrega um `checkout.session.completed` **ASSINADO** (assinatura gerada aqui com
      o segredo de teste, HMAC-SHA256 nativo — nunca o SDK) → 200. Verifica:
@@ -18,9 +18,10 @@ ficar registado como cliente E receber fatura-recibo certificada"*. Percurso:
   6. Entrega um `invoice.paid` (`billing_reason=subscription_cycle`) para o mesmo
      `customer` → emite a **2.ª** fatura-recibo (renovação).
 
-DISCIPLINA (inviolável): MODO DE TESTE, LIVE-GATED. **Zero** rede — o `FakeIX` dirige o
-adaptador InvoiceXpress REAL sem HTTP; a assinatura Stripe é gerada localmente; nada de
-emails, nada de cold. Escrito como critério de aceitação do FDS 2 (TDD de integração).
+DISCIPLINA (inviolável): MODO DE TESTE, LIVE-GATED. **Zero** rede — o `_FakeEmissor` é um
+emissor agnóstico injetado (devolve a `FaturaRecibo` sem HTTP nem fornecedor); a assinatura
+Stripe é gerada localmente; nada de emails, nada de cold. Escrito como critério de aceitação
+do FDS 2 (TDD de integração).
 """
 from __future__ import annotations
 
@@ -72,56 +73,36 @@ def _post(client: TestClient, corpo: bytes, header: str):
 
 
 # ==========================================================================
-#  Duplo do InvoiceXpress (dirige o emitir_fatura_recibo REAL, sem rede)
+#  Emissor falso agnóstico (devolve a FaturaRecibo, sem rede)
 # ==========================================================================
-class _FakeResp:
-    def __init__(self, status_code: int, payload: dict):
-        self.status_code = status_code
-        self._payload = payload
+class _FakeEmissor:
+    """Emissor falso: uma `FaturaRecibo` distinta por chamada (sem HTTP nem fornecedor).
 
-    def json(self) -> dict:
-        return self._payload
-
-    def raise_for_status(self) -> None:
-        if self.status_code >= 400:
-            raise RuntimeError(f"HTTP {self.status_code}")
-
-
-class _FakeIX:
-    """1 POST (criar) + 1 PUT (finalizar) + GET (pdf) + GET (detalhes) por emissão.
-
-    Cada emissão (POST a /invoice_receipts.json) recebe um `doc_id`/ATCUD distinto, para
-    se poder distinguir a 1.ª fatura (checkout) da 2.ª (renovação). `emissoes` conta as
-    faturas emitidas — o critério de idempotência (não reemitir) verifica-se por aqui.
+    Cada emissão recebe um `doc_id`/ATCUD sequencial, para se poder distinguir a 1.ª
+    fatura (checkout) da 2.ª (renovação). `emissoes` conta as faturas emitidas — o
+    critério de idempotência (não reemitir) verifica-se por aqui.
     """
 
     def __init__(self, total: float = 49.0):
         self.total = total
         self._seq = 0
-        self.doc_id = 0
         self.emissoes = 0
 
-    def post(self, url, **kw):
+    def __call__(self, *, nome, nif, email, itens, codigo_cliente=None, dormir=None):
+        from app.faturacao.base import FaturaRecibo
         self._seq += 1
-        self.doc_id = 900000 + self._seq
         self.emissoes += 1
-        return _FakeResp(201, {"invoice_receipt": {"id": self.doc_id, "status": "draft"}})
-
-    def put(self, url, **kw):
-        return _FakeResp(200, {"invoice_receipt": {"id": self.doc_id, "status": "finalized"}})
-
-    def get(self, url, **kw):
-        if "/api/pdf/" in url:
-            return _FakeResp(200, {"output": {"pdfUrl": f"https://ix/pdf/{self.doc_id}.pdf"}})
-        return _FakeResp(200, {"invoice_receipt": {
-            "id": self.doc_id,
-            "status": "finalized",
-            "sequence_number": f"{self._seq}/CKL",
-            "total": self.total,
-            "atcud": f"ATCUD{self._seq:04d}-{self._seq}",
-            "saft_hash": "deadbeef",
-            "permalink": f"https://cosmicoasis.app.invoicexpress.com/i/{self.doc_id}",
-        }})
+        doc_id = 900000 + self._seq
+        return FaturaRecibo(
+            id=str(doc_id),
+            sequence_number=f"{self._seq}/CKL",
+            atcud=f"ATCUD{self._seq:04d}-{self._seq}",
+            saft_hash="deadbeef",
+            total=self.total,
+            permalink=f"https://cosmicoasis.app.invoicexpress.com/i/{doc_id}",
+            pdf_url=f"https://ix/pdf/{doc_id}.pdf",
+            estado="finalizado",
+        )
 
 
 # ==========================================================================
@@ -155,10 +136,10 @@ def segredo(monkeypatch):
 
 @pytest.fixture()
 def ix(monkeypatch):
-    """Injeta um `_FakeIX` partilhado no webhook (o mesmo em todos os despachos)."""
+    """Injeta um `_FakeEmissor` partilhado no webhook (o mesmo em todos os despachos)."""
     from app.web import webhook_stripe
-    fake = _FakeIX(total=49.0)
-    monkeypatch.setattr(webhook_stripe, "_cliente_ix", lambda: fake)
+    fake = _FakeEmissor(total=49.0)
+    monkeypatch.setattr(webhook_stripe, "_emissor", lambda: fake)
     return fake
 
 

@@ -27,6 +27,11 @@ consecutivos em que o registo faltou, para só marcar `desaparecido_em` à 2.ª 
 (idempotência dos webhooks Stripe por `event.id`) e colunas em `clientes`
 (`stripe_session_id`, `ix_fatura_id`, `ix_atcud`, `ix_permalink`) que ligam o
 assinante à sessão Stripe e à fatura-recibo certificada do InvoiceXpress.
+
+**Extensão TOConline (aditiva, SPEC-TOCONLINE §2.2):** tabela `toconline_tokens`
+(linha única) que persiste o par de tokens OAuth2 (access ~4 h / refresh ~8 h) e
+as suas validades, para o cron de renovação server-to-server. As colunas fiscais
+`ix_*` de `clientes` servem qualquer fornecedor por trás da mesma interface.
 """
 from __future__ import annotations
 
@@ -235,3 +240,28 @@ class WebhookEvento(Base):
     event_id: Mapped[str] = mapped_column(Text, primary_key=True)  # ex. 'evt_...'
     tipo: Mapped[str | None] = mapped_column(Text)  # ex. 'checkout.session.completed'
     recebido_em: Mapped[datetime | None] = mapped_column(_TS)
+
+
+class ToconlineToken(Base):
+    """Estado da autenticação OAuth2 server-to-server do TOConline (SPEC-TOCONLINE §2.2).
+
+    **Linha única** (por convenção `id=1`): o TOConline não tem grant
+    `client_credentials`, só `authorization_code` (consentimento humano único no
+    arranque) + `refresh_token`. O `access_token` vale ~4 h e o `refresh_token`
+    ~8 h e **roda** a cada renovação — por isso um cron externo renova de ~3–4 h e
+    **persiste sempre o novo par**. A emissão de faturas nunca conhece OAuth (o
+    `cliente_http` é injetado já autenticado); esta tabela é só a persistência do
+    estado, para o cron saber o que renovar e quando alarmar o dono.
+
+    Portátil (SQLite/Postgres): `Text` para os tokens, `DateTime(timezone=True)`
+    para as validades. Sem segredos no código — os tokens só existem em runtime.
+    """
+
+    __tablename__ = "toconline_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    access_token: Mapped[str | None] = mapped_column(Text)
+    access_expira_em: Mapped[datetime | None] = mapped_column(_TS)
+    refresh_token: Mapped[str | None] = mapped_column(Text)
+    refresh_expira_em: Mapped[datetime | None] = mapped_column(_TS)
+    atualizado_em: Mapped[datetime | None] = mapped_column(_TS)

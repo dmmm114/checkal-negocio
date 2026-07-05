@@ -13,8 +13,8 @@ responsabilidade é curta e defensiva (o trabalho pesado vive em `app.fulfillmen
 
 Mapeamento evento → ação (SPEC-STRIPE §2.5):
 
-    checkout.session.completed    → fulfillment.processar_checkout(obj, ix_http=...)
-    invoice.paid                  → fulfillment.processar_renovacao(obj, ix_http=...)  (G1 dentro)
+    checkout.session.completed    → fulfillment.processar_checkout(obj, emitir_fatura=...)
+    invoice.paid                  → fulfillment.processar_renovacao(obj, emitir_fatura=...)  (G1 dentro)
     invoice.payment_failed        → fulfillment.registar_falha_pagamento(obj)
     customer.subscription.deleted → fulfillment.marcar_cancelado(obj)
 
@@ -30,9 +30,11 @@ se perde a materialização de um pagamento por uma falha transitória.
 
 DISCIPLINA (inviolável): **MODO DE TESTE, LIVE-GATED.** Este módulo não usa o SDK
 `stripe` (a verificação é o HMAC nativo de `stripe_client`) e não cria clientes HTTP de
-rede sob modo de teste — `_cliente_ix()` devolve `None` (o InvoiceXpress só liga em
-produção, quando o dono desliga o modo de teste e há chaves). Nos testes, as ações de
-fulfillment são espiadas e/ou o `_cliente_ix` é substituído por um duplo. Nada de emails,
+rede sob modo de teste — o emissor de faturas compõe-se em
+:func:`app.faturacao.obter_emissor`, que devolve `None` sob modo de teste ou sem
+credenciais (a faturação só liga em produção, quando o dono desliga o modo de teste e há
+credenciais). Nos testes, as ações de fulfillment são espiadas e/ou o `_emissor` é
+substituído por um duplo (um *callable* que devolve uma `FaturaRecibo`). Nada de emails,
 nada de cold.
 """
 from __future__ import annotations
@@ -45,11 +47,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, Response
 from sqlalchemy.exc import IntegrityError
 
-import app.config as config
 import app.db as db
 import app.models as models
 from app import fulfillment
 from app.billing.stripe_client import AssinaturaInvalida, verificar_evento
+from app.faturacao import obter_emissor
 
 router = APIRouter()
 roteador = router  # alias PT, para montagem por qualquer um dos nomes
@@ -62,22 +64,18 @@ EVT_CANCELAMENTO = "customer.subscription.deleted"
 
 
 # ==========================================================================
-#  Cliente HTTP do InvoiceXpress — composição em produção; None em teste
+#  Emissor de faturas — composição em produção; None em teste
 # ==========================================================================
-def _cliente_ix() -> Any:
-    """Cria o cliente HTTP do InvoiceXpress para o fulfillment (composição em produção).
+def _emissor() -> Any:
+    """Compõe o emissor de faturas do fornecedor ativo para o fulfillment.
 
-    **LIVE-GATED**: sob `config.CHECKAL_MODO_TESTE` (default) ou sem chave de API,
-    devolve ``None`` — nenhum cliente de rede é criado, pelo que correr os testes nunca
-    toca a rede. Só em produção (modo de teste desligado **e** chave configurada) se
-    instancia um `httpx.Client`. Nos testes esta função é substituída por um duplo que
-    dirige o adaptador InvoiceXpress sem tocar na rede.
+    Delega em :func:`app.faturacao.obter_emissor` — o **único** sítio que cria um
+    cliente HTTP real (e, no TOConline, obtém o Bearer OAuth). **LIVE-GATED**: sob
+    `config.CHECKAL_MODO_TESTE` (default) ou sem credenciais devolve ``None`` — nenhum
+    cliente de rede é criado, pelo que correr os testes nunca toca a rede. Nos testes
+    esta função é substituída por um duplo que devolve um emissor falso.
     """
-    if config.CHECKAL_MODO_TESTE or not config.INVOICEXPRESS_API_KEY:
-        return None
-    import httpx  # import tardio: só quando de facto se liga em produção
-
-    return httpx.Client(timeout=30.0)
+    return obter_emissor()
 
 
 # ==========================================================================
@@ -121,13 +119,14 @@ def _despachar(tipo: str, obj: dict) -> None:
     """Encaminha o objeto do evento para a ação de fulfillment do seu `tipo`.
 
     Apenas os 4 tipos subscritos têm ação; qualquer outro é ignorado (o webhook
-    responde 200 na mesma). As ações que emitem fatura recebem o cliente HTTP do
-    InvoiceXpress; as restantes (falha/cancelamento) só mexem no estado local.
+    responde 200 na mesma). As ações que emitem fatura recebem o **emissor agnóstico**
+    (`emitir_fatura`) composto em `app.faturacao`; as restantes (falha/cancelamento) só
+    mexem no estado local.
     """
     if tipo == EVT_CHECKOUT:
-        fulfillment.processar_checkout(obj, ix_http=_cliente_ix())
+        fulfillment.processar_checkout(obj, emitir_fatura=_emissor())
     elif tipo == EVT_RENOVACAO:
-        fulfillment.processar_renovacao(obj, ix_http=_cliente_ix())
+        fulfillment.processar_renovacao(obj, emitir_fatura=_emissor())
     elif tipo == EVT_FALHA_PAGAMENTO:
         fulfillment.registar_falha_pagamento(obj)
     elif tipo == EVT_CANCELAMENTO:

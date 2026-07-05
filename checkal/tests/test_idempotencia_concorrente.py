@@ -12,8 +12,8 @@ reverter). Estes testes fixam o backstop:
      função reconcilia-se devolvendo o cliente existente, idempotente e SEM reemitir
      uma 2.ª fatura.
 
-DISCIPLINA (inviolável): MODO DE TESTE, LIVE-GATED. Zero rede: o InvoiceXpress é um
-`FakeIX` injetado; se ele fosse chamado na corrida perdida, `n_emissoes() > 0` denunciava.
+DISCIPLINA (inviolável): MODO DE TESTE, LIVE-GATED. Zero rede: o emissor de faturas é um
+`_FakeEmissor` injetado; se ele fosse chamado na corrida perdida, `emissoes > 0` denunciava.
 """
 from __future__ import annotations
 
@@ -27,45 +27,30 @@ from sqlalchemy.orm import Session, sessionmaker
 import app.db as db
 import app.fulfillment as fulfillment
 import app.models as models
+from app.faturacao.base import FaturaRecibo
 
 
 # ==========================================================================
-#  Duplo do InvoiceXpress — se for chamado, conta uma emissão (delator)
+#  Emissor falso agnóstico — se for chamado, conta uma emissão (delator)
 # ==========================================================================
-class _FakeResp:
-    def __init__(self, status_code: int, payload: dict):
-        self.status_code = status_code
-        self._payload = payload
-
-    def json(self) -> dict:
-        return self._payload
-
-    def raise_for_status(self) -> None:
-        if self.status_code >= 400:
-            raise RuntimeError(f"HTTP {self.status_code}")
-
-
-class _FakeIX:
+class _FakeEmissor:
     def __init__(self, doc_id: int = 700700, total: float = 49.0):
-        self.doc_id = doc_id
+        self.doc_id = str(doc_id)
         self.total = total
         self.emissoes = 0
 
-    def post(self, url, **kw):
-        self.emissoes += 1  # 1 POST /invoice_receipts.json == 1 emissão
-        return _FakeResp(201, {"invoice_receipt": {"id": self.doc_id, "status": "draft"}})
-
-    def put(self, url, **kw):
-        return _FakeResp(200, {"invoice_receipt": {"id": self.doc_id, "status": "finalized"}})
-
-    def get(self, url, **kw):
-        if "/api/pdf/" in url:
-            return _FakeResp(200, {"output": {"pdfUrl": f"https://ix/pdf/{self.doc_id}.pdf"}})
-        return _FakeResp(200, {"invoice_receipt": {
-            "id": self.doc_id, "status": "finalized", "sequence_number": "9/CKL",
-            "total": self.total, "atcud": "ZZZZ0001-9", "saft_hash": "cafef00d",
-            "permalink": f"https://cosmicoasis.app.invoicexpress.com/i/{self.doc_id}",
-        }})
+    def __call__(self, *, nome, nif, email, itens, codigo_cliente=None, dormir=None):
+        self.emissoes += 1  # 1 chamada ao emissor == 1 emissão
+        return FaturaRecibo(
+            id=self.doc_id,
+            sequence_number="9/CKL",
+            atcud="ZZZZ0001-9",
+            saft_hash="cafef00d",
+            total=self.total,
+            permalink=f"https://cosmicoasis.app.invoicexpress.com/i/{self.doc_id}",
+            pdf_url=f"https://ix/pdf/{self.doc_id}.pdf",
+            estado="finalizado",
+        )
 
 
 # ==========================================================================
@@ -161,8 +146,8 @@ def test_processar_checkout_corrida_perdida_nao_reemite(bd, monkeypatch):
 
     monkeypatch.setattr(fulfillment, "_cliente_por_sessao", _cego_na_primeira)
 
-    ix = _FakeIX()
-    res = fulfillment.processar_checkout(_sessao("cs_race"), ix_http=ix, dormir=lambda _s: None)
+    ix = _FakeEmissor()
+    res = fulfillment.processar_checkout(_sessao("cs_race"), emitir_fatura=ix, dormir=lambda _s: None)
 
     # Reconciliou-se com o cliente do vencedor, sem reemitir nada.
     assert res.idempotente is True
@@ -175,9 +160,9 @@ def test_processar_checkout_corrida_perdida_nao_reemite(bd, monkeypatch):
 
 def test_processar_checkout_reentrega_normal_continua_idempotente(bd):
     # Guarda o caminho feliz da idempotência (verificação inicial vê o cliente): 1 emissão.
-    ix = _FakeIX()
-    r1 = fulfillment.processar_checkout(_sessao("cs_norm"), ix_http=ix, dormir=lambda _s: None)
-    r2 = fulfillment.processar_checkout(_sessao("cs_norm"), ix_http=ix, dormir=lambda _s: None)
+    ix = _FakeEmissor()
+    r1 = fulfillment.processar_checkout(_sessao("cs_norm"), emitir_fatura=ix, dormir=lambda _s: None)
+    r2 = fulfillment.processar_checkout(_sessao("cs_norm"), emitir_fatura=ix, dormir=lambda _s: None)
     assert r1.idempotente is False and r2.idempotente is True
     assert r2.fatura is None
     assert ix.emissoes == 1

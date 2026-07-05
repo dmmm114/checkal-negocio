@@ -9,6 +9,13 @@ recebe os dados fiscais de um pagamento confirmado e devolve uma
     [3] GET   /api/pdf/:id.json               → PDF (tolera 202 → polling curto)
     [4] GET   /invoice_receipts/:id.json      → lê ATCUD + saft_hash + total
 
+A dataclass :class:`FaturaRecibo`, a hierarquia de exceções e os helpers de
+preço/certificação vivem agora em :mod:`app.faturacao.base` (tronco partilhado
+por todos os fornecedores). Este módulo importa-os e **re-exporta** os nomes
+históricos — a sua fronteira pública mantém-se **exatamente** igual
+(`FaturaRecibo`, `ErroInvoiceXpress`, `FaturaNaoCertificada`, `TotalInesperado`,
+`preco_liquido`, `total_esperado`, `emitir_fatura_recibo`).
+
 Guardas (não devolvem fatura "boa" quando a realidade fiscal falha):
   - **G2 — `FaturaNaoCertificada`**: `atcud` vazio/"N/D"/"N/A" ou `saft_hash`
     ausente. Sem ATCUD o documento não foi comunicado à AT (é ilegal emiti-lo
@@ -33,90 +40,43 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
 import app.config as config
+from app.faturacao.base import (
+    TOLERANCIA_TOTAL_EUR,
+    ErroFaturacao,
+    FaturaNaoCertificada,
+    FaturaRecibo,
+    TotalInesperado,
+    atcud_valido,
+    preco_liquido,
+    saft_presente,
+    total_esperado,
+)
+
+# Compat: o nome histórico da exceção base deste adaptador É a exceção partilhada.
+# Um `except ErroInvoiceXpress` legado continua a apanhar as guardas G2/G3 (que
+# descendem de `ErroFaturacao`), seja qual for o fornecedor ativo.
+ErroInvoiceXpress = ErroFaturacao
+
+# Fronteira pública inalterada: `FaturaRecibo`, as guardas e os helpers vêm de
+# `base` mas continuam acessíveis como `invoicexpress_client.<nome>`.
+__all__ = [
+    "FaturaRecibo",
+    "ErroInvoiceXpress",
+    "FaturaNaoCertificada",
+    "TotalInesperado",
+    "preco_liquido",
+    "total_esperado",
+    "emitir_fatura_recibo",
+]
 
 # --- Constantes do fluxo (SPEC-INVOICEXPRESS §2.3/§2.5/§6) ----------------
 ESTADO_FINALIZADO = "finalized"     # a doc mente ("settled"); o que funciona é este (gotcha §1)
 PDF_TENTATIVAS = 6                  # nº de GETs ao PDF antes de desistir do polling (202)
 PDF_PAUSA_S = 1.0                  # pausa base entre tentativas de PDF (passa por `dormir`)
-TOLERANCIA_TOTAL_EUR = 0.01        # folga (cêntimo) na comparação de totais da guarda G3
-
-# Valores de ATCUD que significam "documento ainda não registado na AT".
-_ATCUD_INVALIDO = {"", "N/D", "N/A", "ND", "NA"}
-
-
-# ==========================================================================
-#  Exceções (hierarquia própria; a base carrega o doc_id p/ reconciliação)
-# ==========================================================================
-class ErroInvoiceXpress(Exception):
-    """Falha na emissão da fatura-recibo. `doc_id` (se conhecido) permite reconciliar."""
-
-    def __init__(self, mensagem: str, *, doc_id: str | None = None):
-        super().__init__(mensagem)
-        self.doc_id = doc_id
-
-
-class FaturaNaoCertificada(ErroInvoiceXpress):
-    """GUARDA G2: documento finalizado sem ATCUD/saft_hash → não comunicado à AT."""
-
-
-class TotalInesperado(ErroInvoiceXpress):
-    """GUARDA G3: o total devolvido pela API não bate certo com o total esperado."""
-
-
-# ==========================================================================
-#  Resultado
-# ==========================================================================
-@dataclass(frozen=True)
-class FaturaRecibo:
-    """Fatura-recibo **certificada** emitida com sucesso (documento fiscal definitivo).
-
-    `pdf_url` pode ser ``None`` se o PDF ainda estiver a gerar quando o polling
-    esgota — a certificação (ATCUD/saft_hash) não depende do PDF, que é só para
-    anexar ao email de boas-vindas (FDS 3).
-    """
-
-    id: str
-    sequence_number: str
-    atcud: str
-    saft_hash: str
-    total: float
-    permalink: str
-    pdf_url: str | None
-    estado: str
-
-
-# ==========================================================================
-#  Helpers de preço (SPEC-INVOICEXPRESS §5) — PLANOS traz preço com IVA incl.
-# ==========================================================================
-def preco_liquido(preco_bruto: float) -> float:
-    """Converte um preço IVA-incluído no `unit_price` **líquido** a enviar à API.
-
-    A API calcula o IVA sobre `unit_price`; para o total voltar ao preço de
-    tabela (ex. 49,00 €) enviamos a base líquida (49/1,23 = 39,84 €), a que a
-    taxa `IVA23` volta a somar os 23%.
-    """
-    return round(preco_bruto / (1 + config.IVA), 2)
-
-
-def total_esperado(itens: Sequence[Mapping[str, Any]]) -> float:
-    """Total esperado (base + IVA 23%), calculado à moda da AT: IVA sobre a base.
-
-    Soma as bases líquidas por linha (cêntimo a cêntimo, como a fatura), aplica
-    o IVA à base total e arredonda. É o valor que a guarda G3 exige que a API
-    devolva. Trabalha em cêntimos inteiros para não arrastar ruído de vírgula.
-    """
-    base_cent = 0
-    for it in itens:
-        liquido = preco_liquido(float(it["preco"]))
-        quantidade = int(it.get("quantidade", 1))
-        base_cent += round(liquido * quantidade * 100)
-    iva_cent = round(base_cent * config.IVA)
-    return (base_cent + iva_cent) / 100
 
 
 # ==========================================================================
@@ -160,16 +120,6 @@ def _extrair_pdf_url(payload: Any) -> str | None:
         if payload.get(chave):
             return str(payload[chave])
     return None
-
-
-def _atcud_valido(atcud: Any) -> bool:
-    """ATCUD real (documento registado na AT), não `"N/D"`/`"N/A"`/vazio."""
-    return str(atcud or "").strip().upper() not in _ATCUD_INVALIDO
-
-
-def _saft_presente(saft_hash: Any) -> bool:
-    """`saft_hash` presente e não vazio (marca de comunicação à AT)."""
-    return bool(str(saft_hash or "").strip())
 
 
 # ==========================================================================
@@ -302,10 +252,10 @@ def emitir_fatura_recibo(
     saft_hash = det.get("saft_hash")
 
     # GUARDA G2 — certificação AT
-    if not _atcud_valido(atcud) or not _saft_presente(saft_hash):
+    if not atcud_valido(atcud) or not saft_presente(saft_hash):
         raise FaturaNaoCertificada(
             f"Fatura {doc_id} finalizada sem certificação AT "
-            f"(atcud={atcud!r}, saft_hash={'presente' if _saft_presente(saft_hash) else 'ausente'}).",
+            f"(atcud={atcud!r}, saft_hash={'presente' if saft_presente(saft_hash) else 'ausente'}).",
             doc_id=doc_id,
         )
 

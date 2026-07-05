@@ -100,6 +100,24 @@ INVOICEXPRESS_SEQUENCE_ID = _env("INVOICEXPRESS_SEQUENCE_ID", "")  # id numéric
 # Nome exato da taxa de 23% tal como existe na tabela de taxas da conta (SPEC-INVOICEXPRESS §2.2):
 INVOICEXPRESS_TAXA_NOME = _env("INVOICEXPRESS_TAXA_NOME", "IVA23")
 
+# --- Fornecedor de faturação ativo ---
+# O dono passou a faturar via TOConline (como no Radar Marca); a InvoiceXpress
+# fica como adaptador secundário/referência atrás da mesma interface. Este seletor
+# escolhe qual adaptador o fulfillment usa. Default: "toconline".
+CHECKAL_FATURACAO_PROVIDER = _env("CHECKAL_FATURACAO_PROVIDER", "toconline")
+
+# --- TOConline (Cloudware) — SPEC-TOCONLINE ---
+# Base URLs e credenciais são POR-CONTA (não públicas): vêm no ficheiro de config
+# de *Empresa > Dados API* e ficam vazias até o dono as dar. A série CKL nova
+# cria-se na UI; o seu id/prefixo entram aqui depois. Placeholders vazios ⇒
+# LIVE-GATED: sem credenciais, nada toca a rede.
+TOCONLINE_OAUTH_URL = _env("TOCONLINE_OAUTH_URL", "")        # base OAuth2 (/auth, /token)
+TOCONLINE_API_URL = _env("TOCONLINE_API_URL", "")            # base da API JSON:API
+TOCONLINE_CLIENT_ID = _env("TOCONLINE_CLIENT_ID", "")        # OAuth2 client_id
+TOCONLINE_CLIENT_SECRET = _env("TOCONLINE_CLIENT_SECRET", "")  # OAuth2 client_secret
+TOCONLINE_SERIES_ID = _env("TOCONLINE_SERIES_ID", "")        # id numérico da série CKL (dado depois)
+TOCONLINE_SERIES_PREFIX = _env("TOCONLINE_SERIES_PREFIX", "")  # alternativa: prefixo da série
+
 # ==========================================================================
 #  FOLHA DE PRESSUPOSTOS CANÓNICA (PLANO-NEGOCIO.md §5)
 # ==========================================================================
