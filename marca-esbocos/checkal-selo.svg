@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 780 470"
+     font-family="'Plus Jakarta Sans','Trebuchet MS','Segoe UI',system-ui,sans-serif">
+  <!-- CheckAL — esboço do selo. Ativo (verde #12B76A) vs Suspenso (cinzento #94A3B8).
+       Regra legal: o selo suspenso NUNCA é vermelho e nunca diz "falhou"/"não verificado". -->
+  <defs>
+    <path id="arcA" d="M82,210 A118,118 0 0 1 318,210"/>
+    <path id="arcB" d="M462,210 A118,118 0 0 1 698,210"/>
+  </defs>
+  <rect width="780" height="470" fill="#FFFFFF"/>
+
+  <!-- ================= SELO ATIVO ================= -->
+  <circle cx="200" cy="210" r="150" fill="#FFFFFF" stroke="#12B76A" stroke-width="6"/>
+  <circle cx="200" cy="210" r="137" fill="none" stroke="#12B76A" stroke-width="2" opacity="0.4"/>
+  <text font-size="26" font-weight="800" fill="#0F172A" letter-spacing="4" text-anchor="middle">
+    <textPath xlink:href="#arcA" startOffset="50%">CheckAL</textPath>
+  </text>
+  <!-- ✓ herói ao centro -->
+  <g transform="translate(146,133) scale(1.08)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="16"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="200" y="286" font-size="23" font-weight="700" fill="#0F172A" text-anchor="middle">AL Verificado</text>
+  <text x="200" y="309" font-size="14" font-weight="500" fill="#475569" text-anchor="middle" letter-spacing="1">Verified listing</text>
+  <text x="200" y="342" font-size="12" font-weight="600" fill="#94A3B8" text-anchor="middle" letter-spacing="2">checkal.pt</text>
+  <text x="200" y="405" font-size="16" font-weight="700" fill="#12B76A" text-anchor="middle" letter-spacing="1">ATIVO</text>
+  <text x="200" y="428" font-size="13" fill="#475569" text-anchor="middle">subscrição em vigor · ✓ verde</text>
+
+  <!-- ================= SELO SUSPENSO ================= -->
+  <circle cx="580" cy="210" r="150" fill="#F8FAFC" stroke="#94A3B8" stroke-width="6"/>
+  <circle cx="580" cy="210" r="137" fill="none" stroke="#94A3B8" stroke-width="2" opacity="0.4"/>
+  <text font-size="26" font-weight="800" fill="#94A3B8" letter-spacing="4" text-anchor="middle">
+    <textPath xlink:href="#arcB" startOffset="50%">CheckAL</textPath>
+  </text>
+  <g transform="translate(526,133) scale(1.08)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#94A3B8" stroke-width="16"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="580" y="284" font-size="19" font-weight="700" fill="#64748B" text-anchor="middle">Verificação suspensa</text>
+  <text x="580" y="307" font-size="14" font-weight="500" fill="#94A3B8" text-anchor="middle" letter-spacing="1">Verification paused</text>
+  <text x="580" y="342" font-size="12" font-weight="600" fill="#94A3B8" text-anchor="middle" letter-spacing="2">checkal.pt</text>
+  <text x="580" y="405" font-size="16" font-weight="700" fill="#94A3B8" text-anchor="middle" letter-spacing="1">SUSPENSO</text>
+  <text x="580" y="428" font-size="13" fill="#475569" text-anchor="middle">subscrição caducada · cinzento, nunca vermelho</text>
+</svg>

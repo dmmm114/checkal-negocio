@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 720"
+     font-family="'Plus Jakarta Sans','Trebuchet MS','Segoe UI',system-ui,sans-serif">
+  <rect width="920" height="720" fill="#FFFFFF"/>
+  <text x="60" y="52" font-size="22" font-weight="800" fill="#0F172A">CheckAL — logótipo primário: o monograma k✓ lidera</text>
+  <text x="60" y="78" font-size="14" fill="#94A3B8">grafite #0F172A · verde-check #12B76A · fonte final Plus Jakarta Sans ExtraBold</text>
+  <line x1="60" y1="96" x2="860" y2="96" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== PRIMÁRIO: monograma grande + nome pequeno ===== -->
+  <text x="60" y="132" font-size="13" font-weight="700" fill="#94A3B8" letter-spacing="1">PRIMÁRIO</text>
+  <g transform="translate(120,150) scale(1.7)" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="30" y="18" width="22" height="90" rx="10" fill="#0F172A"/>
+    <path d="M52,78 L96,108" fill="none" stroke="#0F172A" stroke-width="22"/>
+    <path d="M36,56 L52,80 L110,8" fill="none" stroke="#12B76A" stroke-width="22"/>
+  </g>
+  <text x="238" y="392" font-size="46" font-weight="800" fill="#0F172A" text-anchor="middle" letter-spacing="-1">CheckAL</text>
+  <text x="238" y="418" font-size="15" font-weight="500" fill="#475569" text-anchor="middle">monitorização de Alojamento Local</text>
+
+  <!-- ===== APP-ICON: claro + escuro ===== -->
+  <text x="560" y="132" font-size="13" font-weight="700" fill="#94A3B8" letter-spacing="1">APP-ICON</text>
+  <!-- claro -->
+  <rect x="560" y="150" width="150" height="150" rx="42" fill="#F1F5F9"/>
+  <g transform="translate(578,166) scale(1.0)" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="30" y="18" width="22" height="90" rx="10" fill="#0F172A"/>
+    <path d="M52,78 L96,108" fill="none" stroke="#0F172A" stroke-width="22"/>
+    <path d="M36,56 L52,80 L110,8" fill="none" stroke="#12B76A" stroke-width="22"/>
+  </g>
+  <text x="635" y="322" font-size="12" fill="#475569" text-anchor="middle">claro</text>
+  <!-- escuro -->
+  <rect x="732" y="150" width="150" height="150" rx="42" fill="#0F172A"/>
+  <g transform="translate(750,166) scale(1.0)" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="30" y="18" width="22" height="90" rx="10" fill="#FFFFFF"/>
+    <path d="M52,78 L96,108" fill="none" stroke="#FFFFFF" stroke-width="22"/>
+    <path d="M36,56 L52,80 L110,8" fill="none" stroke="#12B76A" stroke-width="22"/>
+  </g>
+  <text x="807" y="322" font-size="12" fill="#475569" text-anchor="middle">escuro</text>
+
+  <line x1="60" y1="470" x2="860" y2="470" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== SECUNDÁRIO: assinatura horizontal (monograma + nome) ===== -->
+  <text x="60" y="508" font-size="13" font-weight="700" fill="#94A3B8" letter-spacing="1">SECUNDÁRIO · assinatura horizontal (email, rodapé, cartão)</text>
+  <g transform="translate(80,520) scale(0.82)" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="30" y="18" width="22" height="90" rx="10" fill="#0F172A"/>
+    <path d="M52,78 L96,108" fill="none" stroke="#0F172A" stroke-width="22"/>
+    <path d="M36,56 L52,80 L110,8" fill="none" stroke="#12B76A" stroke-width="22"/>
+  </g>
+  <text x="210" y="600" font-size="62" font-weight="800" fill="#0F172A" letter-spacing="-2">CheckAL</text>
+
+  <line x1="60" y1="648" x2="860" y2="648" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="60" y="686" font-size="14" fill="#475569">Nota: o «k» É o check — a perna superior do k é o ✓ verde. Nunca mudar a cor do ✓, esticar ou rodar. O ✓ verde só aparece aqui e em estados positivos.</text>
+</svg>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 620"
+     font-family="'Plus Jakarta Sans','Trebuchet MS','Segoe UI',system-ui,sans-serif">
+  <rect width="980" height="620" fill="#FFFFFF"/>
+  <text x="60" y="50" font-size="22" font-weight="800" fill="#0F172A">CheckAL — conceitos que ligam ao «AL» (exploração)</text>
+  <text x="60" y="76" font-size="14" fill="#475569">o nome já contém AL · evocamos a associação ao Alojamento Local, mas em linguagem comercial própria (nunca a placa oficial)</text>
+  <line x1="60" y1="94" x2="920" y2="94" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== Conceito 1: o «L» de AL vira ✓ ===== -->
+  <text x="180" y="128" font-size="13" font-weight="700" fill="#94A3B8" text-anchor="middle">1 · o «L» É o check</text>
+  <text x="86" y="250" font-size="130" font-weight="800" fill="#0F172A">A</text>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <rect x="200" y="148" width="26" height="102" rx="10" fill="#0F172A"/>
+    <path d="M200,224 L226,250 L300,150" fill="none" stroke="#12B76A" stroke-width="26"/>
+  </g>
+  <text x="180" y="300" font-size="14" fill="#475569" text-anchor="middle">a perna do L flui no ✓ verde</text>
+
+  <!-- ===== Conceito 2: AL num selo moderno (nod à placa, mas nosso) ===== -->
+  <text x="490" y="128" font-size="13" font-weight="700" fill="#94A3B8" text-anchor="middle">2 · AL num selo moderno</text>
+  <rect x="412" y="146" width="156" height="156" rx="44" fill="#0F172A"/>
+  <text x="486" y="255" font-size="82" font-weight="800" fill="#FFFFFF" text-anchor="middle" letter-spacing="-2">AL</text>
+  <g transform="translate(520,158) scale(0.4)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="490" y="330" font-size="14" fill="#475569" text-anchor="middle">evoca o formato "placa" — mas rounded, grafite+verde</text>
+
+  <!-- ===== Conceito 3: AL✓ direto ===== -->
+  <text x="800" y="128" font-size="13" font-weight="700" fill="#94A3B8" text-anchor="middle">3 · AL✓ direto</text>
+  <text x="708" y="250" font-size="120" font-weight="800" fill="#0F172A" letter-spacing="-4">AL</text>
+  <g transform="translate(862,150) scale(0.78)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="800" y="300" font-size="14" fill="#475569" text-anchor="middle">o ✓ carimba o AL, limpo</text>
+
+  <line x1="60" y1="360" x2="920" y2="360" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== A linha que não cruzamos: oficial vs nosso ===== -->
+  <text x="60" y="398" font-size="14" font-weight="800" fill="#0F172A">🚫 A linha que NÃO cruzamos — a placa oficial vs o nosso selo</text>
+
+  <!-- placa oficial (ilustração de contraste) -->
+  <rect x="80" y="420" width="120" height="120" rx="6" fill="#FFFFFF" stroke="#012169" stroke-width="3"/>
+  <text x="140" y="500" font-size="58" font-weight="700" fill="#012169" text-anchor="middle" letter-spacing="6" font-family="Arial, sans-serif">A L</text>
+  <text x="140" y="562" font-size="12" fill="#DC2626" text-anchor="middle" font-weight="700">PLACA OFICIAL — não imitar</text>
+  <text x="80" y="586" font-size="11" fill="#94A3B8">«A L» espaçado · Arial · azul Pantone 280 · Estado</text>
+
+  <!-- seta -->
+  <text x="330" y="490" font-size="30" fill="#CBD5E1">→</text>
+
+  <!-- o nosso -->
+  <rect x="400" y="420" width="120" height="120" rx="34" fill="#0F172A"/>
+  <text x="456" y="500" font-size="58" font-weight="800" fill="#FFFFFF" text-anchor="middle" letter-spacing="-2">AL</text>
+  <g transform="translate(486,428) scale(0.34)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="460" y="562" font-size="12" fill="#12B76A" text-anchor="middle" font-weight="700">O NOSSO — CheckAL</text>
+  <text x="400" y="586" font-size="11" fill="#94A3B8">«AL» junto · Jakarta · grafite+verde · ✓ · privado</text>
+
+  <!-- nota lateral -->
+  <text x="600" y="446" font-size="13" fill="#475569">A diferença é intencional: a placa é uma obrigação legal do Estado;</text>
+  <text x="600" y="468" font-size="13" fill="#475569">o nosso é um selo de verificação privado. Cores, fonte e o ✓</text>
+  <text x="600" y="490" font-size="13" fill="#475569">afastam-nos de propósito — associação ao AL sem impersonação.</text>
+  <text x="600" y="524" font-size="13" fill="#475569">Nota: continua na mesa o monograma <tspan font-weight="700" fill="#0F172A">k✓</tspan> que aprovaste;</text>
+  <text x="600" y="546" font-size="13" fill="#475569">estes são alternativas para comparares — ou fundir (ex.: k✓ + AL).</text>
+</svg>

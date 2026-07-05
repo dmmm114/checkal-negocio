@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 640"
+     font-family="'Plus Jakarta Sans','Trebuchet MS','Segoe UI',system-ui,sans-serif">
+  <!-- CheckAL — esboço de wordmark. Cores canónicas: grafite #0F172A, verde-check #12B76A.
+       NOTA: o wordmark final deve ser desenhado a partir de Plus Jakarta Sans ExtraBold (vetor);
+       aqui o texto usa fallback do sistema. O ✓ está em path (fiel ao conceito). -->
+  <rect width="920" height="640" fill="#FFFFFF"/>
+  <text x="60" y="52" font-size="20" font-weight="600" fill="#94A3B8" letter-spacing="1">CheckAL — esboço de wordmark</text>
+
+  <!-- ============ LOCKUP PRINCIPAL ============ -->
+  <text x="62" y="188" font-size="118" font-weight="800" fill="#0F172A" letter-spacing="-3">CheckAL</text>
+  <!-- ✓ herói (path) -->
+  <g transform="translate(602,108) scale(0.92)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="18"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="66" y="232" font-size="22" font-weight="500" fill="#475569" letter-spacing="1.5">monitorização de Alojamento Local</text>
+
+  <line x1="60" y1="300" x2="860" y2="300" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ============ A: ideia-herói — o ✓ nasce do «k» ============ -->
+  <text x="60" y="342" font-size="18" font-weight="700" fill="#0F172A">A — a ideia-herói</text>
+  <text x="60" y="366" font-size="15" fill="#475569">o ✓ nasce da perna do «k» · o «k» é o check</text>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- stem do k -->
+    <rect x="96" y="400" width="30" height="200" rx="13" fill="#0F172A"/>
+    <!-- perna inferior (grafite) -->
+    <path d="M118,505 L188,600" fill="none" stroke="#0F172A" stroke-width="30"/>
+    <!-- perna superior = ✓ verde -->
+    <path d="M92,462 L118,505 L214,378" fill="none" stroke="#12B76A" stroke-width="30"/>
+  </g>
+
+  <!-- ============ B: símbolo ✓ isolado ============ -->
+  <text x="360" y="342" font-size="18" font-weight="700" fill="#0F172A">B — símbolo ✓</text>
+  <text x="360" y="366" font-size="15" fill="#475569">a marca, sozinha</text>
+  <g transform="translate(360,410) scale(1.55)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="16"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- ============ C: favicon / app-icon ============ -->
+  <text x="640" y="342" font-size="18" font-weight="700" fill="#0F172A">C — favicon</text>
+  <text x="640" y="366" font-size="15" fill="#475569">squircle grafite + ✓</text>
+  <rect x="648" y="392" width="150" height="150" rx="42" fill="#0F172A"/>
+  <g transform="translate(680,430) scale(0.92)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="17"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- paleta -->
+  <g font-size="12" fill="#475569">
+    <rect x="60" y="605" width="22" height="22" rx="5" fill="#12B76A"/><text x="88" y="621">#12B76A verde-check</text>
+    <rect x="250" y="605" width="22" height="22" rx="5" fill="#0F172A"/><text x="278" y="621">#0F172A grafite</text>
+    <rect x="410" y="605" width="22" height="22" rx="5" fill="#2563EB"/><text x="438" y="621">#2563EB ação</text>
+    <rect x="560" y="605" width="22" height="22" rx="5" fill="#94A3B8"/><text x="588" y="621">#94A3B8 suspenso</text>
+  </g>
+</svg>

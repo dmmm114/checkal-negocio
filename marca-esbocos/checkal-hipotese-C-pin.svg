@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 620"
+     font-family="'Plus Jakarta Sans','Trebuchet MS','Segoe UI',system-ui,sans-serif">
+  <rect width="980" height="620" fill="#FFFFFF"/>
+  <text x="60" y="50" font-size="22" font-weight="800" fill="#0F172A">CheckAL — Hipótese C: «Pin · o teu AL no mapa, verificado»</text>
+  <text x="60" y="76" font-size="14" fill="#475569">metáfora = o lugar (o mundo das listagens) · o ✓ verde vive dentro do pin · traz o check de volta, noutra forma</text>
+  <line x1="60" y1="94" x2="920" y2="94" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== Símbolo: pin com ✓ ===== -->
+  <text x="180" y="128" font-size="13" font-weight="700" fill="#94A3B8" text-anchor="middle">SÍMBOLO · o pin</text>
+  <g transform="translate(118,150) scale(1.0)">
+    <path d="M70,192 C36,128 10,100 10,70 A60,60 0 1 1 130,70 C130,100 104,128 70,192 Z" fill="#0F172A"/>
+    <g transform="translate(41,44) scale(0.56)">
+      <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+  <text x="183" y="382" font-size="13" fill="#475569" text-anchor="middle">o lugar + o check num só ícone</text>
+
+  <!-- ===== App-icon ===== -->
+  <text x="520" y="128" font-size="13" font-weight="700" fill="#94A3B8" text-anchor="middle">APP-ICON</text>
+  <rect x="432" y="150" width="176" height="176" rx="48" fill="#F1F5F9"/>
+  <g transform="translate(464,166) scale(0.82)">
+    <path d="M70,192 C36,128 10,100 10,70 A60,60 0 1 1 130,70 C130,100 104,128 70,192 Z" fill="#0F172A"/>
+    <g transform="translate(41,44) scale(0.56)">
+      <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+  <text x="520" y="360" font-size="13" fill="#475569" text-anchor="middle">o pin dentro do squircle</text>
+
+  <!-- ===== variante: pin em contorno ===== -->
+  <text x="800" y="128" font-size="13" font-weight="700" fill="#94A3B8" text-anchor="middle">VARIANTE · contorno</text>
+  <g transform="translate(748,152) scale(0.86)">
+    <path d="M70,192 C36,128 10,100 10,70 A60,60 0 1 1 130,70 C130,100 104,128 70,192 Z" fill="none" stroke="#0F172A" stroke-width="9"/>
+    <g transform="translate(41,44) scale(0.56)">
+      <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+  <text x="800" y="360" font-size="13" fill="#475569" text-anchor="middle">mais leve, para o selo</text>
+
+  <line x1="60" y1="410" x2="920" y2="410" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== Logótipo ===== -->
+  <text x="60" y="446" font-size="13" font-weight="700" fill="#94A3B8">LOGÓTIPO</text>
+  <g transform="translate(70,458) scale(0.4)">
+    <path d="M70,192 C36,128 10,100 10,70 A60,60 0 1 1 130,70 C130,100 104,128 70,192 Z" fill="#0F172A"/>
+    <g transform="translate(41,44) scale(0.56)">
+      <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+  <text x="146" y="548" font-size="56" font-weight="800" fill="#0F172A" letter-spacing="-2">CheckAL</text>
+  <text x="148" y="580" font-size="18" font-weight="600" fill="#475569">O teu AL? <tspan font-weight="800" fill="#0F172A">Check.</tspan></text>
+
+  <!-- ===== contraste A · B · C ===== -->
+  <text x="560" y="452" font-size="14" font-weight="800" fill="#0F172A">As três hipóteses</text>
+  <text x="560" y="478" font-size="13" fill="#475569"><tspan font-weight="700" fill="#0F172A">A ✓AL:</tspan> o nome/o check · direto, vira verbo.</text>
+  <text x="560" y="500" font-size="13" fill="#475569"><tspan font-weight="700" fill="#0F172A">B Pulso:</tspan> a monitorização · vivo, anima, tech.</text>
+  <text x="560" y="522" font-size="13" fill="#475569"><tspan font-weight="700" fill="#0F172A">C Pin:</tspan> o lugar · icónico, familiar do mundo das listagens.</text>
+  <text x="560" y="552" font-size="13" fill="#475569">C reintroduz o ✓ (bom p/ o nome) numa forma nova e</text>
+  <text x="560" y="574" font-size="13" fill="#475569">universal — mas o pin+check é território mais usado.</text>
+</svg>

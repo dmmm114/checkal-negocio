@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 600"
+     font-family="'Plus Jakarta Sans','Trebuchet MS','Segoe UI',system-ui,sans-serif">
+  <rect width="980" height="600" fill="#FFFFFF"/>
+  <text x="60" y="50" font-size="22" font-weight="800" fill="#0F172A">CheckAL — Alternativa B: «Pulso / Monitor»</text>
+  <text x="60" y="76" font-size="14" fill="#475569">metáfora = monitorização contínua (não o check) · sinal verde = tudo bem · pode ANIMAR (o pulso corre)</text>
+  <line x1="60" y1="94" x2="920" y2="94" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== Símbolo: monitor com pulso ===== -->
+  <text x="180" y="128" font-size="13" font-weight="700" fill="#94A3B8" text-anchor="middle">SÍMBOLO · o monitor</text>
+  <g transform="translate(80,150)">
+    <rect x="0" y="0" width="230" height="190" rx="46" fill="#0F172A"/>
+    <!-- indicador "live" -->
+    <circle cx="34" cy="34" r="8" fill="#12B76A"/>
+    <text x="52" y="39" font-size="15" font-weight="700" fill="#94A3B8">live</text>
+    <!-- linha de pulso -->
+    <path d="M26,110 L78,110 L92,110 L106,66 L120,158 L136,86 L150,110 L204,110"
+          fill="none" stroke="#12B76A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="204" cy="110" r="7" fill="#12B76A"/>
+  </g>
+  <text x="195" y="372" font-size="13" fill="#475569" text-anchor="middle">o teu AL, vigiado · sinal verde = passou no check</text>
+
+  <!-- ===== Sem caixa ===== -->
+  <text x="640" y="128" font-size="13" font-weight="700" fill="#94A3B8" text-anchor="middle">SEM CAIXA</text>
+  <path d="M430,250 L520,250 L540,250 L560,180 L582,330 L604,214 L622,250 L760,250"
+        fill="none" stroke="#0F172A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M540,250 L560,180 L582,330 L604,214 L622,250"
+        fill="none" stroke="#12B76A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="760" cy="250" r="8" fill="#12B76A"/>
+  <text x="640" y="372" font-size="13" fill="#475569" text-anchor="middle">linha grafite · a batida em verde</text>
+
+  <line x1="60" y1="410" x2="920" y2="410" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== Logótipo (símbolo + wordmark) ===== -->
+  <text x="60" y="446" font-size="13" font-weight="700" fill="#94A3B8">LOGÓTIPO</text>
+  <g transform="translate(66,462) scale(0.5)">
+    <rect x="0" y="0" width="230" height="190" rx="46" fill="#0F172A"/>
+    <circle cx="34" cy="34" r="8" fill="#12B76A"/>
+    <path d="M26,110 L78,110 L92,110 L106,66 L120,158 L136,86 L150,110 L204,110"
+          fill="none" stroke="#12B76A" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="204" cy="110" r="8" fill="#12B76A"/>
+  </g>
+  <text x="200" y="576" font-size="56" font-weight="800" fill="#0F172A" letter-spacing="-2">CheckAL</text>
+
+  <!-- ===== nota de contraste ===== -->
+  <text x="560" y="470" font-size="14" font-weight="800" fill="#0F172A">A vs B — a diferença</text>
+  <text x="560" y="496" font-size="13" fill="#475569"><tspan font-weight="700" fill="#0F172A">A (✓AL):</tspan> parte do «check» — ligado ao NOME, direto,</text>
+  <text x="560" y="516" font-size="13" fill="#475569">estático. B: parte da «monitorização» — vivo,</text>
+  <text x="560" y="536" font-size="13" fill="#475569">anima, mais tech; mas larga o ✓ literal do nome.</text>
+  <text x="560" y="562" font-size="13" fill="#475569">Ambos mantêm grafite + verde-estado. Se falha, o</text>
+  <text x="560" y="582" font-size="13" fill="#475569">pulso passaria a âmbar/vermelho na área de cliente.</text>
+</svg>

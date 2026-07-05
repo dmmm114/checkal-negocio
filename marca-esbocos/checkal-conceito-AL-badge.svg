@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 660"
+     font-family="'Plus Jakarta Sans','Trebuchet MS','Segoe UI',system-ui,sans-serif">
+  <rect width="980" height="660" fill="#FFFFFF"/>
+  <text x="60" y="50" font-size="22" font-weight="800" fill="#0F172A">CheckAL — badge «A ✓ L»: o check vive na separação</text>
+  <text x="60" y="76" font-size="14" fill="#475569">a separação que gostas passa a ter função (é a casa do ✓) · e o badge anda sempre com o wordmark, para se ler a NOSSA marca</text>
+  <line x1="60" y1="94" x2="920" y2="94" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== O badge A ✓ L (grafite, recomendado) ===== -->
+  <text x="60" y="128" font-size="13" font-weight="700" fill="#94A3B8">O SÍMBOLO · badge A ✓ L</text>
+  <rect x="70" y="150" width="180" height="180" rx="48" fill="#0F172A"/>
+  <text x="118" y="268" font-size="92" font-weight="800" fill="#FFFFFF" text-anchor="middle">A</text>
+  <text x="204" y="268" font-size="92" font-weight="800" fill="#FFFFFF" text-anchor="middle">L</text>
+  <g transform="translate(138,178) scale(0.6)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="160" y="360" font-size="13" fill="#475569" text-anchor="middle">o ✓ verde ocupa o vão entre A e L</text>
+
+  <!-- ===== O lockup completo: badge + wordmark ===== -->
+  <text x="360" y="128" font-size="13" font-weight="700" fill="#94A3B8">O LOGÓTIPO · assim lê-se «CheckAL» à primeira</text>
+  <rect x="360" y="168" width="104" height="104" rx="28" fill="#0F172A"/>
+  <text x="388" y="238" font-size="54" font-weight="800" fill="#FFFFFF" text-anchor="middle">A</text>
+  <text x="436" y="238" font-size="54" font-weight="800" fill="#FFFFFF" text-anchor="middle">L</text>
+  <g transform="translate(398,184) scale(0.35)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="490" y="238" font-size="62" font-weight="800" fill="#0F172A" letter-spacing="-2">CheckAL</text>
+  <text x="492" y="268" font-size="15" fill="#475569">monitorização de Alojamento Local</text>
+
+  <text x="360" y="322" font-size="14" fill="#475569">O badge carrega a associação ao AL + o check; o wordmark</text>
+  <text x="360" y="344" font-size="14" fill="#475569">garante que se lê a marca. Sozinho, o badge é o app-icon / selo.</text>
+
+  <line x1="60" y1="392" x2="920" y2="392" stroke="#E2E8F0" stroke-width="2"/>
+
+  <!-- ===== Cor: grafite (sim) · nosso azul (talvez) · navy da placa (não) ===== -->
+  <text x="60" y="428" font-size="14" font-weight="800" fill="#0F172A">E a cor? (tu gostas do azul — vamos com cuidado)</text>
+
+  <!-- grafite -->
+  <rect x="80" y="450" width="120" height="120" rx="34" fill="#0F172A"/>
+  <text x="112" y="530" font-size="60" font-weight="800" fill="#FFFFFF" text-anchor="middle">A</text>
+  <text x="168" y="530" font-size="60" font-weight="800" fill="#FFFFFF" text-anchor="middle">L</text>
+  <g transform="translate(126,470) scale(0.4)"><path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="140" y="592" font-size="13" font-weight="700" fill="#12B76A" text-anchor="middle">GRAFITE — recomendo</text>
+  <text x="140" y="612" font-size="11" fill="#94A3B8" text-anchor="middle">verde salta, zero risco de Estado</text>
+
+  <!-- nosso azul -->
+  <rect x="290" y="450" width="120" height="120" rx="34" fill="#2563EB"/>
+  <text x="322" y="530" font-size="60" font-weight="800" fill="#FFFFFF" text-anchor="middle">A</text>
+  <text x="378" y="530" font-size="60" font-weight="800" fill="#FFFFFF" text-anchor="middle">L</text>
+  <g transform="translate(336,470) scale(0.4)"><path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text x="350" y="592" font-size="13" font-weight="700" fill="#2563EB" text-anchor="middle">NOSSO AZUL — talvez</text>
+  <text x="350" y="612" font-size="11" fill="#94A3B8" text-anchor="middle">#2563EB vivo, não o navy; verde+azul a gerir</text>
+
+  <!-- navy = não -->
+  <rect x="500" y="450" width="120" height="120" rx="8" fill="#012169"/>
+  <text x="560" y="528" font-size="52" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="6" font-family="Arial, sans-serif">A L</text>
+  <text x="560" y="592" font-size="13" font-weight="700" fill="#DC2626" text-anchor="middle">NAVY DA PLACA — não</text>
+  <text x="560" y="612" font-size="11" fill="#94A3B8" text-anchor="middle">Pantone 280, quadrado, Arial = o Estado</text>
+
+  <text x="670" y="486" font-size="13" fill="#475569">Regra: quanto mais azul-navy + quadrado</text>
+  <text x="670" y="508" font-size="13" fill="#475569">+ Arial + «A L» espaçado → mais parece</text>
+  <text x="670" y="530" font-size="13" fill="#475569">a placa oficial. O ✓, a nossa fonte e o</text>
+  <text x="670" y="552" font-size="13" fill="#475569">wordmark são o que nos torna «CheckAL».</text>
+</svg>

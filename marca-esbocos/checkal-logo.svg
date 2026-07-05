@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 176"
+     font-family="'Plus Jakarta Sans','Trebuchet MS','Segoe UI',system-ui,sans-serif">
+  <!-- CheckAL — logótipo primário (horizontal). Ficheiro de uso, fundo transparente.
+       Cores: grafite #0F172A · verde-check #12B76A. Fonte final: Plus Jakarta Sans ExtraBold. -->
+  <text x="24" y="122" font-size="104" font-weight="800" fill="#0F172A" letter-spacing="-3">CheckAL</text>
+  <g transform="translate(474,40) scale(0.8)">
+    <path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="17"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
