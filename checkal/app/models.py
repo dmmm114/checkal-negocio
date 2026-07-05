@@ -32,6 +32,11 @@ assinante à sessão Stripe e à fatura-recibo certificada do InvoiceXpress.
 (linha única) que persiste o par de tokens OAuth2 (access ~4 h / refresh ~8 h) e
 as suas validades, para o cron de renovação server-to-server. As colunas fiscais
 `ix_*` de `clientes` servem qualquer fornecedor por trás da mesma interface.
+
+**Extensão FDS 3 (aditiva, SPEC-FDS3.md §base / SPEC-DETALHE §2.1/§4):** coluna
+`detalhes_cliente.seguro_inicio date` — a página individual do RNAL expõe "Data
+início" da apólice a par da "Validade"; guardar ambas alimenta a copy "apólice de
+X a Y" e o alerta de seguro. Puramente aditiva: não quebra FDS 1/FDS 2/swap.
 """
 from __future__ import annotations
 
@@ -140,7 +145,11 @@ class DetalheCliente(Base):
     nr_registo: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
     estado_detalhado: Mapped[str | None] = mapped_column(Text)
     seguro_companhia: Mapped[str | None] = mapped_column(Text)
-    seguro_apolice: Mapped[str | None] = mapped_column(Text)
+    seguro_apolice: Mapped[str | None] = mapped_column(Text)  # texto: guarda zeros à esquerda
+    # FDS 3 (aditivo, SPEC-DETALHE §2.1/§4): a página individual expõe "Data início" da
+    # apólice, a par da "Validade". Guardar as duas alimenta a copy "apólice de X a Y" e
+    # dá contexto ao alerta de seguro. Ordem espelha a página (início → validade).
+    seguro_inicio: Mapped[date | None] = mapped_column(Date)
     seguro_validade: Mapped[date | None] = mapped_column(Date)
     obtido_em: Mapped[datetime | None] = mapped_column(_TS)
 

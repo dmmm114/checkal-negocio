@@ -37,6 +37,7 @@ no FDS 2 é um no-op deliberado, para não haver envios.
 """
 from __future__ import annotations
 
+import logging
 import time
 import unicodedata
 from collections.abc import Callable, Mapping, Sequence
@@ -220,17 +221,60 @@ def _match_registo(
 
 
 # ==========================================================================
-#  Ponto de extensão FDS 3 (boas-vindas + selo) — NO-OP no FDS 2
+#  Ponto de extensão FDS 3 (boas-vindas + selo) — seam LIVE-GATED
 # ==========================================================================
+def _compor_onboarding() -> Callable[[int, FaturaRecibo | None], Any] | None:
+    """Compõe o *seam* de onboarding do FDS 3, ou ``None`` (LIVE-GATED).
+
+    À imagem **exata** de :func:`app.faturacao.obter_emissor` /
+    :func:`app.envio.obter_enviador`: devolve ``None`` (sem tocar a rede) sob
+    `config.CHECKAL_MODO_TESTE` **ou** quando o enviador transacional não está composto
+    (sem `RESEND_API_KEY`). Só em produção compõe o *callable* que liga o detalhe RNAL
+    (`app.rnal.detalhe.obter_detalhe`, o único ponto que cria o seu cliente HTTP) e o
+    enviador Resend ao :func:`app.onboarding.processar_onboarding`.
+
+    Os imports são **tardios**: nos testes este seam nunca resolve (modo de teste), pelo
+    que nem `fpdf` nem a stack de envio são carregados a partir daqui.
+    """
+    if config.CHECKAL_MODO_TESTE:
+        return None
+
+    from app.envio import obter_enviador
+
+    enviar = obter_enviador()
+    if enviar is None:
+        return None
+
+    from app.onboarding import processar_onboarding
+    from app.rnal.detalhe import obter_detalhe
+
+    def _seam(cliente_id: int, fatura: FaturaRecibo | None) -> Any:
+        return processar_onboarding(cliente_id, obter_detalhe=obter_detalhe, enviar=enviar)
+
+    return _seam
+
+
 def _agendar_boas_vindas(
     cliente_id: int, fatura: FaturaRecibo | None, *, sessao: Mapping[str, Any] | None = None
 ) -> None:
-    """Ponto de extensão para o email de boas-vindas + selo (FDS 3).
+    """Ponto de extensão (pós-fatura) do email de boas-vindas + selo (FDS 3).
 
-    **Não envia nada no FDS 2** (disciplina: zero emails). Existe para o fulfillment
-    ter um único gancho onde o FDS 3 liga o envio (via Resend, anexando o PDF da
-    `fatura`), sem reabrir `processar_checkout`. Deliberadamente um no-op.
+    Chamado **depois** de o cliente e a fatura-recibo estarem duravelmente commitados
+    (fora da transação do checkout), para que o onboarding, ao abrir a sua própria
+    sessão, veja o pagante já persistido. LIVE-GATED via :func:`_compor_onboarding`:
+    sob modo de teste é um no-op (devolve ``None`` sem enviar) — os testes de fulfillment
+    substituem esta função ou verificam o no-op. **Best-effort**: uma falha do onboarding
+    (um email de cortesia) nunca desfaz um pagamento já materializado — engole-se e regista.
     """
+    seam = _compor_onboarding()
+    if seam is None:
+        return None
+    try:
+        seam(cliente_id, fatura)
+    except Exception:
+        logging.getLogger(__name__).exception(
+            "onboarding (boas-vindas) falhou para o cliente %s", cliente_id
+        )
     return None
 
 
@@ -390,8 +434,10 @@ def processar_checkout(
             cliente_id = cliente.id
             nr_correspondido = registo.nr_registo if registo is not None else None
 
-            # (5) ponto de extensão FDS 3 (boas-vindas + selo) — no-op aqui
-            _agendar_boas_vindas(cliente_id, fatura, sessao=sessao)
+        # (5) ponto de extensão FDS 3 (boas-vindas + selo) — DEPOIS do commit da
+        # transação do checkout, para o onboarding ver o pagante já persistido ao abrir
+        # a sua própria sessão. LIVE-GATED: no-op sob modo de teste (ver `_agendar_boas_vindas`).
+        _agendar_boas_vindas(cliente_id, fatura, sessao=sessao)
 
         return Resultado(
             accao=ACCAO_CHECKOUT,

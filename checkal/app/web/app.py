@@ -8,6 +8,7 @@ SPEC) e reunidos só aqui:
                               GET /saude       (healthcheck de uptime/deploy)
     app.web.verificar       → GET /api/verificar   (verificação pública consent-first)
     app.web.webhook_stripe  → POST /webhooks/stripe (webhook único da Stripe)
+    app.web.selo            → GET /selo/{nr_registo} (página pública do selo — FDS 3)
 
 Porquê uma *fábrica* e não um `app` de módulo: cada teste (e cada processo de
 produção) obtém uma instância fresca com os routers montados, sem estado global de
@@ -25,23 +26,25 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from app.web import landing, verificar, webhook_stripe
+from app.web import landing, selo, verificar, webhook_stripe
 
 
 def criar_app() -> FastAPI:
     """Cria e devolve a aplicação FastAPI do CheckAL com os três routers montados.
 
     Monta, por esta ordem, a landing (+ healthcheck), a verificação pública
-    consent-first e o webhook único da Stripe. Não cria tabelas nem abre ligações:
-    a persistência resolve-se em `app.db` no momento de cada request (o que permite
-    aos testes trocarem o motor por um SQLite temporário antes de exercitar as rotas).
+    consent-first, o webhook único da Stripe e a página pública do selo (FDS 3). Não
+    cria tabelas nem abre ligações: a persistência resolve-se em `app.db` no momento de
+    cada request (o que permite aos testes trocarem o motor por um SQLite temporário
+    antes de exercitar as rotas).
     """
     app = FastAPI(
         title="CheckAL",
         description="Monitorização RNAL + seguro + regulamentos municipais de Alojamento Local.",
-        version="2.0",  # FDS 2
+        version="3.0",  # FDS 3
     )
     app.include_router(landing.router)
     app.include_router(verificar.router)
     app.include_router(webhook_stripe.router)
+    app.include_router(selo.router)
     return app
