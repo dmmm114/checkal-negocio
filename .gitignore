@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Segredos e ambiente — NUNCA versionar
+.env
+checkal/.env
+
+# Dados locais / snapshots RNAL (podem conter dados pessoais — fora do git)
+checkal/data/
+checkal/data/snapshots/
+*.db
+*.sqlite3
+
+# Caches de análise
+**/rnal_cache/
+
+# Estado transitório de ferramentas (mantém o conteúdo do brainstorm, ignora runtime)
+.superpowers/**/state/
