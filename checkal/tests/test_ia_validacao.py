@@ -141,9 +141,45 @@ def test_formato_milhar_com_ponto_casa_com_inteiro_simples():
 
 
 def test_formato_com_espaco_e_decimais_casa_com_inteiro():
-    # alerta "2 500,00€" ; excerto "2500" — mesmo montante.
-    excerto = "A coima base fixada no regulamento é 2500."
+    # alerta "2 500,00€" ; excerto "2500 euros" — mesmo montante, ambos em contexto
+    # monetário (grounding type-aware: montante só casa com montante do excerto).
+    excerto = "A coima base fixada no regulamento é 2500 euros."
     alerta = f"A coima é de 2 500,00€. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is True
+
+
+# --- Regressão (red-team FDS4, [médio]): grounding TYPE-AWARE ------------------
+# Um valor inventado que coincide com um número de OUTRO tipo no excerto (nº de
+# regulamento, artigo, ano) NÃO o fundamenta — só montante contra montante.
+def test_montante_inventado_que_coincide_com_no_de_regulamento_e_orfao():
+    excerto = "Regulamento n.º 927/2025 — área de contenção. Sem coimas indicadas."
+    alerta = f"A coima é de 927 €. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is False
+    assert "927" in r.valores_orfaos
+
+
+def test_montante_inventado_que_coincide_com_ano_e_orfao():
+    excerto = "Publicado em 2025; entra em vigor em junho de 2026. Sem valores de coima."
+    alerta = f"A coima pode chegar a 2026 €. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is False
+    assert "2026" in r.valores_orfaos
+
+
+def test_percentagem_inventada_que_coincide_com_artigo_e_orfa():
+    excerto = "Nos termos do artigo 15.º do regulamento, sem alteração de taxas."
+    alerta = f"A taxa municipal sobe para 15%. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is False
+    assert any("15" in o for o in r.valores_orfaos)
+
+
+def test_montante_real_em_contexto_monetario_continua_valido():
+    # Guarda de não-regressão: um montante genuíno (com € no excerto) mantém-se válido.
+    excerto = "A coima varia entre 2.500 € e 4.000 € para o titular singular."
+    alerta = f"A coima vai de 2.500 € a 4.000 €. Lê aqui: {URL}"
     r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
     assert r.valido is True
 
@@ -426,3 +462,111 @@ def test_percentagem_fundamentada_e_valida():
     alerta = f"A taxa aplicável é de 30%. Lê aqui: {URL}"
     r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
     assert r.valido is True
+
+
+# ==========================================================================
+#  🧯 RED-TEAM FDS4 — FURO 2: data "dia de mês" SEM ano ("3 de março")
+#  Não era apanhada por _RE_DATA_ESCRITA (exige ano) nem _RE_MES_ANO → passava.
+#  Vira um claim "dia+mês" fundamentado contra os pares (mês,dia) do excerto.
+# ==========================================================================
+def test_data_dia_mes_sem_ano_inventada_invalida():
+    # Repro red-team: excerto só tem "15 de junho de 2026"; alerta inventa "3 de março".
+    alerta = f"Tens de regularizar até 3 de março. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=EXCERTO)
+    assert r.valido is False
+    assert any("3 de mar" in v.lower() for v in r.valores_orfaos)
+
+
+def test_data_dia_mes_sem_ano_fiel_e_valida():
+    # Excerto tem "15 de junho" (sem ano); alerta repete o mesmo dia+mês → fiel.
+    excerto = "Regulariza até 15 de junho, sob pena de coima."
+    alerta = f"Tens até 15 de junho para comunicar. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is True
+
+
+def test_data_dia_mes_partial_fundamentado_por_data_completa_do_excerto():
+    # alerta "15 de junho" (menos específico) ; excerto "15 de junho de 2026".
+    # O alerta pode ser MENOS específico que a fonte — é seguro.
+    alerta = f"A área de contenção começa a 15 de junho. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=EXCERTO)
+    assert r.valido is True
+
+
+def test_data_dia_mes_dia_errado_invalida():
+    # Mesmo mês (junho) mas dia inventado (3 ≠ 15) → órfão.
+    alerta = f"Regulariza até 3 de junho. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=EXCERTO)
+    assert r.valido is False
+    assert any("3 de junho" in v.lower() for v in r.valores_orfaos)
+
+
+# ==========================================================================
+#  🧯 RED-TEAM FDS4 — FURO 3: ANO isolado como prazo ("até 2027")
+#  Um ano nu (19xx/20xx) não gerava claim → passava. Vira um claim "ano"
+#  fundamentado contra os anos do excerto (de datas + mês/ano + anos isolados).
+# ==========================================================================
+def test_ano_isolado_como_prazo_inventado_invalida():
+    # Repro red-team: excerto fala de 2026; alerta dá o prazo nu "até 2027".
+    alerta = f"Tens até 2027 para cumprir as novas regras. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=EXCERTO)
+    assert r.valido is False
+    assert "2027" in r.valores_orfaos
+
+
+def test_ano_isolado_fundamentado_por_data_do_excerto_e_valido():
+    # O excerto tem "15 de junho de 2026" → o ano 2026 está fundamentado.
+    alerta = f"Tens até 2026 para cumprir as novas regras. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=EXCERTO)
+    assert r.valido is True
+
+
+def test_ano_dentro_de_identificador_de_regulamento_nao_e_valor():
+    # "927/2025" é um identificador (nº/ano), NÃO um prazo → não é exigido no excerto.
+    excerto = "O Município de Braga publicou nova regulação de alojamento local."
+    alerta = f"Foi publicado o Regulamento n.º 927/2025. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is True
+    assert r.valores_orfaos == []
+
+
+def test_ano_isolado_nao_colide_com_montante_em_euros():
+    # "2027 €" é um montante (moeda), não deve gerar TAMBÉM um claim "ano" duplicado;
+    # continua a ser reprovado como coima órfã, com um único órfão "2027".
+    excerto = "A área de contenção entra em vigor em 2026. Sem valores de coima."
+    alerta = f"A coima pode chegar a 2027 €. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is False
+    assert r.valores_orfaos == ["2027"]
+
+
+# ==========================================================================
+#  🧯 RED-TEAM FDS4 — FURO 4: extremo superior de intervalo com moeda implícita
+#  "de 2500 euros até 9999" — o 9999 ficava fora do span monetário e não gerava
+#  órfão. A deteção monetária passa a apanhar o 2.º extremo do intervalo.
+# ==========================================================================
+def test_intervalo_moeda_implicita_extremo_superior_inventado_invalida():
+    # Repro red-team: excerto só tem "2500 euros"; alerta estende para "até 9999".
+    excerto = "A coima base é de 2500 euros."
+    alerta = f"A coima vai de 2500 euros até 9999. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is False
+    assert "9999" in r.valores_orfaos
+
+
+def test_intervalo_moeda_implicita_ambos_extremos_fieis_e_valido():
+    # Moeda só num dos lados, mas ambos os extremos constam do excerto → válido.
+    excerto = "A coima vai de 2500 a 4000 euros."
+    alerta = f"A coima vai de 2500 euros até 4000. Lê aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is True
+
+
+def test_intervalo_moeda_implicita_com_ate_sem_acento_invalida():
+    # Repro EXATO do red-team (attack.py A7): "ate" sem diacrítico ainda é ligação de
+    # intervalo → o extremo superior "9999" entra no span monetário e é órfão.
+    excerto = "A coima base e de 2500 euros."
+    alerta = f"A coima vai de 2500 euros ate 9999. Le aqui: {URL}"
+    r = validar_alerta(alerta, url_fonte=URL, excerto=excerto)
+    assert r.valido is False
+    assert "9999" in r.valores_orfaos
