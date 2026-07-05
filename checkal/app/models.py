@@ -22,6 +22,11 @@ AUTOMACAO.md: `concelhos text[]` → `JSON`; `campos_alterados jsonb` → `JSON`
 `registos.ausencias_consecutivas` não consta do SQL de referência mas é exigida
 pela **regra dos 2 varrimentos** (SPEC diffing/ingest): guarda o nº de varrimentos
 consecutivos em que o registo faltou, para só marcar `desaparecido_em` à 2.ª ausência.
+
+**Extensão FDS 2 (aditiva, SPEC-FDS2.md §models):** tabela `webhook_eventos`
+(idempotência dos webhooks Stripe por `event.id`) e colunas em `clientes`
+(`stripe_session_id`, `ix_fatura_id`, `ix_atcud`, `ix_permalink`) que ligam o
+assinante à sessão Stripe e à fatura-recibo certificada do InvoiceXpress.
 """
 from __future__ import annotations
 
@@ -149,6 +154,20 @@ class Cliente(Base):
     estado: Mapped[str | None] = mapped_column(Text)  # 'ativo'|'em_dunning'|'cancelado'
     criado_em: Mapped[datetime | None] = mapped_column(_TS)
 
+    # --- FDS 2: ligação Stripe ↔ InvoiceXpress (aditivo; NULL até haver checkout/fatura) ---
+    # `unique=True` é o backstop DURÁVEL da idempotência do fulfillment: a verificação
+    # "já existe cliente para esta sessão?" em `app.fulfillment` é um query-then-insert
+    # (TOCTOU). Com >1 worker uvicorn, a reentrega rotineira do MESMO
+    # `checkout.session.completed` pela Stripe pode fazer dois processos passarem a
+    # verificação e emitirem DOIS documentos fiscais certificados (ilegal de reverter).
+    # A constraint garante que o 2.º INSERT falha no `flush()` — que corre ANTES da
+    # emissão da fatura — pelo que o worker perdedor aborta sem reemitir. Portátil:
+    # SQLite e Postgres tratam NULLs como distintos, logo clientes sem sessão coexistem.
+    stripe_session_id: Mapped[str | None] = mapped_column(Text, unique=True)  # idempotência do fulfillment
+    ix_fatura_id: Mapped[str | None] = mapped_column(Text)       # id do documento InvoiceXpress
+    ix_atcud: Mapped[str | None] = mapped_column(Text)           # ATCUD (identificador AT)
+    ix_permalink: Mapped[str | None] = mapped_column(Text)       # permalink do PDF certificado
+
     registos: Mapped[list[Registo]] = relationship(
         secondary="clientes_registos", back_populates="clientes"
     )
@@ -200,3 +219,19 @@ class Alerta(Base):
     conteudo: Mapped[str | None] = mapped_column(Text)
     enviado_em: Mapped[datetime | None] = mapped_column(_TS)
     canal: Mapped[str] = mapped_column(Text, default="email", nullable=False)
+
+
+class WebhookEvento(Base):
+    """Idempotência dos webhooks Stripe (FDS 2, SPEC-FDS2.md §models).
+
+    A Stripe reentrega webhooks (retries, entregas duplicadas/fora de ordem). Antes de
+    processar um evento, grava-se aqui o `event.id`; a PoR `event_id` é a chave: uma segunda
+    entrega do mesmo evento colide na PK e é rejeitada, garantindo que o fulfillment corre
+    exatamente uma vez por evento. `event_id` é `Text` (portátil SQLite/Postgres).
+    """
+
+    __tablename__ = "webhook_eventos"
+
+    event_id: Mapped[str] = mapped_column(Text, primary_key=True)  # ex. 'evt_...'
+    tipo: Mapped[str | None] = mapped_column(Text)  # ex. 'checkout.session.completed'
+    recebido_em: Mapped[datetime | None] = mapped_column(_TS)

@@ -32,6 +32,14 @@ def _env(chave: str, default: str = "") -> str:
     return os.environ.get(chave, default)
 
 
+def _env_bool(chave: str, default: bool) -> bool:
+    """Lê um booleano do ambiente ('1/true/sim/yes/on' → True). Ausente → `default`."""
+    v = os.environ.get(chave)
+    if v is None:
+        return default
+    return v.strip().lower() in ("1", "true", "sim", "yes", "on")
+
+
 def a_testar() -> bool:
     return bool(os.environ.get("PYTEST_CURRENT_TEST"))
 
@@ -86,7 +94,11 @@ STRIPE_WEBHOOK_SECRET = _env("STRIPE_WEBHOOK_SECRET", "")
 # --- InvoiceXpress ---
 INVOICEXPRESS_ACCOUNT = _env("INVOICEXPRESS_ACCOUNT", "")
 INVOICEXPRESS_API_KEY = _env("INVOICEXPRESS_API_KEY", "")
-INVOICEXPRESS_SERIE = _env("INVOICEXPRESS_SERIE", "CKL")
+INVOICEXPRESS_SERIE = _env("INVOICEXPRESS_SERIE", "CKL")  # NOME da série (leitura humana)
+# A API não referencia a série pelo nome, mas por um id numérico (SPEC-INVOICEXPRESS §5):
+INVOICEXPRESS_SEQUENCE_ID = _env("INVOICEXPRESS_SEQUENCE_ID", "")  # id numérico da série CKL
+# Nome exato da taxa de 23% tal como existe na tabela de taxas da conta (SPEC-INVOICEXPRESS §2.2):
+INVOICEXPRESS_TAXA_NOME = _env("INVOICEXPRESS_TAXA_NOME", "IVA23")
 
 # ==========================================================================
 #  FOLHA DE PRESSUPOSTOS CANÓNICA (PLANO-NEGOCIO.md §5)
@@ -104,6 +116,28 @@ PLANOS = {
 }
 AL_ADICIONAL_ANUAL = 19.0    # 2.º e 3.º AL no plano anual
 AL_ADICIONAL_TRIENAL = 45.0  # 2.º e 3.º AL no plano trienal
+
+# ==========================================================================
+#  FDS 2 — billing (Stripe) + faturação (InvoiceXpress)
+# ==========================================================================
+# MODO DE TESTE, LIVE-GATED: nenhum módulo faz chamadas HTTP reais a
+# Stripe/InvoiceXpress enquanto isto for True; o dono desliga em produção.
+CHECKAL_MODO_TESTE = _env_bool("CHECKAL_MODO_TESTE", True)
+
+# Mapa price_id (Stripe) → código de plano interno (chave de PLANOS).
+# Alimentado por ambiente (STRIPE_PRICE_<PLANO>), sem segredos no código; vazio se não configurado.
+STRIPE_PRICE_PLANO: dict[str, str] = {
+    pid: plano
+    for plano in PLANOS
+    if (pid := _env(f"STRIPE_PRICE_{plano.upper()}"))
+}
+
+# Mapa código de plano → Payment Link URL (Stripe). Fonte: ambiente (STRIPE_PAYMENT_LINK_<PLANO>).
+STRIPE_PAYMENT_LINKS: dict[str, str] = {
+    plano: url
+    for plano in PLANOS
+    if (url := _env(f"STRIPE_PAYMENT_LINK_{plano.upper()}"))
+}
 
 # Coimas ASAE (únicos valores a usar em copy) — por tipo de titular.
 COIMA = {
