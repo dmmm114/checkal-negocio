@@ -1,0 +1,14 @@
+# Serviço systemd templado: corre um job do CheckAL no container da app.
+# Instância = nome do job (varrimento|dre|dunning|suporte|backup|token).
+#   sudo systemctl start checkal@varrimento.service   (corre uma vez)
+# Os .timer (ver README.md) é que agendam. Falha do job → estado failed + o
+# dead-man switch (Healthchecks) avisa; o próprio job pinga /fail.
+[Unit]
+Description=CheckAL job %i
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/checkal/deploy
+ExecStart=/usr/bin/docker compose exec -T app python manage.py %i

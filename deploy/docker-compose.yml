@@ -1,0 +1,48 @@
+# CheckAL — stack de produção (Hetzner CX32). App + Postgres + Caddy (HTTPS automático).
+# Uso: (no servidor, em /opt/checkal/deploy) docker compose up -d --build
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: checkal
+      POSTGRES_USER: checkal
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD no .env do deploy}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U checkal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ../checkal
+    env_file:
+      - ../checkal/.env            # todas as chaves (Stripe, TOConline, Resend, Anthropic, …)
+    environment:
+      # Sobrepõe o DB_URL para apontar ao Postgres do compose.
+      CHECKAL_DB_URL: postgresql+psycopg://checkal:${POSTGRES_PASSWORD}@db:5432/checkal
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,17 @@
+# CheckAL — Caddy: HTTPS automático (Let's Encrypt) + proxy para a app.
+checkal.pt, www.checkal.pt {
+	encode gzip
+	reverse_proxy app:8000
+	header {
+		# Cabeçalhos de segurança básicos.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# www → raiz (opcional; a linha acima já serve os dois).
+www.checkal.pt {
+	redir https://checkal.pt{uri}
+}
