@@ -1,0 +1,61 @@
+{% extends "admin/base_admin.html" %}
+{# Leads — prospects consent-first por estado (SPEC-FASE1-DASHBOARD §dashboard).
+   Contagens por estado + a lista operacional (email é PII, mas necessária aqui para
+   o dono gerir os interessados; nunca exposta na visão geral). Autoescape Jinja
+   protege os campos vindos do titular (email/concelho) contra XSS. #}
+
+{% block title %}Leads — Painel {{ marca.nome }}{% endblock %}
+
+{% block admin_content %}
+<div class="painel__cabecalho">
+  <h1 id="painel-titulo">Leads</h1>
+  <p class="nota">Prospects consent-first (só quem carregou na checkbox de consentimento).</p>
+</div>
+
+<div class="painel-metricas">
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="leads_pendente">{{ leads_estado.pendente }}</span>
+    <span class="painel-metrica__rotulo">Pendentes</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="leads_confirmado">{{ leads_estado.confirmado }}</span>
+    <span class="painel-metrica__rotulo">Confirmados</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="leads_removido">{{ leads_estado.removido }}</span>
+    <span class="painel-metrica__rotulo">Removidos</span>
+  </div>
+</div>
+
+<div class="painel-tabela-envolucro">
+  <table class="painel-tabela">
+    <caption class="sr-so">Lista de leads por estado</caption>
+    <thead>
+      <tr>
+        <th scope="col">Email</th>
+        <th scope="col">Estado</th>
+        <th scope="col">Concelho</th>
+        <th scope="col">Nº RNAL</th>
+        <th scope="col">Ofertas</th>
+        <th scope="col">Criado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for lead in leads %}
+      <tr>
+        <td>{{ lead.email }}</td>
+        <td>{{ lead.estado }}</td>
+        <td>{{ lead.concelho or "—" }}</td>
+        <td>{{ lead.nr_registo if lead.nr_registo is not none else "—" }}</td>
+        <td>{{ "sim" if lead.consent_ofertas else "não" }}</td>
+        <td>{{ lead.criado or "—" }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td class="painel-vazio" colspan="6">Ainda sem leads.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

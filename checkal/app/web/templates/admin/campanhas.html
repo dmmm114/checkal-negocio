@@ -1,0 +1,108 @@
+{% extends "admin/base_admin.html" %}
+{# Painel · Campanhas (SPEC-FASE1-DASHBOARD §campanhas). Estende o chrome COERENTE do
+   painel (base_admin.html → logo, brand.css, rodapé legal e a NAV única do painel).
+   Read-first: nenhum botão dispara — o cold mostra-se mas o disparo respeita
+   config.pode_enviar_frio_global(); o botão "Disparar" nasce DESATIVADO sob gate
+   fechado e o aviso explica o porquê. Autoescape Jinja protege os campos. #}
+
+{% block title %}Campanhas — Painel {{ marca.nome }}{% endblock %}
+
+{% block admin_content %}
+<div class="painel__cabecalho">
+  <h1 id="painel-titulo">Campanhas de prospeção</h1>
+</div>
+
+{% if not pode_disparar %}
+<div class="painel-aviso" role="alert">
+  <p><strong>Canal frio fechado.</strong> Os emails de prospeção compõem-se para
+  revisão, mas <strong>nada é enviado</strong>. O disparo está bloqueado por código
+  enquanto:</p>
+  <ul>
+    {% for razao in razoes_gate %}<li>{{ razao }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<h2>Gatilhos pendentes</h2>
+<div class="painel-metricas">
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="novos">{{ dados.contagem.novos }}</span>
+    <span class="painel-metrica__rotulo">Registos novos</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="alteracoes">{{ dados.contagem.alteracoes }}</span>
+    <span class="painel-metrica__rotulo">Alterações relevantes</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="limpezas">{{ dados.contagem.limpezas }}</span>
+    <span class="painel-metrica__rotulo">Limpezas (concelhos)</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="regulatorios">{{ dados.contagem.regulatorios }}</span>
+    <span class="painel-metrica__rotulo">Regulatórios</span>
+  </div>
+</div>
+
+<h2>Segmentos</h2>
+<div class="painel-metricas">
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="cold">{{ dados.n_cold }}</span>
+    <span class="painel-metrica__rotulo">Cold (email B2B)</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="carta">{{ dados.n_carta }}</span>
+    <span class="painel-metrica__rotulo">Carta (postal)</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="suprimidos">{{ dados.n_suprimidos }}</span>
+    <span class="painel-metrica__rotulo">Suprimidos (opt-out)</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="descartados">{{ dados.n_descartados }}</span>
+    <span class="painel-metrica__rotulo">Descartados</span>
+  </div>
+</div>
+
+<h2>Fila de aprovação — cold (getcheckal.com)</h2>
+{% if dados.fila %}
+<div class="painel-tabela-envolucro">
+  <table class="painel-tabela">
+    <thead>
+      <tr>
+        <th scope="col">Nº RNAL</th>
+        <th scope="col">Empresa</th>
+        <th scope="col">Concelho</th>
+        <th scope="col">Email</th>
+        <th scope="col">Proveniência</th>
+        <th scope="col">Motivo</th>
+        <th scope="col">Assunto</th>
+        <th scope="col">Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in dados.fila %}
+      <tr>
+        <td>{{ c.nr }}</td>
+        <td>{{ c.nome }}</td>
+        <td>{{ c.concelho }}</td>
+        <td>{{ c.email }}</td>
+        <td>{{ c.proveniencia }}</td>
+        <td>{{ c.motivo }}</td>
+        <td>{{ c.assunto }}</td>
+        <td>
+          <button
+            type="button"
+            class="btn btn--acao btn--pequeno"
+            data-disparar
+            {% if not pode_disparar %}disabled aria-disabled="true" title="Canal frio fechado — ver o aviso acima"{% endif %}
+          >Disparar</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="painel-vazio">Sem candidatos a cold neste momento.</p>
+{% endif %}
+{% endblock %}

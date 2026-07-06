@@ -1,0 +1,77 @@
+{% extends "admin/base_admin.html" %}
+{# Painel · Compliance (SPEC-FASE1-DASHBOARD §compliance). Estende o chrome COERENTE
+   do painel (base_admin.html → nav única + marca). A prova para a CNPD: opt-outs +
+   proveniências (canal frio) + consentimentos (Leads: texto+versão, quando, IP).
+   Exportável em CSV — só autenticado. Autoescape Jinja protege os campos (anti-XSS). #}
+
+{% block title %}Compliance — Painel {{ marca.nome }}{% endblock %}
+
+{% block admin_content %}
+<div class="painel__cabecalho">
+  <h1 id="painel-titulo">Compliance — prova para a CNPD</h1>
+</div>
+
+<h2>Opt-outs (lista de supressão)</h2>
+<p><a class="btn btn--pequeno" href="/admin/compliance/optouts.csv">Exportar CSV</a></p>
+{% if optouts %}
+<div class="painel-tabela-envolucro">
+  <table class="painel-tabela">
+    <thead><tr><th scope="col">Email</th><th scope="col">Origem</th><th scope="col">Registado em</th></tr></thead>
+    <tbody>
+      {% for o in optouts %}
+      <tr><td>{{ o.email }}</td><td>{{ o.origem }}</td><td>{{ o.criado_em }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="painel-vazio">Sem opt-outs registados.</p>
+{% endif %}
+
+<h2>Proveniências (prova do canal frio)</h2>
+<p class="painel-vazio">Prova de <em>lookup</em> dirigido no registo público RNAL — não <em>scraping</em>.</p>
+{% if proveniencias %}
+<div class="painel-tabela-envolucro">
+  <table class="painel-tabela">
+    <thead><tr><th scope="col">Nº RNAL</th><th scope="col">Email</th><th scope="col">Concelho</th><th scope="col">Proveniência</th></tr></thead>
+    <tbody>
+      {% for p in proveniencias %}
+      <tr><td>{{ p.nr }}</td><td>{{ p.email }}</td><td>{{ p.concelho }}</td><td>{{ p.proveniencia }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="painel-vazio">Sem contactos de canal frio a considerar.</p>
+{% endif %}
+
+<h2>Consentimentos (leads consent-first)</h2>
+<p><a class="btn btn--pequeno" href="/admin/compliance/consentimentos.csv">Exportar CSV</a></p>
+{% if leads %}
+<div class="painel-tabela-envolucro">
+  <table class="painel-tabela">
+    <thead>
+      <tr>
+        <th scope="col">Email</th><th scope="col">Estado</th><th scope="col">Alertas</th><th scope="col">Ofertas</th>
+        <th scope="col">Texto + versão</th><th scope="col">Quando</th><th scope="col">IP</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in leads %}
+      <tr>
+        <td>{{ l.email }}</td>
+        <td>{{ l.estado }}</td>
+        <td>{{ l.consent_alertas }}</td>
+        <td>{{ l.consent_ofertas }}</td>
+        <td>{{ l.texto }}</td>
+        <td>{{ l.em }}</td>
+        <td>{{ l.ip }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="painel-vazio">Sem consentimentos registados.</p>
+{% endif %}
+{% endblock %}

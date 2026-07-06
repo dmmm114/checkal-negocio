@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{# Login do painel admin (SPEC-FASE1-DASHBOARD §auth). Estende o chrome da marca
+   (base.html) → logo, brand.css e rodapé legal. Área PRIVADA, só o dono. #}
+
+{% block title %}Entrar — Painel {{ marca.nome }}{% endblock %}
+
+{% block meta %}
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Área privada do painel {{ marca.nome }}.">
+{% endblock %}
+
+{% block content %}
+<section class="admin-login" aria-labelledby="admin-login-titulo">
+  <h1 id="admin-login-titulo" class="admin-login__titulo">Painel {{ marca.nome }}</h1>
+  <p class="admin-login__intro">Área privada. Entra com a tua palavra-passe.</p>
+
+  {% if erro %}
+  <p class="admin-login__erro" role="alert">{{ erro }}</p>
+  {% endif %}
+
+  <form class="admin-login__form" method="post" action="/admin/login">
+    <label class="admin-login__label" for="password">Palavra-passe</label>
+    <input
+      class="admin-login__input"
+      type="password"
+      id="password"
+      name="password"
+      required
+      autofocus
+      autocomplete="current-password"
+      aria-describedby="{{ 'admin-login-erro' if erro else '' }}"
+    >
+    <button class="btn btn--acao" type="submit">Entrar</button>
+  </form>
+</section>
+{% endblock %}

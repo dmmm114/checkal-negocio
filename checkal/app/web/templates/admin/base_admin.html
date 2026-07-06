@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{# Chrome do painel admin (SPEC-FASE1-DASHBOARD §dashboard). Estende o chrome da marca
+   (base.html → logo, brand.css, rodapé legal) e acrescenta a NAV do painel. Área
+   PRIVADA, só o dono (noindex). As secções irmãs (clientes/campanhas/alertas/
+   compliance) são montadas por outros módulos; a nav já as liga. `secao` marca o item
+   ativo (aria-current) para orientação e acessibilidade. #}
+
+{% block title %}Painel {{ marca.nome }}{% endblock %}
+
+{% block meta %}
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Área privada do painel {{ marca.nome }}.">
+{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Layout do painel — reutiliza os tokens da marca (brand.css). Escopado ao admin. */
+  .painel { padding-block: clamp(1.5rem, 1rem + 2vw, 2.5rem); }
+  .painel__cabecalho { display: flex; flex-wrap: wrap; align-items: baseline;
+    justify-content: space-between; gap: .75rem 1.5rem; margin-bottom: 1.25rem; }
+  .painel__cabecalho h1 { margin: 0; }
+  .painel-nav { display: flex; flex-wrap: wrap; gap: .4rem .5rem; margin-bottom: 1.75rem;
+    border-bottom: 1px solid var(--cor-borda); padding-bottom: .75rem; }
+  .painel-nav a { display: inline-flex; align-items: center; min-height: 40px;
+    padding: .4rem .9rem; border-radius: var(--raio-pill); font-weight: 600;
+    color: var(--cor-texto-secundario); }
+  .painel-nav a:hover { text-decoration: none; background: var(--cor-fundo-frio);
+    color: var(--cor-grafite); }
+  .painel-nav a[aria-current="page"] { background: var(--cor-azul-acao); color: #fff; }
+  .painel-nav a.painel-nav__sair { margin-left: auto; color: var(--cor-coral); }
+  .painel-metricas { display: grid; gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 2rem; }
+  .painel-metrica { background: var(--cor-superficie); border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-grande); padding: 1.25rem 1.4rem; box-shadow: var(--sombra-1); }
+  .painel-metrica__valor { display: block; font-family: var(--fonte-titulos);
+    font-weight: 800; font-size: 2rem; line-height: 1.1; color: var(--cor-grafite); }
+  .painel-metrica__rotulo { display: block; margin-top: .25rem;
+    font-size: var(--fs-pequeno); color: var(--cor-texto-secundario); }
+  .painel-tabela { width: 100%; border-collapse: collapse; font-size: var(--fs-pequeno); }
+  .painel-tabela th, .painel-tabela td { text-align: left; padding: .6rem .75rem;
+    border-bottom: 1px solid var(--cor-borda); vertical-align: top; }
+  .painel-tabela th { color: var(--cor-texto-secundario); font-weight: 700; }
+  .painel-tabela-envolucro { overflow-x: auto; border: 1px solid var(--cor-borda);
+    border-radius: var(--raio); background: var(--cor-superficie); }
+  .painel-vazio { color: var(--cor-texto-secundario); }
+  /* Aviso do portão de cold (campanhas): âmbar de atenção, nunca coral de erro. */
+  .painel-aviso { border: 1px solid var(--cor-ambar); border-left-width: 4px;
+    background: #fffaf0; border-radius: var(--raio); padding: 1rem 1.25rem;
+    margin-bottom: 1.75rem; }
+  .painel-aviso p { margin: 0 0 .5rem; }
+  .painel-aviso ul { margin: 0; padding-left: 1.25rem; }
+  .painel-detalhe { margin-top: .5rem; }
+</style>
+{% endblock %}
+
+{# Item de nav ativo: overview/clientes/alertas/leads passam `secao`; campanhas e
+   compliance passam `seccao`. Aceitar ambos mantém o realce coerente sem obrigar os
+   routers a uniformizar a chave. #}
+{% set _ativo = (secao if secao is defined and secao else (seccao if seccao is defined and seccao else "")) %}
+
+{% set _nav = [
+  ("overview",   "/admin",            "Visão geral"),
+  ("clientes",   "/admin/clientes",   "Clientes"),
+  ("campanhas",  "/admin/campanhas",  "Campanhas"),
+  ("alertas",    "/admin/alertas",    "Alertas"),
+  ("compliance", "/admin/compliance", "Compliance"),
+  ("leads",      "/admin/leads",      "Leads"),
+] %}
+
+{% block content %}
+<section class="envolucro painel" aria-labelledby="painel-titulo">
+  <nav class="painel-nav" aria-label="Secções do painel">
+    {% for chave, href, rotulo in _nav %}
+    <a href="{{ href }}"{% if _ativo == chave %} aria-current="page"{% endif %}>{{ rotulo }}</a>
+    {% endfor %}
+    <a class="painel-nav__sair" href="/admin/logout">Sair</a>
+  </nav>
+
+  {% block admin_content %}{% endblock %}
+</section>
+{% endblock %}

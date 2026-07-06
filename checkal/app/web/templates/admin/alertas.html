@@ -1,0 +1,74 @@
+{% extends "admin/base_admin.html" %}
+{# Painel · Alertas (SPEC-FASE1-DASHBOARD §dashboard). Duas listas de LEITURA:
+   (1) a fila de alertas já enviados; (2) os eventos `desaparecido` PENDENTES de
+   desambiguação (processado=False) — revisão do dono, "só informa, o breaker decide".
+   Nenhum botão aqui decide/reprocessa. Estende o chrome do painel (base_admin.html). #}
+
+{% block title %}Alertas — Painel {{ marca.nome }}{% endblock %}
+
+{% block admin_content %}
+<div class="painel__cabecalho">
+  <h1 id="painel-titulo">Alertas</h1>
+</div>
+
+<h2>Fila de alertas <span class="painel-vazio">({{ alertas | length }})</span></h2>
+{% if alertas %}
+<div class="painel-tabela-envolucro">
+  <table class="painel-tabela">
+    <thead>
+      <tr>
+        <th scope="col">Enviado</th>
+        <th scope="col">Cliente</th>
+        <th scope="col">AL</th>
+        <th scope="col">Origem</th>
+        <th scope="col">Canal</th>
+        <th scope="col">Conteúdo</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in alertas %}
+      <tr>
+        <td>{{ a.enviado }}</td>
+        <td>{{ a.cliente_email or ("cliente #" ~ a.cliente_id) }}</td>
+        <td>{% if a.nr_registo is not none %}#{{ a.nr_registo }}{% else %}—{% endif %}</td>
+        <td>{{ a.origem or "—" }}</td>
+        <td>{{ a.canal }}</td>
+        <td>{{ a.conteudo }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="painel-vazio">Sem alertas enviados.</p>
+{% endif %}
+
+<h2>Desaparecidos pendentes de desambiguação <span class="painel-vazio">({{ desaparecidos | length }})</span></h2>
+<p class="painel-vazio">Revisão do dono — só informativo; a decisão final é do circuit breaker.</p>
+{% if desaparecidos %}
+<div class="painel-tabela-envolucro">
+  <table class="painel-tabela">
+    <thead>
+      <tr>
+        <th scope="col">Detetado</th>
+        <th scope="col">AL</th>
+        <th scope="col">Nome</th>
+        <th scope="col">Concelho</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in desaparecidos %}
+      <tr>
+        <td>{{ d.detetado }}</td>
+        <td>#{{ d.nr_registo }}</td>
+        <td>{{ d.nome or "(sem nome)" }}</td>
+        <td>{{ d.concelho or "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="painel-vazio">Nada pendente de desambiguação.</p>
+{% endif %}
+{% endblock %}

@@ -13,6 +13,20 @@ SPEC) e reunidos só aqui:
     app.web.selo            → GET /selo/{nr_registo}    (página pública do selo — FDS 3)
     app.web.webhook_stripe  → POST /webhooks/stripe     (webhook único da Stripe)
 
+    app.web.admin.auth               → GET/POST /admin/login · GET /admin/logout
+    app.web.admin.dashboard_overview → GET /admin · GET /admin/leads
+    app.web.admin.dashboard_clientes → GET /admin/clientes · GET /admin/alertas
+    app.web.admin.dashboard_campanhas→ GET /admin/campanhas · /admin/compliance (+CSV)
+
+O painel `/admin/*` é a área PRIVADA do dono (FASE 1 · WF3): o login é público (senão
+não haveria como entrar), mas todas as rotas do dashboard estão sob `requer_admin`
+(sessão assinada `itsdangerous` + `config.SECRET_KEY`). Os routers do admin já
+carregam o prefixo `/admin` nos próprios paths, pelo que se montam SEM prefixo
+adicional (montá-los com `prefix="/admin"` duplicaria para `/admin/admin`). O portão
+de cold é CÓDIGO, não confiança: a página de campanhas mostra a fila mas o botão de
+disparo nasce DESATIVADO e não existe endpoint que ENVIE (respeita
+`config.pode_enviar_frio_global()`).
+
 Porquê uma *fábrica* e não um `app` de módulo: cada teste (e cada processo de
 produção) obtém uma instância fresca com os routers montados, sem estado global de
 importação. A configuração da BD vive em `app.db` (o motor é trocado por um SQLite
@@ -40,6 +54,12 @@ from app.web import (
     selo,
     verificar,
     webhook_stripe,
+)
+from app.web.admin import (
+    auth as admin_auth,
+    dashboard_campanhas,
+    dashboard_clientes,
+    dashboard_overview,
 )
 
 
@@ -69,4 +89,12 @@ def criar_app() -> FastAPI:
     app.include_router(remover.router)
     app.include_router(selo.router)
     app.include_router(webhook_stripe.router)
+
+    # Painel admin (FASE 1 · WF3) — área privada do dono. Os routers já embutem o
+    # prefixo `/admin` nos paths, por isso montam-se sem prefixo adicional. O login é
+    # público; o dashboard está sob `requer_admin`.
+    app.include_router(admin_auth.router)
+    app.include_router(dashboard_overview.router)
+    app.include_router(dashboard_clientes.router)
+    app.include_router(dashboard_campanhas.router)
     return app

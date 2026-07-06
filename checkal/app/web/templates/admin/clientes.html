@@ -1,0 +1,75 @@
+{% extends "admin/base_admin.html" %}
+{# Painel · Clientes (SPEC-FASE1-DASHBOARD §dashboard). Lista dos assinantes +
+   detalhe/histórico. Só leitura — nenhuma ação que envie/cobre. Minimizada no
+   servidor (lista branca em dashboard_clientes.py): SEM contactos do titular do RNAL.
+   Estende o chrome do painel (base_admin.html): override de `admin_content`, `secao`
+   vem do router para marcar o item de nav ativo. #}
+
+{% block title %}Clientes — Painel {{ marca.nome }}{% endblock %}
+
+{% block admin_content %}
+<div class="painel__cabecalho">
+  <h1 id="painel-titulo">Clientes</h1>
+  <p class="painel-vazio">{{ clientes | length }} assinante(s).</p>
+</div>
+
+{% if not clientes %}
+  <p class="painel-vazio">Ainda sem clientes.</p>
+{% else %}
+<div class="painel-tabela-envolucro">
+  <table class="painel-tabela">
+    <thead>
+      <tr>
+        <th scope="col">Email</th>
+        <th scope="col">Nome</th>
+        <th scope="col">Plano</th>
+        <th scope="col">Estado</th>
+        <th scope="col">N.º AL</th>
+        <th scope="col">Criado</th>
+        <th scope="col">Detalhe &amp; histórico</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in clientes %}
+      <tr>
+        <td>{{ c.email }}</td>
+        <td>{{ c.nome or "—" }}</td>
+        <td>{{ c.plano_nome }}</td>
+        <td>{{ c.estado or "—" }}</td>
+        <td>{{ c.n_al }}</td>
+        <td>{{ c.criado }}</td>
+        <td>
+          <details>
+            <summary>Ver</summary>
+            <div class="painel-detalhe">
+              <p><strong>Alojamentos ({{ c.n_al }})</strong></p>
+              {% if c.als %}
+              <ul>
+                {% for a in c.als %}
+                <li>#{{ a.nr_registo }} — {{ a.nome or "(sem nome)" }} · {{ a.concelho or "—" }} · {{ a.estado }}</li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p class="painel-vazio">Sem alojamentos associados.</p>
+              {% endif %}
+
+              <p><strong>Alertas enviados ({{ c.alertas | length }})</strong></p>
+              {% if c.alertas %}
+              <ul>
+                {% for al in c.alertas %}
+                <li>{{ al.enviado }} · {{ al.canal }} · AL #{{ al.nr_registo if al.nr_registo is not none else "—" }} — {{ al.conteudo }}</li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p class="painel-vazio">Sem alertas enviados.</p>
+              {% endif %}
+            </div>
+          </details>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

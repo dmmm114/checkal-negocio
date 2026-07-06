@@ -1,0 +1,58 @@
+{% extends "admin/base_admin.html" %}
+{# Visão geral do painel (SPEC-FASE1-DASHBOARD §dashboard). Contagens de LEITURA —
+   clientes ativos, MRR estimado (de config.PLANOS), alertas enviados, opt-outs,
+   leads por estado, último varrimento. Sem PII de leads (minimização): só números.
+   Cada valor leva `data-metrica` (âncora estável para leitura/testes). #}
+
+{% block title %}Visão geral — Painel {{ marca.nome }}{% endblock %}
+
+{% block admin_content %}
+<div class="painel__cabecalho">
+  <h1 id="painel-titulo">Visão geral</h1>
+</div>
+
+<div class="painel-metricas">
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="clientes_ativos">{{ clientes_ativos }}</span>
+    <span class="painel-metrica__rotulo">Clientes ativos</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="mrr">{{ mrr_fmt }}</span>
+    <span class="painel-metrica__rotulo">MRR estimado</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="alertas_enviados">{{ alertas_enviados }}</span>
+    <span class="painel-metrica__rotulo">Alertas enviados</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="opt_outs">{{ opt_outs }}</span>
+    <span class="painel-metrica__rotulo">Opt-outs</span>
+  </div>
+</div>
+
+<h2>Leads por estado</h2>
+<div class="painel-metricas">
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="leads_pendente">{{ leads_estado.pendente }}</span>
+    <span class="painel-metrica__rotulo">Pendentes</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="leads_confirmado">{{ leads_estado.confirmado }}</span>
+    <span class="painel-metrica__rotulo">Confirmados</span>
+  </div>
+  <div class="painel-metrica">
+    <span class="painel-metrica__valor" data-metrica="leads_removido">{{ leads_estado.removido }}</span>
+    <span class="painel-metrica__rotulo">Removidos</span>
+  </div>
+</div>
+
+<h2>Último varrimento</h2>
+<div class="painel-metrica">
+  {% if ultimo_varrimento %}
+  <span class="painel-metrica__valor" style="font-size:1.25rem" data-metrica="ultimo_varrimento">{{ ultimo_varrimento.data }} · {{ ultimo_varrimento.estado }}{% if ultimo_varrimento.total is not none %} · {{ ultimo_varrimento.total }} registos{% endif %}</span>
+  <span class="painel-metrica__rotulo">Passagem nacional mais recente</span>
+  {% else %}
+  <span class="painel-vazio" data-metrica="ultimo_varrimento">Ainda sem varrimentos.</span>
+  {% endif %}
+</div>
+{% endblock %}
