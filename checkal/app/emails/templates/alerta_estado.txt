@@ -1,0 +1,16 @@
+{% extends 'email_base.txt' %}
+{% block corpo %}
+O teu AL «{{ nome_al }}» {{ estados[estado].rotulo }}
+
+{{ estados[estado].emoji }} {{ titulo }}
+
+{% for par in corpo_paragrafos %}
+{{ par }}
+
+{% endfor %}
+{% if cta_url %}
+{{ cta_texto or 'Ver o meu AL' }}: {{ cta_url }}
+
+{% endif %}
+{{ disclaimer }}
+{% endblock %}

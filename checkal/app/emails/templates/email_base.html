@@ -1,0 +1,47 @@
+{#
+  Base de email do CheckAL — HTML com CSS INLINE (compat. cliente de email).
+  Header de marca por HTML/CSS: wordmark "CheckAL" + ✓ verde — SEM imagem externa.
+  Blocos para os templates concretos: {% block assunto %} e {% block corpo %}.
+  O rodapé (legal + morada + opt-out + privacidade) é FIXO — a garantia da base.
+#}
+{# Pré-cabeçalho invisível (mostra o assunto na pré-visualização da inbox). #}
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">{% block assunto %}{{ assunto | default('') }}{% endblock %}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0;padding:0;background:{{ fundo }};">
+  <tr>
+    <td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:600px;background:#ffffff;border-radius:14px;font-family:{{ fonte }};color:{{ cores.grafite }};">
+
+        {# ---- Header: wordmark CheckAL + ✓ verde (só texto/CSS) ---- #}
+        <tr>
+          <td style="padding:26px 30px 10px 30px;">
+            <span style="font-family:{{ fonte }};font-size:23px;font-weight:800;letter-spacing:-0.02em;color:{{ cores.grafite }};">CheckAL</span><span aria-hidden="true" style="font-family:{{ fonte }};font-size:23px;font-weight:800;color:{{ cor_check }};">&nbsp;✓</span>
+          </td>
+        </tr>
+
+        {# ---- Corpo (os templates concretos substituem este bloco) ---- #}
+        <tr>
+          <td style="padding:6px 30px 10px 30px;font-family:{{ fonte }};font-size:16px;line-height:1.62;color:{{ cores.grafite }};">
+            {% block corpo %}{{ (corpo_html or '') | safe }}{% endblock %}
+          </td>
+        </tr>
+
+        {# ---- Rodapé FIXO: legal + morada + opt-out + privacidade/termos ---- #}
+        <tr>
+          <td style="padding:20px 30px 28px 30px;border-top:1px solid #E2E8F0;font-family:{{ fonte }};font-size:12px;line-height:1.6;color:{{ cores.texto_secundario }};">
+            <p style="margin:0 0 8px 0;">{{ remetente_nome }} — serviço privado e independente de monitorização de Alojamento Local. Não somos, nem representamos, o Turismo de Portugal, o RNAL ou qualquer câmara municipal.</p>
+            <p style="margin:0 0 8px 0;">{{ entidade_legal }} · {{ morada }} · Portugal</p>
+            <p style="margin:0 0 8px 0;">
+              <a href="{{ url_privacidade }}" style="color:{{ cores.texto_secundario }};text-decoration:underline;">Privacidade</a>
+              &nbsp;·&nbsp;
+              <a href="{{ url_termos }}" style="color:{{ cores.texto_secundario }};text-decoration:underline;">Termos</a>
+              &nbsp;·&nbsp;
+              <a href="{{ url_optout }}" style="color:{{ cores.texto_secundario }};text-decoration:underline;">Remover num clique</a>
+            </p>
+            <p style="margin:0;">Para deixares de receber estes emails, um clique: {{ url_optout }}</p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>

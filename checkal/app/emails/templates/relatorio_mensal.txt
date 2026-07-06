@@ -1,0 +1,22 @@
+{% extends 'email_base.txt' %}
+{% block corpo %}
+{{ mes }}: o teu AL passou no check ✓
+
+Olá{% if nome %} {{ nome }}{% endif %}, este mês o {{ nome_al }} continuou sob vigilância. Resultado:
+
+🟢 Tudo em ordem — o teu registo e o teu seguro continuam em dia.
+
+Registo: check ✓ · Seguro: check ✓ · Regulamento: check ✓
+
+{% if resumo %}
+{{ resumo }}
+
+{% endif %}
+{% if n_analisadas is not none %}
+O teu escudo este mês: analisámos {{ n_analisadas }} publicações regulatórias do teu concelho — {{ n_relevantes or 0 }} exigiram a tua atenção. É isto que a tua subscrição paga: só te incomodamos quando é preciso.
+
+{% endif %}
+{% if cta_url %}
+{{ cta_texto or 'Ver o meu relatório' }}: {{ cta_url }}
+{% endif %}
+{% endblock %}

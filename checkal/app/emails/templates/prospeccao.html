@@ -1,0 +1,28 @@
+{#
+  Cold B2B (getcheckal.com) — sequência de prospeção a pessoa COLETIVA.
+  SPEC-FASE1-EMAILS §prospeccao · ⚠️ PARECER-GATED (o envio é do cold_email FDS6, gated).
+  Estende a base (rodapé legal + opt-out 1-clique herdados). Este template só embrulha:
+    · `disclaimer`   — nota de independência (topo, obrigatória; texto vem do módulo);
+    · `corpo_html`   — o corpo da peça (merge já escapado no módulo → injetado com | safe);
+    · `nota_rgpd`    — nota RGPD (Anexo 1 corrigido; SEM afirmar "público por imposição do art. 10.º").
+  O assunto vem do ctx (o módulo é dono da copy). Sem imagem externa (herda do base).
+#}
+{% extends 'email_base.html' %}
+{% block corpo %}
+  {# ---- Disclaimer de independência (fixo, 1.ª dobra) ---- #}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 18px 0;">
+    <tr>
+      <td style="padding:12px 14px;border-radius:10px;background:{{ cores.fundo_frio }};border-left:4px solid {{ cores.cinza_suspenso }};font-family:{{ fonte }};font-size:13px;line-height:1.55;color:{{ cores.texto_secundario }};">
+        {{ disclaimer }}
+      </td>
+    </tr>
+  </table>
+
+  {# ---- Corpo da peça (copy de COPY-VENDAS.md §2; merge escapado no módulo) ---- #}
+  {{ corpo_html | safe }}
+
+  {# ---- Nota RGPD (Anexo 1 corrigido) — pequena, cinzenta, acima do rodapé da base ---- #}
+  <p style="margin:22px 0 0 0;padding-top:14px;border-top:1px solid #E2E8F0;font-family:{{ fonte }};font-size:12px;line-height:1.6;color:{{ cores.texto_secundario }};">
+    {{ nota_rgpd }}
+  </p>
+{% endblock %}

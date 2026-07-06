@@ -32,12 +32,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from html import escape
 from typing import Any
 
 import app.config as config
 import app.db as db
 import app.models as models
+from app.emails import transacional
+from app.emails.base import EmailRenderizado
 from app.relatorio import RelatorioInicial, gerar_relatorio_inicial, render_pdf
 from app.rnal.detalhe import (
     ESTADO_INDETERMINADO,
@@ -126,78 +127,35 @@ def _selo_url(nr_registo: int) -> str:
     return f"{config.BASE_URL}/selo/{nr_registo}"
 
 
-def _assunto(requer_atencao: bool) -> str:
-    if requer_atencao:
-        return "Bem-vindo ao CheckAL — o teu AL já está monitorizado (a confirmar um detalhe)"
-    return "Bem-vindo ao CheckAL — o teu AL passou no check ✓"
+def _nome_al(s: Any, nr: int) -> str:
+    """Nome público do estabelecimento do 1.º registo (cabeçalho do email de boas-vindas)."""
+    registo = s.get(models.Registo, nr)
+    if registo is not None and registo.nome_alojamento:
+        return registo.nome_alojamento
+    return "teu Alojamento Local"
 
 
-def _bloco_selo_html(nrs: tuple[int, ...]) -> str:
-    """Lista de ligações ao selo público de cada registo (só o link — dados públicos)."""
-    itens = "".join(
-        f'<li><a href="{escape(_selo_url(nr))}">{escape(_selo_url(nr))}</a></li>' for nr in nrs
-    )
-    return (
-        "<p>O teu selo público <strong>CheckAL ✓ — AL Verificado</strong> "
-        "(para colares no anúncio):</p>"
-        f"<ul>{itens}</ul>"
-    )
+def _compor_boas_vindas(
+    s: Any, cliente: models.Cliente, nrs: tuple[int, ...], *, requer_atencao: bool
+) -> EmailRenderizado:
+    """Compõe o email de boas-vindas (branded, template WF2) a partir dos dados do pagante.
 
-
-def _bloco_fatura_html(cliente: models.Cliente) -> str:
-    """Ligação à fatura-recibo certificada já emitida (permalink guardado no cliente)."""
-    if not cliente.ix_permalink:
-        return ""
-    link = escape(cliente.ix_permalink)
-    return f'<p>A tua fatura-recibo certificada: <a href="{link}">{link}</a></p>'
-
-
-def _compor_email(
-    cliente: models.Cliente,
-    relatorios: list[RelatorioInicial],
-    nrs: tuple[int, ...],
-    *,
-    requer_atencao: bool,
-) -> tuple[str, str]:
-    """Compõe `(html, texto)` do email de boas-vindas a partir dos relatórios gerados.
-
-    Copy factual, PT-PT, sem inventar. O detalhe fica no PDF anexo; o corpo dá as boas-vindas,
-    liga à fatura e ao(s) selo(s), e — se algum detalhe ficou por confirmar — assinala a
-    ressalva sem afirmar cancelamento (G4).
+    Substitui o HTML ad-hoc: a copy/estilo/rodapé/opt-out vivem no template `boas_vindas`
+    (`app.emails.transacional`, sobre `app.emails.base`); aqui só se reúnem os DADOS — nome
+    do AL, selo(s) público(s), permalink da fatura-recibo já emitida e a ressalva do ponto
+    semi-manual (G4: nunca afirma "cancelado"). O Relatório Inicial segue em anexo (PDF).
     """
-    nome = escape(cliente.nome or "titular")
-    partes = [
-        f"<p>Olá {nome},</p>",
-        "<p>Obrigado por subscreveres o <strong>CheckAL</strong>. A partir de agora "
-        "vigiamos o registo RNAL, o seguro obrigatório e os regulamentos municipais do teu "
-        "Alojamento Local, e avisamos-te se algo mudar.</p>",
-        "<p>Em anexo segue o teu <strong>relatório inicial</strong> (PDF).</p>",
-    ]
-    if requer_atencao:
-        partes.append(
-            "<p>Há um detalhe do teu registo que ficamos a reconfirmar antes de tirar "
-            "conclusões; assim que o validarmos, avisamos-te. Nada a fazer da tua parte.</p>"
-        )
-    partes.append(_bloco_fatura_html(cliente))
-    if nrs:
-        partes.append(_bloco_selo_html(nrs))
-    partes.append(
-        '<p style="font-size:.85em;color:#6b7280">Isto é informação de monitorização a '
-        "partir de dados públicos do RNAL; não constitui aconselhamento jurídico.</p>"
+    selos = [_selo_url(nr) for nr in nrs]
+    return transacional.boas_vindas(
+        nome_al=_nome_al(s, nrs[0]),
+        nr_registo=str(nrs[0]),
+        url_selo=selos[0],
+        selos_extra=selos[1:],
+        url_fatura=cliente.ix_permalink or "",
+        requer_atencao=requer_atencao,
+        nome=cliente.nome or None,
+        email_destinatario=cliente.email or "",
     )
-    html = "\n".join(p for p in partes if p)
-
-    # Alternativa em texto simples: o texto de cada relatório + os links factuais.
-    linhas_txt: list[str] = [f"Olá {cliente.nome or 'titular'},", ""]
-    for rel in relatorios:
-        linhas_txt.append(rel.texto())
-        linhas_txt.append("")
-    if cliente.ix_permalink:
-        linhas_txt.append(f"Fatura-recibo: {cliente.ix_permalink}")
-    for nr in nrs:
-        linhas_txt.append(f"Selo público: {_selo_url(nr)}")
-    texto = "\n".join(linhas_txt)
-    return html, texto
 
 
 # ==========================================================================
@@ -288,14 +246,14 @@ def processar_onboarding(
             anexos.append({"filename": f"relatorio-checkal-{nr}.pdf", "conteudo": render_pdf(relatorio)})
 
         requer_atencao = bool(tarefas)
-        html, texto = _compor_email(cliente, relatorios, nrs, requer_atencao=requer_atencao)
+        email = _compor_boas_vindas(s, cliente, nrs, requer_atencao=requer_atencao)
 
         resultado_envio = enviar(
             para=cliente.email,
-            assunto=_assunto(requer_atencao),
-            html=html,
+            assunto=email.assunto,
+            html=email.html,
             anexos=anexos,
-            texto=texto,
+            texto=email.texto,
             idempotency_key=f"onboarding-{cliente_id}",
         )
         email_id = getattr(resultado_envio, "id", None)

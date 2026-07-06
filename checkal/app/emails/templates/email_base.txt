@@ -1,0 +1,12 @@
+CheckAL ✓
+
+{% block corpo %}{{ corpo_texto or '' }}{% endblock %}
+
+--
+{{ remetente_nome }} — serviço privado e independente de monitorização de Alojamento Local.
+Não somos, nem representamos, o Turismo de Portugal, o RNAL ou qualquer câmara municipal.
+{{ entidade_legal }} · {{ morada }} · Portugal
+
+Privacidade: {{ url_privacidade }}
+Termos: {{ url_termos }}
+Para deixares de receber estes emails, um clique: {{ url_optout }}

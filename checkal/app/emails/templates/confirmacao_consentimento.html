@@ -1,0 +1,41 @@
+{#
+  confirmacao_consentimento — double opt-in (Canal A). Confirma o email via
+  `checkal.pt/confirmar?token=` e REFLETE o consentimento GRANULAR dado no widget
+  (alertas do serviço vs ofertas/novidades) — a CNPD rejeita consentimento global
+  (LEGAL-PARECER §3). Só lista o que a pessoa efetivamente escolheu.
+#}
+{% extends 'email_base.html' %}
+{% block corpo %}
+<h1 style="margin:0 0 12px 0;font-family:{{ fonte }};font-size:22px;font-weight:800;letter-spacing:-0.01em;color:{{ cores.grafite }};">
+  Falta um passo: confirma que és tu.
+</h1>
+<p style="margin:0 0 14px 0;">
+  Olá{% if nome %} {{ nome }}{% endif %}, para ativarmos o teu pedido precisamos que confirmes o teu email —
+  é a garantia (a tua e a nossa) de que foste mesmo tu a inscreveres-te.
+</p>
+{% if consente_alertas or consente_ofertas %}
+<p style="margin:0 0 6px 0;color:{{ cores.texto_secundario }};font-size:14px;">Escolheste receber:</p>
+<ul style="margin:0 0 16px 0;padding-left:20px;color:{{ cores.grafite }};">
+  {% if consente_alertas %}
+  <li style="margin:0 0 6px 0;"><strong>Alertas do serviço</strong> — avisamos-te quando algo afeta o teu AL.</li>
+  {% endif %}
+  {% if consente_ofertas %}
+  <li style="margin:0 0 6px 0;"><strong>Ofertas e novidades</strong> do CheckAL.</li>
+  {% endif %}
+</ul>
+{% endif %}
+<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:8px 0 12px 0;">
+  <tr>
+    <td style="border-radius:10px;background:{{ cores.azul_acao }};">
+      <a href="{{ url_confirmar }}" style="display:inline-block;padding:13px 24px;font-family:{{ fonte }};font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">Confirmar o meu email</a>
+    </td>
+  </tr>
+</table>
+<p style="margin:0 0 14px 0;font-size:13px;color:{{ cores.texto_secundario }};">
+  Se o botão não funcionar, copia este endereço:<br>
+  <a href="{{ url_confirmar }}" style="color:{{ cores.azul_acao }};text-decoration:underline;">{{ url_confirmar }}</a>
+</p>
+<p style="margin:0;font-size:13px;color:{{ cores.texto_secundario }};">
+  Se não foste tu, ignora este email — sem esta confirmação, não te enviamos mais nada.
+</p>
+{% endblock %}

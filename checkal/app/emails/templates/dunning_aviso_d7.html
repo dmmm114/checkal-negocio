@@ -1,0 +1,11 @@
+{# D-7 — a cobrança é iminente; confirma que o cartão está válido. AUTOMACAO §5. #}
+{% extends 'email_base.html' %}
+{% import 'blocos_dunning.html' as db %}
+{% block assunto %}A tua renovação CheckAL é já a {{ data_renovacao }}{% endblock %}
+{% block corpo %}
+<p style="margin:0 0 14px 0;font-size:20px;font-weight:800;letter-spacing:-0.01em;color:{{ cores.grafite }};">A tua renovação é já a {{ data_renovacao }}</p>
+<p style="margin:0 0 14px 0;">Olá {{ nome }}, a tua subscrição «{{ plano_nome }}» do CheckAL renova a <strong>{{ data_renovacao }}</strong> — vamos cobrar <strong>{{ preco }}</strong> (IVA incluído) no método de pagamento em ficheiro.</p>
+<p style="margin:0 0 6px 0;">Confirma que o teu cartão está válido para não perderes a monitorização do teu Alojamento Local.</p>
+{{ db.botao(url_gerir, 'Confirmar método de pagamento') }}
+<p style="margin:18px 0 0 0;font-size:12px;line-height:1.6;color:{{ cores.texto_secundario }};">{{ disclaimer_faturacao }}</p>
+{% endblock %}

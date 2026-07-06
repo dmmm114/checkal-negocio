@@ -1,0 +1,18 @@
+{# D+3 / D+7 — a cobrança da renovação falhou; link para ATUALIZAR o cartão (Stripe/portal).
+   O passo (`passo` ∈ {"D+3","D+7"}) muda o assunto e o grau de urgência. AUTOMACAO §5. #}
+{% extends 'email_base.html' %}
+{% import 'blocos_dunning.html' as db %}
+{% block assunto %}{% if passo == 'D+7' %}Continuamos sem conseguir renovar o teu CheckAL{% else %}Não conseguimos renovar o teu CheckAL — atualiza o método de pagamento{% endif %}{% endblock %}
+{% block corpo %}
+{% if passo == 'D+7' %}
+<p style="margin:0 0 14px 0;font-size:20px;font-weight:800;letter-spacing:-0.01em;color:{{ cores.coral }};">Continuamos sem conseguir renovar</p>
+<p style="margin:0 0 14px 0;">Olá {{ nome }}, ainda não conseguimos cobrar a renovação da tua subscrição CheckAL (<strong>{{ preco }}</strong>). Se não for resolvido em breve, a monitorização do teu Alojamento Local será <strong>suspensa</strong>.</p>
+<p style="margin:0 0 6px 0;">Basta atualizares o teu método de pagamento para continuares protegido:</p>
+{% else %}
+<p style="margin:0 0 14px 0;font-size:20px;font-weight:800;letter-spacing:-0.01em;color:{{ cores.coral }};">Não conseguimos renovar o teu CheckAL</p>
+<p style="margin:0 0 14px 0;">Olá {{ nome }}, a cobrança da renovação da tua subscrição CheckAL (<strong>{{ preco }}</strong>) não foi bem-sucedida. Vamos voltar a tentar automaticamente nos próximos dias.</p>
+<p style="margin:0 0 6px 0;">Para não perderes a monitorização do teu Alojamento Local, atualiza o teu cartão:</p>
+{% endif %}
+{{ db.botao(url_gerir, 'Atualizar método de pagamento') }}
+<p style="margin:18px 0 0 0;font-size:12px;line-height:1.6;color:{{ cores.texto_secundario }};">{{ disclaimer_faturacao }}</p>
+{% endblock %}

@@ -1,0 +1,15 @@
+{#
+  Botão de ação (CTA) para os emails de dunning — table-based + CSS INLINE
+  (compat. cliente de email; Outlook não faz `padding` em <a>, daí o <td>).
+  Cor = azul-ação da marca (`cores.azul_acao`), fonte de sistema (`fonte`) — globais da base.
+  Uso:  {% import 'blocos_dunning.html' as db %}  {{ db.botao(url_gerir, 'Gerir subscrição') }}
+#}
+{% macro botao(url, texto) -%}
+<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:18px 0;">
+  <tr>
+    <td align="center" style="border-radius:10px;background:{{ cores.azul_acao }};">
+      <a href="{{ url }}" style="display:inline-block;padding:13px 24px;font-family:{{ fonte }};font-size:16px;font-weight:700;line-height:1;color:#ffffff;text-decoration:none;border-radius:10px;">{{ texto }}</a>
+    </td>
+  </tr>
+</table>
+{%- endmacro %}

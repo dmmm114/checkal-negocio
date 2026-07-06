@@ -65,13 +65,13 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
-from html import escape
 from typing import Any
 
 import app.config as config
 import app.db as db
 import app.models as models
 from app.alertas_estado import ORIGEM_EVENTO_REGISTO
+from app.emails import dunning as _emails_dunning
 from app.fulfillment import ESTADO_ATIVO, ESTADO_CANCELADO, ESTADO_DUNNING, PLANO_PADRAO
 
 __all__ = [
@@ -262,14 +262,8 @@ def _resumo_valor(s: Any, cliente: models.Cliente, inicio: date) -> str:
 
 
 # ==========================================================================
-#  Composição da copy (determinística, PT-PT, factual)
+#  Formatação dos dados de faturação (a copy/estilo vivem nos templates WF2)
 # ==========================================================================
-_DISCLAIMER = (
-    "Recebes este email porque tens uma subscrição CheckAL — é uma comunicação de "
-    "faturação da tua subscrição, não constitui aconselhamento jurídico."
-)
-
-
 def _euros(v: float) -> str:
     """Preço em euros, PT-PT (vírgula decimal; inteiro sem casas)."""
     if float(v).is_integer():
@@ -284,60 +278,6 @@ def _data_pt(d: date) -> str:
 def _gerir_url() -> str:
     """Ligação para o cliente gerir subscrição/método de pagamento (área de cliente)."""
     return config.SITE_URL
-
-
-def _compor(
-    passo: str, cliente: models.Cliente, renova: date, preco: float, plano_nome: str, resumo: str
-) -> tuple[str, str]:
-    """Devolve `(assunto, texto)` determinístico para o passo. Copy factual, sem inventar."""
-    nome = cliente.nome or "titular"
-    data = _data_pt(renova)
-    valor = _euros(preco)
-    gerir = _gerir_url()
-
-    if passo == PASSO_D30:
-        return (
-            f"A tua proteção CheckAL renova a {data}",
-            f"Olá {nome}, a tua subscrição «{plano_nome}» do CheckAL renova a {data}, "
-            f"por {valor} (IVA incluído). {resumo} Não precisas de fazer nada para "
-            f"continuares protegido. Para rever ou cancelar: {gerir}.",
-        )
-    if passo == PASSO_D7:
-        return (
-            f"A tua renovação CheckAL é já a {data}",
-            f"Olá {nome}, a tua subscrição «{plano_nome}» do CheckAL renova a {data} — "
-            f"vamos cobrar {valor} no método de pagamento em ficheiro. Confirma que o teu "
-            f"cartão está válido para não perderes a monitorização. Gerir: {gerir}.",
-        )
-    if passo == PASSO_D3:
-        return (
-            "Não conseguimos renovar o teu CheckAL — atualiza o método de pagamento",
-            f"Olá {nome}, a cobrança da renovação da tua subscrição CheckAL ({valor}) não "
-            f"foi bem-sucedida. Vamos voltar a tentar automaticamente nos próximos dias. "
-            f"Para não perderes a monitorização do teu AL, atualiza o teu cartão aqui: {gerir}.",
-        )
-    if passo == PASSO_D7_POS:
-        return (
-            "Continuamos sem conseguir renovar o teu CheckAL",
-            f"Olá {nome}, ainda não conseguimos cobrar a renovação da tua subscrição CheckAL "
-            f"({valor}). Se não for resolvido em breve, a monitorização do teu Alojamento "
-            f"Local será suspensa. Atualiza o teu método de pagamento aqui: {gerir}.",
-        )
-    # PASSO_D21 — email final (win-back)
-    return (
-        "O teu AL deixou de estar monitorizado pelo CheckAL",
-        f"Olá {nome}, como não conseguimos renovar a tua subscrição, a monitorização do teu "
-        "Alojamento Local foi suspensa e o teu selo público passa a «monitorização suspensa». "
-        f"Podes reativar quando quiseres — basta atualizares o pagamento aqui: {gerir}.",
-    )
-
-
-def _html(texto: str) -> str:
-    """Corpo HTML mínimo com o texto factual e o disclaimer de faturação no rodapé."""
-    return (
-        f"<p>{escape(texto)}</p>"
-        f'<p style="font-size:.85em;color:#6b7280">{escape(_DISCLAIMER)}</p>'
-    )
 
 
 # ==========================================================================
@@ -463,16 +403,29 @@ def _executar(
     if passo == PASSO_D30:
         resumo = _resumo_valor(s, cliente, _add_meses(renova, -meses))
 
-    assunto, texto = _compor(passo, cliente, renova, preco, plano_nome, resumo)
+    # Branded (templates WF2 de dunning): marca + rodapé legal + opt-out + disclaimer de
+    # faturação garantidos pela base; aqui só se reúnem os DADOS do ciclo (data, preço,
+    # resumo de valor, link de gestão). O dispatcher mapeia o passo → template certo.
+    email = _emails_dunning.render_passo(
+        passo,
+        nome=cliente.nome or "titular",
+        plano_nome=plano_nome,
+        data_renovacao=_data_pt(renova),
+        preco=_euros(preco),
+        url_gerir=_gerir_url(),
+        resumo_valor=resumo,
+        email_destinatario=cliente.email or "",
+        token_optout="",
+    )
 
     enviado = False
     if enviar is not None and cliente.email:
         enviar(
             para=cliente.email,
-            assunto=assunto,
-            html=_html(texto),
+            assunto=email.assunto,
+            html=email.html,
             anexos=(),
-            texto=texto,
+            texto=email.texto,
             idempotency_key=marcador,
         )
         enviado = True
@@ -481,7 +434,7 @@ def _executar(
         cliente_id=cliente.id,
         nr_registo=None,
         origem=marcador,
-        conteudo=texto,
+        conteudo=email.texto,
         canal="email",
         enviado_em=agora if enviado else None,
     ))

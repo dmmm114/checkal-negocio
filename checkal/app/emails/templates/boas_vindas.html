@@ -1,0 +1,49 @@
+{#
+  boas_vindas — o primeiro email do cliente (Canal A, Resend). Boas-vindas +
+  linha dos 3 checks + link do selo + nota do Relatório Inicial (PDF anexado
+  pelo onboarding). Copy: MARCA.md (micro-copy dos checks) + voz "inspetor amigo".
+  Assunto vem do ctx (transacional.ASSUNTO_BOAS_VINDAS); a base usa-o no pré-cabeçalho.
+#}
+{% extends 'email_base.html' %}
+{% block corpo %}
+<h1 style="margin:0 0 12px 0;font-family:{{ fonte }};font-size:22px;font-weight:800;letter-spacing:-0.01em;color:{{ cores.grafite }};">
+  Bem-vindo ao CheckAL{% if nome %}, {{ nome }}{% endif %}.
+</h1>
+<p style="margin:0 0 14px 0;">
+  A partir de hoje, o <strong>{{ nome_al }}</strong> (registo n.º {{ nr_registo }}) está sob vigilância —
+  e não tens de fazer nada. Vigiamos o teu registo, o teu seguro e o regulamento do teu concelho todas as semanas.
+</p>
+<p style="margin:16px 0;padding:12px 16px;background:{{ cores.fundo_frio }};border-radius:10px;font-weight:600;color:{{ cores.grafite }};">
+  Registo: check ✓ · Seguro: check ✓ · Regulamento: check ✓
+</p>
+<p style="margin:0 0 14px 0;">
+  Só te escrevemos quando algo te afeta — em português claro, com o que fazer a seguir. E no dia 1 de
+  cada mês recebes o relatório <strong>“Tudo em ordem”</strong>: a prova, todos os meses, de que estivemos a vigiar por ti.
+</p>
+<p style="margin:0 0 14px 0;">
+  O teu selo <strong>«AL Verificado»</strong> já está pronto — mostra-o no teu anúncio:<br>
+  <a href="{{ url_selo }}" style="color:{{ cores.azul_acao }};text-decoration:underline;">{{ url_selo }}</a>
+</p>
+{% if selos_extra %}
+<p style="margin:0 0 6px 0;">Tens mais do que um Alojamento Local — aqui ficam os selos dos restantes:</p>
+<ul style="margin:0 0 14px 20px;padding:0;color:{{ cores.grafite }};">
+  {% for s in selos_extra %}
+  <li style="margin:0 0 4px 0;"><a href="{{ s }}" style="color:{{ cores.azul_acao }};text-decoration:underline;">{{ s }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% if url_fatura %}
+<p style="margin:0 0 14px 0;">
+  A tua <strong>fatura-recibo certificada</strong>:<br>
+  <a href="{{ url_fatura }}" style="color:{{ cores.azul_acao }};text-decoration:underline;">{{ url_fatura }}</a>
+</p>
+{% endif %}
+{% if requer_atencao %}
+<p style="margin:0 0 14px 0;padding:12px 16px;background:{{ cores.fundo_frio }};border-left:4px solid {{ cores.ambar }};border-radius:8px;color:{{ cores.grafite }};">
+  Há um detalhe do teu registo que estamos a reconfirmar antes de tirar conclusões; assim que o validarmos, avisamos-te. Nada a fazer da tua parte.
+</p>
+{% endif %}
+<p style="margin:0 0 4px 0;color:{{ cores.texto_secundario }};font-size:14px;">
+  Em anexo segue o teu <strong>Relatório Inicial</strong> (PDF) com o retrato do teu AL à data de hoje.
+</p>
+{% endblock %}

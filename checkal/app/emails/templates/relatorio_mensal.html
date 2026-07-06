@@ -1,0 +1,37 @@
+{#
+  relatorio_mensal — a âncora anti-churn (dia 1 de cada mês). "✅ {mês}: o teu AL passou
+  no check". Estado verde "Tudo em ordem" + linha dos 3 checks + resumo do valor entregue
+  ("O teu escudo este mês" — COPY-VENDAS §5). NÃO é alerta: sem disclaimer de aconselhamento.
+#}
+{% extends 'email_base.html' %}
+{% import 'blocos.html' as blocos %}
+{% block corpo %}
+<h1 style="margin:0 0 12px 0;font-family:{{ fonte }};font-size:22px;font-weight:800;letter-spacing:-0.01em;color:{{ cores.grafite }};">
+  {{ mes }}: o teu AL passou no check ✓
+</h1>
+<p style="margin:0 0 12px 0;">
+  Olá{% if nome %} {{ nome }}{% endif %}, este mês o <strong>{{ nome_al }}</strong> continuou sob vigilância. Resultado:
+</p>
+{{ blocos.estado('verde', 'Tudo em ordem', 'O teu registo e o teu seguro continuam em dia.') }}
+<p style="margin:16px 0;padding:12px 16px;background:{{ cores.fundo_frio }};border-radius:10px;font-weight:600;color:{{ cores.grafite }};">
+  Registo: check ✓ · Seguro: check ✓ · Regulamento: check ✓
+</p>
+{% if resumo %}
+<p style="margin:0 0 14px 0;">{{ resumo }}</p>
+{% endif %}
+{% if n_analisadas is not none %}
+<p style="margin:0 0 14px 0;color:{{ cores.texto_secundario }};font-size:14px;">
+  O teu escudo este mês: analisámos {{ n_analisadas }} publicações regulatórias do teu concelho —
+  {{ n_relevantes or 0 }} exigiram a tua atenção. É isto que a tua subscrição paga: só te incomodamos quando é preciso.
+</p>
+{% endif %}
+{% if cta_url %}
+<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:20px 0 8px 0;">
+  <tr>
+    <td style="border-radius:10px;background:{{ cores.azul_acao }};">
+      <a href="{{ cta_url }}" style="display:inline-block;padding:13px 22px;font-family:{{ fonte }};font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">{{ cta_texto or 'Ver o meu relatório' }}</a>
+    </td>
+  </tr>
+</table>
+{% endif %}
+{% endblock %}

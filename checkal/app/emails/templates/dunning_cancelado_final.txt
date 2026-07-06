@@ -1,0 +1,12 @@
+{% extends 'email_base.txt' %}
+{% block corpo %}
+O teu AL deixou de estar monitorizado
+
+Olá {{ nome }}, como não conseguimos renovar a tua subscrição, a monitorização do teu Alojamento Local foi suspensa e o teu selo público passa a «monitorização suspensa».
+
+Podes reativar quando quiseres — basta atualizares o pagamento e voltamos a vigiar o teu registo, o seguro e o regulamento do teu concelho.
+
+Reativar a monitorização: {{ url_gerir }}
+
+{{ disclaimer_faturacao }}
+{% endblock %}

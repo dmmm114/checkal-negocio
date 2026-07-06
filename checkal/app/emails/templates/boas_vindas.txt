@@ -1,0 +1,31 @@
+{% extends 'email_base.txt' %}
+{% block corpo %}
+Bem-vindo ao CheckAL{% if nome %}, {{ nome }}{% endif %}.
+
+A partir de hoje, o {{ nome_al }} (registo n.º {{ nr_registo }}) está sob vigilância — e não tens de fazer nada. Vigiamos o teu registo, o teu seguro e o regulamento do teu concelho todas as semanas.
+
+Registo: check ✓ · Seguro: check ✓ · Regulamento: check ✓
+
+Só te escrevemos quando algo te afeta — em português claro, com o que fazer a seguir. E no dia 1 de cada mês recebes o relatório "Tudo em ordem": a prova, todos os meses, de que estivemos a vigiar por ti.
+
+O teu selo «AL Verificado» já está pronto — mostra-o no teu anúncio:
+{{ url_selo }}
+{% if selos_extra %}
+
+Tens mais do que um Alojamento Local — selos dos restantes:
+{% for s in selos_extra %}
+- {{ s }}
+{% endfor %}
+{% endif %}
+{% if url_fatura %}
+
+A tua fatura-recibo certificada:
+{{ url_fatura }}
+{% endif %}
+{% if requer_atencao %}
+
+Há um detalhe do teu registo que estamos a reconfirmar antes de tirar conclusões; assim que o validarmos, avisamos-te. Nada a fazer da tua parte.
+{% endif %}
+
+Em anexo segue o teu Relatório Inicial (PDF) com o retrato do teu AL à data de hoje.
+{% endblock %}

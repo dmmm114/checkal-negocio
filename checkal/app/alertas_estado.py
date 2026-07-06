@@ -42,11 +42,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime, timezone
-from html import escape
 from typing import Any
 
 import app.config as config
 import app.models as models
+from app.emails import transacional as _emails
 from app.rnal.diffing import (
     TIPO_ALTERADO,
     TIPO_DESAPARECIDO,
@@ -95,11 +95,19 @@ _ROTULOS_CAMPO: dict[str, str] = {
     "telemovel": "telemóvel",
 }
 
-# Disclaimer factual repetido em cada alerta (informação, não aconselhamento).
-_DISCLAIMER = (
-    "Isto é informação de monitorização a partir de dados públicos do RNAL; "
-    "não constitui aconselhamento jurídico."
-)
+# Mapa tipo de evento de registo → estado visual 🟢🟡🔴 do template `alerta_estado`.
+# `reapareceu` é boa notícia (verde); `alterado` pede revisão (âmbar); `desaparecido`
+# é o pior caso (coral) — mas NUNCA é enviado antes do FDS 5 (guarda de sequência).
+_ESTADO_POR_TIPO: dict[str, str] = {
+    TIPO_ALTERADO: "amarelo",
+    TIPO_REAPARECEU: "verde",
+    TIPO_DESAPARECIDO: "vermelho",
+}
+_TITULO_POR_TIPO: dict[str, str] = {
+    TIPO_ALTERADO: "Registo RNAL atualizado",
+    TIPO_REAPARECEU: "Registo RNAL voltou a constar",
+    TIPO_DESAPARECIDO: "Registo RNAL deixou de constar",
+}
 
 
 # ==========================================================================
@@ -174,14 +182,6 @@ def _compor(evento: models.EventoRegisto, nome: str, nr: int) -> tuple[str, str]
     )
 
 
-def _html(texto: str) -> str:
-    """Envolve o texto factual num corpo HTML mínimo, com o disclaimer no rodapé."""
-    return (
-        f"<p>{escape(texto)}</p>"
-        f'<p style="font-size:.85em;color:#6b7280">{escape(_DISCLAIMER)}</p>'
-    )
-
-
 # ==========================================================================
 #  Ponto de entrada
 # ==========================================================================
@@ -227,7 +227,7 @@ def gerar_alertas_estado(session: Any, *, enviar: Enviar) -> list[models.Alerta]
             for cliente in clientes:
                 criados.append(
                     _emitir(
-                        session, evento=evento, cliente=cliente, nr=nr,
+                        session, evento=evento, cliente=cliente, nr=nr, nome=nome,
                         assunto=assunto, texto=texto, agora=agora, enviar=enviar,
                     )
                 )
@@ -255,6 +255,7 @@ def _emitir(
     evento: models.EventoRegisto,
     cliente: models.Cliente,
     nr: int,
+    nome: str,
     assunto: str,
     texto: str,
     agora: datetime,
@@ -266,18 +267,30 @@ def _emitir(
     envia (retido para o FDS 5). `alterado`/`reapareceu` → envia e data `enviado_em`.
     Um cliente sem email nunca rebenta: persiste-se o alerta por enviar (o dono
     resolve-o no ponto semi-manual).
+
+    O email enviado é o template branded `alerta_estado` (marca + rodapé legal + opt-out
+    + disclaimer garantidos pela base); o `assunto` factual do módulo é preservado. A BD
+    guarda o `texto` determinístico como `conteudo` (fonte de verdade/auditoria).
     """
     retido = evento.tipo == TIPO_DESAPARECIDO
     pode_enviar = (not retido) and bool(cliente.email)
 
     enviado_em: datetime | None = None
     if pode_enviar:
+        email = _emails.alerta_estado(
+            nome_al=nome,
+            estado=_ESTADO_POR_TIPO.get(evento.tipo, "amarelo"),
+            assunto=assunto,
+            titulo=_TITULO_POR_TIPO.get(evento.tipo, "Atualização do teu Alojamento Local"),
+            corpo=texto,
+            email_destinatario=cliente.email or "",
+        )
         enviar(
             para=cliente.email,
-            assunto=assunto,
-            html=_html(texto),
+            assunto=email.assunto,
+            html=email.html,
             anexos=(),
-            texto=texto,
+            texto=email.texto,
             idempotency_key=f"alerta-{evento.id}-{cliente.id}",
         )
         enviado_em = agora

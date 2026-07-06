@@ -1,0 +1,7 @@
+{% extends 'email_base.txt' %}
+{% block corpo %}{{ disclaimer }}
+
+{{ corpo_texto }}
+
+--
+{{ nota_rgpd }}{% endblock %}

@@ -1,0 +1,15 @@
+{# D-30 — aviso de renovação + resumo do valor entregue (anti-churn). AUTOMACAO §5. #}
+{% extends 'email_base.html' %}
+{% import 'blocos_dunning.html' as db %}
+{% block assunto %}A tua proteção CheckAL renova a {{ data_renovacao }}{% endblock %}
+{% block corpo %}
+<p style="margin:0 0 14px 0;font-size:20px;font-weight:800;letter-spacing:-0.01em;color:{{ cores.grafite }};">A tua proteção renova a {{ data_renovacao }}</p>
+<p style="margin:0 0 14px 0;">Olá {{ nome }}, a tua subscrição «{{ plano_nome }}» do CheckAL renova automaticamente a <strong>{{ data_renovacao }}</strong>, por <strong>{{ preco }}</strong> (IVA incluído).</p>
+{% if resumo_valor %}
+<p style="margin:0 0 14px 0;">{{ resumo_valor }}</p>
+{% endif %}
+<p style="margin:0 0 6px 0;">Não precisas de fazer nada para continuares protegido — o teu registo no RNAL, o seguro obrigatório e o regulamento do teu concelho seguem sob vigilância semanal.</p>
+<p style="margin:14px 0 0 0;">Para rever ou cancelar a qualquer momento:</p>
+{{ db.botao(url_gerir, 'Gerir a minha subscrição') }}
+<p style="margin:18px 0 0 0;font-size:12px;line-height:1.6;color:{{ cores.texto_secundario }};">{{ disclaimer_faturacao }}</p>
+{% endblock %}

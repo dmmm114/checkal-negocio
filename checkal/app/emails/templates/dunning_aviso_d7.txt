@@ -1,0 +1,12 @@
+{% extends 'email_base.txt' %}
+{% block corpo %}
+A tua renovação é já a {{ data_renovacao }}
+
+Olá {{ nome }}, a tua subscrição «{{ plano_nome }}» do CheckAL renova a {{ data_renovacao }} — vamos cobrar {{ preco }} (IVA incluído) no método de pagamento em ficheiro.
+
+Confirma que o teu cartão está válido para não perderes a monitorização do teu Alojamento Local.
+
+Confirmar método de pagamento: {{ url_gerir }}
+
+{{ disclaimer_faturacao }}
+{% endblock %}

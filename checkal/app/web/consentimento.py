@@ -34,7 +34,6 @@ from __future__ import annotations
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
-from html import escape
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -45,6 +44,7 @@ import app.db as db
 import app.envio as envio
 import app.models as models
 from app.compliance.optout import normalizar_email
+from app.emails import transacional as _emails
 from app.web.marca import templates
 
 router = APIRouter()
@@ -160,28 +160,15 @@ def _url_confirmacao(token: str) -> str:
     return f"{config.BASE_URL}/confirmar?token={token}"
 
 
-def _email_confirmacao_html(token: str) -> str:
-    """HTML provisório do double opt-in (substituído pelo template WF2 no wiring).
+def _disparar_double_opt_in(
+    email: str, token: str, *, alertas: bool, ofertas: bool
+) -> None:
+    """Dispara o email de confirmação (template branded WF2) pelo seam LIVE-GATED.
 
-    Copy factual, PT-PT, voz "inspetor amigo". O `token` é URL-safe (secrets), mas
-    escapa-se na mesma por defesa em profundidade (autoescape só cobre o Jinja).
-    """
-    url = escape(_url_confirmacao(token))
-    return (
-        "<p>Olá,</p>"
-        "<p>Falta um passo para o <strong>CheckAL</strong> começar a vigiar o teu "
-        "Alojamento Local. Confirma que és tu ao carregar na ligação:</p>"
-        f'<p><a href="{url}">Confirmar a minha inscrição ✓</a></p>'
-        f"<p>Se a ligação não abrir, copia este endereço: {url}</p>"
-        "<p>Se não foste tu a pedir isto, ignora este email — nada acontece sem esta "
-        "confirmação.</p>"
-        '<p style="font-size:.85em;color:#475569">CheckAL — serviço privado e '
-        "independente de monitorização de Alojamento Local · Cosmic Oasis, Lda.</p>"
-    )
-
-
-def _disparar_double_opt_in(email: str, token: str) -> None:
-    """Dispara o email de confirmação pelo seam LIVE-GATED, sem nunca rebentar o request.
+    Usa `app.emails.transacional.confirmacao_consentimento` — marca + rodapé legal +
+    opt-out garantidos pela base — e REFLETE o consentimento **granular** dado no widget
+    (alertas do serviço / ofertas), como exige a CNPD (LEGAL-PARECER §3). Preserva o seam
+    e a ligação `/confirmar?token=` (via `config.BASE_URL`).
 
     `envio.obter_enviador()` devolve `None` sob modo de teste ou sem chave — nesse caso
     não há para onde enviar e simplesmente não se envia (o Lead já ficou gravado com a
@@ -192,10 +179,17 @@ def _disparar_double_opt_in(email: str, token: str) -> None:
     if enviar is None:
         return
     try:
+        email_render = _emails.confirmacao_consentimento(
+            url_confirmar=_url_confirmacao(token),
+            consente_alertas=alertas,
+            consente_ofertas=ofertas,
+            email_destinatario=email,
+        )
         enviar(
             para=email,
-            assunto="Confirma a tua inscrição no CheckAL ✓",
-            html=_email_confirmacao_html(token),
+            assunto=email_render.assunto,
+            html=email_render.html,
+            texto=email_render.texto,
             idempotency_key=f"double-opt-in-{token}",
         )
     except Exception:
@@ -325,7 +319,9 @@ def inscrever(
     # Double opt-in só para um Lead NOVO — LIVE-GATED, best-effort, nunca rebenta o
     # request (o reutilizado já recebeu a confirmação; reenviá-la seria o bombing).
     if token is not None:
-        _disparar_double_opt_in(email_limpo, token)
+        _disparar_double_opt_in(
+            email_limpo, token, alertas=quer_alertas, ofertas=quer_ofertas
+        )
 
     # 303 See Other: após um POST, o browser segue com GET para /obrigado (evita reenvio).
     return RedirectResponse(url="/obrigado", status_code=303)

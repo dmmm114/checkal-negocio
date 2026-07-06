@@ -52,10 +52,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from html import escape
 from typing import Any
 
 import app.models as models
+from app.emails import transacional
 from app.ia import triagem as _triagem
 from app.ia.alerta import gerar_alerta
 
@@ -83,12 +83,6 @@ _TRIAGEM_PERSIST: dict[str, str] = {
 
 # Estado de cliente que NÃO recebe alertas (assinatura terminada).
 _ESTADO_CANCELADO = "cancelado"
-
-# Disclaimer factual repetido em cada alerta (informação, não aconselhamento — LEGAL.md).
-_DISCLAIMER = (
-    "Isto é informação a partir de fontes públicas (Diário da República); não constitui "
-    "aconselhamento jurídico."
-)
 
 # Assinatura do enviador injetado (só para leitura; não impõe verificação).
 Enviar = Callable[..., Any]
@@ -158,15 +152,9 @@ def _assunto(registo: models.Registo) -> str:
     return "CheckAL: novo documento regulatório que pode afetar o teu AL"
 
 
-def _html(conteudo: str, url_fonte: str) -> str:
-    """Envolve o alerta num corpo HTML mínimo: texto + link da fonte + disclaimer."""
-    partes = [f"<p>{escape(conteudo)}</p>"]
-    if url_fonte:
-        partes.append(f'<p><a href="{escape(url_fonte)}">{escape(url_fonte)}</a></p>')
-    partes.append(
-        f'<p style="font-size:.85em;color:#6b7280">{escape(_DISCLAIMER)}</p>'
-    )
-    return "".join(partes)
+def _nome_al(registo: models.Registo) -> str:
+    """Nome público do estabelecimento do cliente (cabeçalho do alerta), ou rótulo pelo nº."""
+    return (getattr(registo, "nome_alojamento", None) or "").strip() or f"nº {registo.nr_registo}"
 
 
 # ==========================================================================
@@ -245,12 +233,25 @@ def correr_pipeline(
                 enviado_em=None,
             )
             if enviar is not None and cliente.email:
+                # Branded (template WF2 `alerta_estado`): marca + rodapé legal + opt-out +
+                # disclaimer garantidos pela base; o corpo é a prosa JÁ validada da IA (só
+                # embrulhada — anti-alucinação) e a fonte citada vai também no CTA.
+                email = transacional.alerta_estado(
+                    nome_al=_nome_al(registo),
+                    estado="amarelo",
+                    assunto=_assunto(registo),
+                    titulo="Novo documento regulatório",
+                    corpo=gerado.conteudo,
+                    cta_texto="Ler o documento oficial",
+                    cta_url=gerado.url_fonte,
+                    email_destinatario=cliente.email or "",
+                )
                 enviar(
                     para=cliente.email,
-                    assunto=_assunto(registo),
-                    html=_html(gerado.conteudo, gerado.url_fonte),
+                    assunto=email.assunto,
+                    html=email.html,
                     anexos=(),
-                    texto=gerado.conteudo,
+                    texto=email.texto,
                     idempotency_key=f"reg-{evento.id}-{registo.nr_registo}",
                 )
                 alerta.enviado_em = agora

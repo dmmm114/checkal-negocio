@@ -1,0 +1,29 @@
+{#
+  alerta_estado — o PRODUTO (Canal A). Estado 🟢/🟡/🔴 (macro `blocos.estado`) + corpo
+  determinístico OU da camada IA (FDS4, apenas embrulhado — anti-alucinação) + disclaimer
+  "informação, não aconselhamento jurídico" (parecer §7) + CTA opcional. Assunto conforme
+  MARCA.md, calculado em `transacional.assunto_alerta` e passado no ctx.
+#}
+{% extends 'email_base.html' %}
+{% import 'blocos.html' as blocos %}
+{% block corpo %}
+<h1 style="margin:0 0 4px 0;font-family:{{ fonte }};font-size:21px;font-weight:800;letter-spacing:-0.01em;color:{{ cores.grafite }};">
+  O teu AL «{{ nome_al }}» {{ estados[estado].rotulo }}
+</h1>
+{{ blocos.estado(estado, titulo, '') }}
+{% for par in corpo_paragrafos %}
+<p style="margin:0 0 14px 0;">{{ par }}</p>
+{% endfor %}
+{% if cta_url %}
+<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:20px 0 8px 0;">
+  <tr>
+    <td style="border-radius:10px;background:{{ cores.azul_acao }};">
+      <a href="{{ cta_url }}" style="display:inline-block;padding:13px 22px;font-family:{{ fonte }};font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">{{ cta_texto or 'Ver o meu AL' }}</a>
+    </td>
+  </tr>
+</table>
+{% endif %}
+<p style="margin:18px 0 0 0;padding-top:12px;border-top:1px solid #E2E8F0;font-size:12px;line-height:1.55;color:{{ cores.texto_secundario }};">
+  {{ disclaimer }}
+</p>
+{% endblock %}

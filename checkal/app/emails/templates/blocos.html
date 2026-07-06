@@ -1,0 +1,18 @@
+{#
+  Blocos reutilizáveis dos estados 🟢🟡🔴 (SPEC-FASE1-EMAILS §base).
+  Uso nos templates concretos:
+    {% import 'blocos.html' as blocos %}
+    {{ blocos.estado('vermelho', 'Registo RNAL', 'cancelado em 2026') }}
+  Emoji + cor canónica vêm dos globais `estados`/`cores` (fonte única em app.emails.base).
+#}
+{% macro estado(tipo, titulo, texto='') -%}
+{%- set e = estados[tipo] -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:12px 0;">
+  <tr>
+    <td style="padding:14px 16px;border-radius:10px;background:{{ cores.fundo_frio }};border-left:4px solid {{ e.cor }};font-family:{{ fonte }};">
+      <strong style="color:{{ e.cor }};font-size:16px;">{{ e.emoji }} {{ titulo }}</strong>
+      {% if texto %}<div style="margin-top:6px;color:{{ cores.grafite }};font-size:15px;line-height:1.55;">{{ texto }}</div>{% endif %}
+    </td>
+  </tr>
+</table>
+{%- endmacro %}

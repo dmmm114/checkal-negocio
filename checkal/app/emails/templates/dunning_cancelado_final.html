@@ -1,0 +1,11 @@
+{# D+21 — cancelado: monitorização suspensa + porta de reativação. O melhor win-back. AUTOMACAO §5. #}
+{% extends 'email_base.html' %}
+{% import 'blocos_dunning.html' as db %}
+{% block assunto %}O teu AL deixou de estar monitorizado pelo CheckAL{% endblock %}
+{% block corpo %}
+<p style="margin:0 0 14px 0;font-size:20px;font-weight:800;letter-spacing:-0.01em;color:{{ cores.grafite }};">O teu AL deixou de estar monitorizado</p>
+<p style="margin:0 0 14px 0;">Olá {{ nome }}, como não conseguimos renovar a tua subscrição, a monitorização do teu Alojamento Local foi <strong>suspensa</strong> e o teu selo público passa a «monitorização suspensa».</p>
+<p style="margin:0 0 6px 0;">Podes reativar quando quiseres — basta atualizares o pagamento e voltamos a vigiar o teu registo, o seguro e o regulamento do teu concelho:</p>
+{{ db.botao(url_gerir, 'Reativar a monitorização') }}
+<p style="margin:18px 0 0 0;font-size:12px;line-height:1.6;color:{{ cores.texto_secundario }};">{{ disclaimer_faturacao }}</p>
+{% endblock %}

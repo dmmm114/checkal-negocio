@@ -1,0 +1,20 @@
+{% extends 'email_base.txt' %}
+{% block corpo %}
+{% if passo == 'D+7' %}
+Continuamos sem conseguir renovar
+
+Olá {{ nome }}, ainda não conseguimos cobrar a renovação da tua subscrição CheckAL ({{ preco }}). Se não for resolvido em breve, a monitorização do teu Alojamento Local será suspensa.
+
+Basta atualizares o teu método de pagamento para continuares protegido.
+{% else %}
+Não conseguimos renovar o teu CheckAL
+
+Olá {{ nome }}, a cobrança da renovação da tua subscrição CheckAL ({{ preco }}) não foi bem-sucedida. Vamos voltar a tentar automaticamente nos próximos dias.
+
+Para não perderes a monitorização do teu Alojamento Local, atualiza o teu cartão.
+{% endif %}
+
+Atualizar método de pagamento: {{ url_gerir }}
+
+{{ disclaimer_faturacao }}
+{% endblock %}
