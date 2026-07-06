@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{# MINUTA — a validar por advogado/EPD antes de publicar. Placeholders [NIPC]/[morada]
+   e [data] bloqueiam a publicação até haver dados reais e revisão jurídica. #}
 
 {% block title %}Termos e Condições — {{ marca.nome }}{% endblock %}
 {% block meta %}
@@ -14,59 +16,85 @@
       aceitas estes termos. O {{ marca.nome }} é um serviço privado e independente, sem
       qualquer vínculo ao Turismo de Portugal, ao RNAL ou a câmaras municipais.</p>
 
-    <h2>1. Natureza do serviço</h2>
-    <p>O {{ marca.nome }} presta um serviço de <strong>informação e monitorização</strong> com
-      base em fontes públicas (RNAL, Diário da República, regulamentos municipais). Os alertas
-      interpretados por IA são auxiliares informativos.</p>
+    <h2>1. Objeto</h2>
+    <p>Estes termos regulam a subscrição e o uso do {{ marca.nome }}, um serviço prestado por
+      <strong>Cosmic Oasis, Lda.</strong> (NIPC <strong>[NIPC]</strong>, sede em
+      <strong>[morada]</strong>, Portugal). O serviço consiste em monitorizar fontes públicas
+      relativas ao teu Alojamento Local (registo RNAL, seguro obrigatório e regulamentos
+      municipais) e enviar-te alertas quando algo o afeta.</p>
+
+    <h2>2. Natureza do serviço — ferramenta informativa</h2>
+    <p>O {{ marca.nome }} é uma <strong>ferramenta de informação e monitorização</strong> baseada
+      em fontes públicas (RNAL, Diário da República, regulamentos municipais). Os alertas,
+      incluindo os redigidos com apoio de IA, são <strong>auxiliares informativos</strong> de
+      caráter geral.</p>
     <p class="estado estado--atencao" style="margin: .5rem 0;">
       Isto é informação, não aconselhamento jurídico.
     </p>
-    <p>O serviço <strong>não presta aconselhamento jurídico</strong> nem substitui a consulta a
-      advogado, solicitador ou contabilista. Recomendamos que confirmes com o teu profissional
-      antes de agir.</p>
+    <p>O serviço <strong>não presta aconselhamento jurídico</strong>, não interpreta a lei para o
+      teu caso concreto e não substitui a consulta a advogado, solicitador ou contabilista.
+      Fornece informação genérica e monitorização de estado; qualquer decisão sobre a tua
+      situação é tua. Recomendamos que confirmes com o teu profissional antes de agir.</p>
 
-    <h2>2. Sem garantia de resultado</h2>
-    <p>O serviço não garante a manutenção do teu registo de AL, a validade do seguro nem a tua
-      conformidade legal — essas obrigações são e permanecem tuas, enquanto titular.</p>
+    <h2>3. Sem garantia de conformidade nem de resultado</h2>
+    <p>O {{ marca.nome }} <strong>não garante</strong> a tua conformidade legal, a manutenção do
+      teu registo de AL nem a validade do teu seguro — essas obrigações são e permanecem
+      <strong>tuas</strong>, enquanto titular. O serviço ajuda-te a acompanhá-las, mas não as
+      cumpre por ti nem certifica que estás conforme.</p>
 
-    <h2>3. Dependência de fontes de terceiros</h2>
+    <h2>4. Dependência de fontes de terceiros</h2>
     <p>A deteção depende da disponibilidade e exatidão das fontes públicas. A indisponibilidade
       da API do Turismo de Portugal ou um erro nos dados de origem não constitui incumprimento
       do {{ marca.nome }}, que se obriga a diligenciar meios alternativos.</p>
 
-    <h2>4. Prazo de deteção (SLA)</h2>
+    <h2>5. Prazo de deteção (SLA)</h2>
     <p>Alertamos-te <strong>até 7 dias</strong> após uma alteração se tornar detetável nas
-      fontes públicas que monitorizamos. Não prometemos tempo real.</p>
+      fontes públicas que monitorizamos. Não prometemos tempo real nem alerta no próprio dia.</p>
 
-    <h2>5. Limitação de responsabilidade</h2>
-    <p>Na medida máxima permitida por lei, a nossa <strong>responsabilidade</strong> total fica
-      limitada ao valor que pagaste nos 12 meses anteriores ao facto, excluindo lucros cessantes
-      e danos indiretos. Esta limitação não afasta a responsabilidade por dolo ou negligência
-      grosseira, nem os direitos que a lei do consumo te garante de forma imperativa.</p>
+    <h2>6. Limitação de responsabilidade</h2>
+    <p>Respondemos pelos danos que causarmos por incumprimento culposo, nos termos gerais da lei.
+      Na medida — e <strong>apenas</strong> na medida — em que a lei o permite, a nossa
+      responsabilidade por <strong>negligência leve</strong> e <strong>danos patrimoniais</strong>
+      fica limitada de forma proporcional ao valor que pagaste nos 12 meses anteriores ao facto,
+      excluindo lucros cessantes e danos indiretos.</p>
+    <p>Esta limitação <strong>não exclui nem reduz</strong>, em caso algum, a nossa
+      responsabilidade por <strong>dolo</strong>, por <strong>negligência grave</strong>, por
+      <strong>danos a pessoas</strong> (vida, integridade física ou saúde), nem os direitos que a
+      lei do consumo te garante de forma imperativa (DL 446/85, Lei 24/96 e DL 84/2021). Se
+      alguma parte desta cláusula for tida por abusiva ou inválida, o restante mantém-se e aplica-se
+      o regime legal supletivo.</p>
+    <p>A tua proteção real não é um teto de responsabilidade: a Cosmic Oasis, Lda. mantém (ou
+      contrata antes de escalar) um <strong>seguro de responsabilidade civil profissional (E&amp;O)</strong>
+      para cobrir eventuais danos decorrentes do serviço.</p>
 
-    <h2>6. Preços e pagamento</h2>
+    <h2>7. Preços e pagamento</h2>
     <p>Os preços constam da página de <a href="{{ marca.nav.precos }}">Preços</a> e são
       apresentados <strong>com IVA incluído</strong>. O pagamento é feito à cabeça pelo período
       contratado (anual ou trienal).</p>
 
-    <h2>7. Renovação automática</h2>
+    <h2>8. Renovação automática</h2>
     <p>A subscrição renova automaticamente por igual período. Avisamos-te <strong>30 dias
       antes</strong> de cada renovação, com o preço, a data e um link de cancelamento. Podes
       cancelar gratuitamente, pelo mesmo meio da contratação, com efeito até ao dia da renovação.</p>
 
-    <h2>8. Livre resolução e garantia</h2>
+    <h2>9. Livre resolução e garantia</h2>
     <p>Tens <strong>14 dias</strong> de livre resolução, nos termos do DL 24/2014 (contratos à
       distância). Como o serviço inicia de imediato a teu pedido, o reembolso é proporcional se
       resolveres dentro desse prazo. Acresce a nossa <strong>garantia de 30 dias</strong>:
       se não vires valor, devolvemos 100% — sem perguntas.</p>
 
-    <h2>9. Lei aplicável e resolução de litígios</h2>
+    <h2>10. Proteção de dados</h2>
+    <p>O tratamento dos teus dados pessoais rege-se pela nossa
+      <a href="{{ marca.nav.privacidade }}">Política de Privacidade</a>, que faz parte integrante
+      destes termos.</p>
+
+    <h2>11. Lei aplicável e resolução de litígios</h2>
     <p>Aplica-se a lei portuguesa. Em caso de litígio de consumo, podes recorrer a uma entidade
       de Resolução Alternativa de Litígios (RAL) e à plataforma europeia de resolução de litígios
       em linha (ODR). Dispomos de <strong>Livro de Reclamações Eletrónico</strong> em
       <a href="https://www.livroreclamacoes.pt" rel="noopener">livroreclamacoes.pt</a>.</p>
 
-    <h2>10. Identificação e contacto</h2>
+    <h2>12. Identificação e contacto</h2>
     <p>O {{ marca.nome }} é um serviço de <strong>Cosmic Oasis, Lda.</strong>, NIPC
       <strong>[NIPC]</strong>, com sede em <strong>[morada]</strong>, Portugal. Contacto:
       <a href="mailto:{{ email_privacidade }}">{{ email_privacidade }}</a>. Consulta a
