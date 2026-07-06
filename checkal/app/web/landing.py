@@ -23,6 +23,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
+from app.web import consentimento
 from app.web.marca import templates
 
 router = APIRouter()
@@ -36,8 +37,20 @@ def home(request: Request) -> HTMLResponse:
     Renderiza `landing.html` com os globais da marca (`marca.contexto_base()`) já
     injetados no ambiente Jinja partilhado — hero, widget de verificação gratuita,
     "como funciona", preços, confiança, FAQ e CTA. Não consulta a BD.
+
+    Os labels dos DOIS checkboxes de consentimento (granular — parecer RGPD §3) vêm
+    das constantes canónicas de `app.web.consentimento`: a prova gravada é EXATAMENTE
+    o texto mostrado (fecha o drift entre landing e a prova — achado do red-team).
     """
-    return templates.TemplateResponse(request=request, name="landing.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="landing.html",
+        context={
+            "consentimento_alertas_texto": consentimento.CONSENTIMENTO_ALERTAS_TEXTO,
+            "consentimento_ofertas_texto": consentimento.CONSENTIMENTO_OFERTAS_TEXTO,
+            "consentimento_responsavel": consentimento.CONSENTIMENTO_RESPONSAVEL,
+        },
+    )
 
 
 @router.get("/saude")

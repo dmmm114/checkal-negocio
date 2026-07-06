@@ -91,10 +91,26 @@ def test_form_consentimento_para_inscrever(client):
     assert 'method="post"' in html
     assert 'type="email"' in html                       # campo de email
     assert 'type="checkbox"' in html                    # checkbox de consentimento
-    assert 'name="consentimento"' in html
-    # checkbox NÃO pré-marcada (consent-first): sem atributo `checked`
+    # GRANULAR (CNPD): dois consentimentos INDEPENDENTES, nenhum pré-marcado
+    assert 'name="consent_alertas"' in html
+    assert 'name="consent_ofertas"' in html
+    # nenhuma checkbox pré-marcada (consent-first): sem atributo `checked`
     assert "checked" not in html
     assert "/privacidade" in html                       # o consentimento liga à política
+
+
+def test_consentimento_granular_renderiza_texto_canonico(client):
+    # a prova gravada TEM de ser exatamente o texto mostrado: os labels renderizam
+    # as constantes canónicas de app.web.consentimento (fecha o drift do red-team)
+    from app.web import consentimento
+
+    html = client.get("/").text
+    assert consentimento.CONSENTIMENTO_ALERTAS_TEXTO in html
+    assert consentimento.CONSENTIMENTO_OFERTAS_TEXTO in html
+    # identidade do responsável junto aos checkboxes (RGPD art. 13.º)
+    assert "Cosmic Oasis, Lda. — CheckAL" in html
+    # NÃO afirmar a base de publicidade do email (LEGAL-PARECER §2/§5 — por confirmar)
+    assert "art. 10" not in html
 
 
 def test_widget_js_e_anti_xss(client):

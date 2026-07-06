@@ -180,6 +180,16 @@ BREAKER_PCT_CONCELHO = 0.03          # >3% da base do concelho desaparecida → 
 CACHE_TTL_S = 60
 
 # ==========================================================================
+#  FASE 1 — funil consent-first: conservação de dados (parecer RGPD §5)
+# ==========================================================================
+# Prospects que NUNCA interagem apagam-se ao fim deste prazo. O parecer reviu o
+# horizonte de 12 → 6 meses (mais seguro). A **lista de supressão** (`optouts`) NÃO
+# cai nesta regra: conserva-se à parte e por mais tempo, como prova de que a oposição
+# é honrada — a limpeza periódica de leads inativos (a agendar) usa esta constante e
+# NUNCA toca `optouts`.
+CONSERVACAO_PROSPECT_MESES = 6
+
+# ==========================================================================
 #  FDS 5 — fiabilidade: observabilidade, suporte IMAP, escalação, backups
 # ==========================================================================
 # Aditivo (AUTOMACAO.md §6). Todos os SEGREDOS (chaves/tokens/passwords/hosts)

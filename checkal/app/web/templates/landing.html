@@ -91,13 +91,23 @@
             <input type="email" id="insc-email" name="email" required
                    autocomplete="email" placeholder="tu@exemplo.pt">
           </div>
-          <div class="campo consentimento">
-            <input type="checkbox" id="insc-consent" name="consentimento" value="1">
-            <label for="insc-consent">Autorizo o CheckAL a enviar-me por email o relatório do
-              meu AL e alertas quando algo o afetar. Posso sair a qualquer momento em
-              <a href="/remover">checkal.pt/remover</a>. Ver a
-              <a href="/privacidade">Política de Privacidade</a>.</label>
-          </div>
+          {# Consentimento GRANULAR (parecer RGPD §3 — CNPD): dois consentimentos
+             INDEPENDENTES, nenhum pré-marcado, nenhum condicionado ao relatório. Os
+             labels renderizam o TEXTO CANÓNICO (app.web.consentimento) — a prova
+             gravada é EXATAMENTE o que aqui se mostra. Só `consent_alertas` é o gate. #}
+          <fieldset class="consentimentos" style="border: 0; padding: 0; margin: 0; display: grid; gap: .75rem;">
+            <legend class="nota" style="padding: 0; margin-bottom: .35rem;">Responsável pelo
+              tratamento: <strong>{{ consentimento_responsavel }}</strong>. Consulta a
+              <a href="/privacidade">Política de Privacidade</a>.</legend>
+            <div class="campo consentimento">
+              <input type="checkbox" id="insc-consent-alertas" name="consent_alertas" value="1">
+              <label for="insc-consent-alertas">{{ consentimento_alertas_texto }}</label>
+            </div>
+            <div class="campo consentimento">
+              <input type="checkbox" id="insc-consent-ofertas" name="consent_ofertas" value="1">
+              <label for="insc-consent-ofertas">{{ consentimento_ofertas_texto }}</label>
+            </div>
+          </fieldset>
           <button type="submit" class="btn btn--check btn--grande btn--bloco">Enviar-me o relatório</button>
         </form>
       </div>

@@ -289,6 +289,15 @@ class Lead(Base):
     + a versão que o titular viu e aceitou), `consentimento_em` (quando) e `ip` (de
     onde). Assim, perante a CNPD, prova-se *o quê*, *quando* e *de onde* se consentiu.
 
+    **Consentimento GRANULAR (parecer RGPD §3 — exigência da CNPD):** dois
+    consentimentos INDEPENDENTES, nenhum condicionado ao outro nem ao relatório
+    gratuito — `consent_alertas` (comunicações do serviço: relatório + alertas do AL
+    e do concelho) e `consent_ofertas` (marketing: novidades/ofertas comerciais). A
+    CNPD rejeita consentimento global para finalidades distintas, por isso cada um se
+    regista em separado; o Lead nasce com `consent_alertas` (o valor do serviço) e
+    `consent_ofertas` é extra opcional. `consentimento_texto_versao` continua a ser a
+    prova textual (regista o texto EXATO de cada finalidade aceite).
+
     Fluxo de estado (double opt-in): nasce `'pendente'`; o email de confirmação leva
     `token_confirmacao` e a ligação `/confirmar?token=`; ao clicar passa a
     `'confirmado'`. O opt-out (`/remover`) leva-o a `'removido'`. O `token_confirmacao`
@@ -305,6 +314,9 @@ class Lead(Base):
     # O AL que o interessado verificou no widget (contexto; opcional — pode inscrever-se sem verificar).
     nr_registo: Mapped[int | None] = mapped_column(Integer)
     concelho: Mapped[str | None] = mapped_column(Text)
+    # --- Consentimento GRANULAR (parecer RGPD §3): duas finalidades independentes ---
+    consent_alertas: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    consent_ofertas: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # --- PROVA de consentimento (RGPD art. 7/1): texto+versão, quando e de onde ---
     consentimento_texto_versao: Mapped[str | None] = mapped_column(Text)
     consentimento_em: Mapped[datetime | None] = mapped_column(_TS)

@@ -33,16 +33,18 @@ from __future__ import annotations
 
 import re
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from html import escape
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import func
 
 import app.config as config
 import app.db as db
 import app.envio as envio
 import app.models as models
+from app.compliance.optout import normalizar_email
 from app.web.marca import templates
 
 router = APIRouter()
@@ -51,19 +53,50 @@ roteador = router  # alias PT, para montagem por qualquer um dos nomes
 # ==========================================================================
 #  Texto e versão do consentimento — a PROVA que se grava (RGPD art. 7/1)
 # ==========================================================================
-# A versão sobe sempre que o texto mudar, para que cada Lead aponte para a redação
-# EXATA que o titular aceitou. Grava-se o texto versionado inteiro (auto-descritivo).
-CONSENTIMENTO_VERSAO = "2026-07-05"
-CONSENTIMENTO_TEXTO = (
+# CONSENTIMENTO GRANULAR (parecer RGPD §3 — exigência da CNPD): duas finalidades
+# INDEPENDENTES, nenhuma pré-marcada, nenhuma condicionada ao relatório gratuito.
+# Estas constantes são a FONTE ÚNICA (fecha o drift — achado do red-team): são
+# renderizadas como os labels dos checkboxes na landing (via contexto Jinja) E
+# gravadas como a prova — o que se mostra é EXATAMENTE o que se prova.
+#
+# A versão sobe sempre que QUALQUER texto mudar, para que cada Lead aponte para a
+# redação EXATA que o titular aceitou. NÃO se afirma aqui a base de publicidade do
+# email do titular (art. 10.º ainda por confirmar — LEGAL-PARECER §2/§5).
+CONSENTIMENTO_VERSAO = "2026-07-06"
+CONSENTIMENTO_ALERTAS_TEXTO = (
     "Autorizo a Cosmic Oasis, Lda. (CheckAL) a enviar-me, por email, o relatório "
-    "gratuito do meu Alojamento Local e comunicações sobre o serviço. Posso retirar "
-    "o consentimento a qualquer momento em checkal.pt/remover."
+    "gratuito do meu Alojamento Local e alertas sobre o meu AL e o meu concelho — "
+    "registo RNAL, seguro obrigatório e regulamentos municipais. Posso retirar este "
+    "consentimento a qualquer momento em checkal.pt/remover."
+)
+CONSENTIMENTO_OFERTAS_TEXTO = (
+    "Autorizo a Cosmic Oasis, Lda. (CheckAL) a enviar-me novidades e ofertas "
+    "comerciais do CheckAL. É opcional e independente dos alertas do serviço."
 )
 
+# Identidade do responsável mostrada junto aos checkboxes (RGPD art. 13.º).
+CONSENTIMENTO_RESPONSAVEL = "Cosmic Oasis, Lda. — CheckAL"
 
-def _consentimento_versionado() -> str:
-    """A prova textual auto-descritiva: versão + o texto EXATO mostrado ao titular."""
-    return f"[v{CONSENTIMENTO_VERSAO}] {CONSENTIMENTO_TEXTO}"
+
+def _consentimento_versionado(*, alertas: bool, ofertas: bool) -> str:
+    """Prova textual auto-descritiva: versão + o texto EXATO de CADA finalidade aceite.
+
+    Regista só o que o titular marcou — a prova reflete o consentimento real, por
+    finalidade (não um texto global). `alertas` está sempre presente (é o gate da
+    inscrição); `ofertas` só consta se marcado.
+    """
+    partes = [f"[v{CONSENTIMENTO_VERSAO}]"]
+    if alertas:
+        partes.append(f"alertas: {CONSENTIMENTO_ALERTAS_TEXTO}")
+    if ofertas:
+        partes.append(f"ofertas: {CONSENTIMENTO_OFERTAS_TEXTO}")
+    return " | ".join(partes)
+
+
+# Janela de dedup anti-bombing: dentro dela, um novo POST /inscrever para um email
+# com Lead 'pendente' ATUALIZA esse Lead em vez de criar outro e reenviar o double
+# opt-in (evita encher a caixa do titular com confirmações — achado do red-team).
+DEDUP_PENDENTE_JANELA = timedelta(hours=1)
 
 
 # ==========================================================================
@@ -194,45 +227,105 @@ _PAGINA_ERRO = """<!doctype html>
 
 
 # ==========================================================================
+#  Dedup anti-bombing — reutiliza um Lead 'pendente' recente do mesmo email
+# ==========================================================================
+def _pendente_recente(s, email: str, agora: datetime) -> models.Lead | None:
+    """O Lead 'pendente' mais recente deste email dentro da janela de dedup, ou `None`.
+
+    Case-insensitive no email (igual ao opt-out). O filtro de recência corre no SQL
+    (`criado_em >= limite`) de propósito — o SQLite devolve `datetime` naïve, pelo que
+    comparar em Python com o `agora` aware rebentaria; no SQL ambos os lados passam
+    pelo mesmo processador de datas e a comparação é consistente (e portável a Postgres).
+    """
+    limite = agora - DEDUP_PENDENTE_JANELA
+    return (
+        s.query(models.Lead)
+        .filter(
+            func.lower(models.Lead.email) == email.lower(),
+            models.Lead.estado == "pendente",
+            models.Lead.criado_em >= limite,
+        )
+        .order_by(models.Lead.criado_em.desc())
+        .first()
+    )
+
+
+# ==========================================================================
 #  Rotas
 # ==========================================================================
 @router.post("/inscrever", response_model=None)
 def inscrever(
     request: Request,
     email: str = Form(default=""),
-    consentimento: str | None = Form(default=None),
+    consent_alertas: str | None = Form(default=None),
+    consent_ofertas: str | None = Form(default=None),
+    consentimento: str | None = Form(default=None),  # legado: alias de consent_alertas
     nr_registo: str | None = Form(default=None),
     concelho: str | None = Form(default=None),
 ) -> HTMLResponse | RedirectResponse:
-    """Inscreve um interessado consent-first e dispara o double opt-in.
+    """Inscreve um interessado consent-first (GRANULAR) e dispara o double opt-in.
 
-    Fluxo: valida email + consentimento → cria `Lead` 'pendente' com a PROVA (texto+
-    versão, timestamp, IP) → email de confirmação (LIVE-GATED) → 303 `/obrigado`.
-    Sem email válido ou sem consentimento → 400 (nada gravado, nada enviado).
+    Consentimento GRANULAR (parecer RGPD §3): `consent_alertas` (comunicações do
+    serviço) é o GATE — sem ele não nasce Lead; `consent_ofertas` (marketing) é extra
+    opcional. O campo legado `consentimento` mapeia para alertas (compat do contrato
+    antigo). Grava-se a PROVA por finalidade (texto+versão, quando, IP).
+
+    Dedup anti-bombing: se já existir um Lead 'pendente' recente para o email,
+    ATUALIZA-o (consentimentos + prova) em vez de criar outro e reenviar a confirmação.
+
+    Sem email válido ou sem consentimento de alertas → 400 (nada gravado, nada enviado).
     """
-    if not _email_valido(email) or not _consentiu(consentimento):
+    # Alertas (serviço) é o valor e o GATE; ofertas (marketing) é extra. O legado
+    # `consentimento` conta como alertas (nunca como ofertas — o default seguro).
+    quer_alertas = _consentiu(consent_alertas) or _consentiu(consentimento)
+    quer_ofertas = _consentiu(consent_ofertas)
+
+    if not _email_valido(email) or not quer_alertas:
         # Falha fechado: não cria Lead nem envia. 400 com página sem eco de input.
         return HTMLResponse(content=_PAGINA_ERRO, status_code=400)
 
+    email_limpo = email.strip()
     agora = datetime.now(timezone.utc)
-    token = secrets.token_urlsafe(32)
+    prova = _consentimento_versionado(alertas=quer_alertas, ofertas=quer_ofertas)
+    ip = _ip_do_request(request)
+    nr = _parse_nr(nr_registo)
+    conc = _limpar(concelho)
 
+    token: str | None = None  # só se atribui a um Lead NOVO → gate do double opt-in
     with db.get_session() as s:
-        s.add(models.Lead(
-            email=email.strip(),
-            nr_registo=_parse_nr(nr_registo),
-            concelho=_limpar(concelho),
-            consentimento_texto_versao=_consentimento_versionado(),  # a PROVA (texto+versão)
-            consentimento_em=agora,                                  # a PROVA (quando)
-            ip=_ip_do_request(request),                              # a PROVA (de onde)
-            estado="pendente",
-            token_confirmacao=token,
-            criado_em=agora,
-        ))
+        pendente = _pendente_recente(s, email_limpo, agora)
+        if pendente is not None:
+            # Reutiliza: atualiza a prova/consentimentos do 'pendente'; NÃO reenvia.
+            pendente.consent_alertas = quer_alertas
+            pendente.consent_ofertas = quer_ofertas
+            pendente.consentimento_texto_versao = prova
+            pendente.consentimento_em = agora
+            pendente.ip = ip
+            if nr is not None:
+                pendente.nr_registo = nr
+            if conc is not None:
+                pendente.concelho = conc
+        else:
+            token = secrets.token_urlsafe(32)
+            s.add(models.Lead(
+                email=email_limpo,
+                nr_registo=nr,
+                concelho=conc,
+                consent_alertas=quer_alertas,            # a PROVA (o quê — serviço)
+                consent_ofertas=quer_ofertas,            # a PROVA (o quê — marketing)
+                consentimento_texto_versao=prova,        # a PROVA (texto+versão)
+                consentimento_em=agora,                  # a PROVA (quando)
+                ip=ip,                                   # a PROVA (de onde)
+                estado="pendente",
+                token_confirmacao=token,
+                criado_em=agora,
+            ))
         # commit no fim do `with` (db.get_session): a prova fica DURÁVEL antes do envio.
 
-    # Double opt-in: best-effort e LIVE-GATED — nunca rebenta o request (Lead já gravado).
-    _disparar_double_opt_in(email.strip(), token)
+    # Double opt-in só para um Lead NOVO — LIVE-GATED, best-effort, nunca rebenta o
+    # request (o reutilizado já recebeu a confirmação; reenviá-la seria o bombing).
+    if token is not None:
+        _disparar_double_opt_in(email_limpo, token)
 
     # 303 See Other: após um POST, o browser segue com GET para /obrigado (evita reenvio).
     return RedirectResponse(url="/obrigado", status_code=303)
@@ -246,6 +339,11 @@ def confirmar(request: Request, token: str = "") -> HTMLResponse:
     'confirmado' (idempotente: reconfirmar mantém 'confirmado'). Token vazio,
     desconhecido, ou Lead já removido → página de "ligação inválida" (não rebenta,
     não reativa um opt-out). Renderiza `confirma.html`.
+
+    Des-supressão (parecer RGPD red-team §4a): confirmar é um re-consentimento
+    EXPLÍCITO (o próprio titular clicou), pelo que se REMOVE o email da lista de
+    supressão (`optouts`) — senão a pessoa re-autorizava mas continuaria excluída
+    pelo núcleo de compliance. A supressão só cede a esta revogação pelo titular.
     """
     confirmado = False
     if token.strip():
@@ -257,6 +355,9 @@ def confirmar(request: Request, token: str = "") -> HTMLResponse:
             )
             if lead is not None and lead.estado != "removido":
                 lead.estado = "confirmado"  # commit no fim do `with`
+                optout = s.get(models.OptOut, normalizar_email(lead.email))
+                if optout is not None:
+                    s.delete(optout)  # des-suprime: o titular reautorizou
                 confirmado = True
 
     status = 200 if confirmado else 404
