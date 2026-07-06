@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Quase lá — confirma o teu email · {{ marca.nome }}{% endblock %}
+{% block meta %}
+  <meta name="description" content="Recebemos o teu pedido. Falta um passo: confirma o teu email para ativarmos a vigilância do teu Alojamento Local.">
+  <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block content %}
+<section class="secao">
+  <div class="secao__interior centro" style="max-width: 620px;">
+    <p class="estado estado--ok" style="margin-inline: auto;">Pedido recebido</p>
+    <h1 style="margin-top: 1rem;">Quase lá. Confirma o teu email.</h1>
+    <p style="font-size: 1.15rem;">
+      Enviámos-te um <strong>email de confirmação</strong>. Abre-o e clica no link para
+      confirmares que és mesmo tu — só depois começamos a vigiar o teu Alojamento Local.
+    </p>
+
+    <div class="cartao" style="text-align: left; margin: 2rem 0;">
+      <ul class="checklist">
+        <li><span class="marca-ok">1.</span> Vai à tua caixa de entrada (procura por “{{ marca.nome }}”).</li>
+        <li><span class="marca-ok">2.</span> Clica em <strong>Confirmar o meu email</strong>.</li>
+        <li><span class="marca-ok">3.</span> Pronto — passa a check ✓. Ficamos nós de vigia.</li>
+      </ul>
+    </div>
+
+    <p class="nota">
+      Não recebeste nada em poucos minutos? Vê a pasta de <em>spam</em> ou promoções. Se
+      precisares, escreve-nos para <a href="mailto:{{ email_privacidade | default('ola@checkal.pt') }}">ola@checkal.pt</a>.
+    </p>
+
+    <a class="btn btn--contorno" href="{{ marca.nav.inicio }}" style="margin-top: 1rem;">Voltar ao início</a>
+  </div>
+</section>
+{% endblock %}

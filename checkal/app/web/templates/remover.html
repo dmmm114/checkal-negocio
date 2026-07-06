@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Remover os meus dados — {{ marca.nome }}{% endblock %}
+
+{% block head_extra %}
+  {# Página utilitária: fora dos índices de pesquisa. #}
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    .remover { max-width: 40rem; margin: 0 auto; }
+    .remover h1 { margin-top: 0; }
+    .remover form { margin: 1.25rem 0 0; }
+    .remover input[type="email"] { width: 100%; font-size: 1rem; }
+    .remover .btn { margin-top: 1rem; }
+    .remover__aviso {
+      margin: 1rem 0 0;
+      padding: .75rem 1rem;
+      border-radius: var(--raio-medio, 10px);
+      border: 1px solid var(--cor-ambar, #F59E0B);
+      background: #FFFBEB;
+      color: #7A4A00;
+      font-weight: 600;
+    }
+    .remover__ok { color: var(--cor-verde-escuro, #087443); font-weight: 700; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<section class="secao">
+  <div class="remover cartao">
+    {% if confirmado %}
+      <h1>Pronto. Estás fora da lista.</h1>
+      <p class="remover__ok">Oposição registada.</p>
+      <p>Removemos <strong>{{ email }}</strong> da nossa lista. Não voltarás a ser
+         contactado pelo {{ marca.nome }}.</p>
+      <p class="nota">A remoção fica registada de imediato. Os teus dados de contacto
+         podem ter chegado até nós a partir do registo público RNAL; a partir de agora
+         ficam suprimidos. Se te removeste por engano, podes voltar a fazer o
+         <a href="{{ marca.nav.inicio }}#verificar">check grátis ao teu AL</a> quando quiseres.</p>
+    {% else %}
+      <h1>Remover os meus dados</h1>
+      <p>Escreve o teu email e removemos-te da lista — sem custos e sem fricção.
+         É o teu direito de oposição, e queremos que seja fácil.</p>
+
+      {% if erro %}
+      <p class="remover__aviso" role="alert">{{ erro }}</p>
+      {% endif %}
+
+      <form method="post" action="{{ marca.nav.remover }}" novalidate>
+        <label for="email">O teu email</label>
+        <input type="email" id="email" name="email" required
+               autocomplete="email" inputmode="email" placeholder="tu@exemplo.pt"
+               {% if erro %}aria-invalid="true"{% endif %}>
+        <button type="submit" class="btn btn--acao btn--grande btn--bloco">Remover-me da lista</button>
+      </form>
+
+      <p class="nota">Os teus dados de contacto podem ter chegado até nós a partir do
+         registo público RNAL. Podes opor-te a qualquer momento — é isso que este pedido
+         faz. Vê a <a href="{{ marca.nav.privacidade }}">política de privacidade</a>.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

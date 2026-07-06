@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" font-family="&#39;Plus Jakarta Sans&#39;,&#39;Trebuchet MS&#39;,&#39;Segoe UI&#39;,system-ui,sans-serif">
+  
+  <defs>
+    <path id="topArcS" d="M 62 200 A 138 138 0 0 1 338 200"></path>
+    <path id="botArcS" d="M 40 200 A 160 160 0 0 0 360 200"></path>
+  </defs>
+  <circle cx="200" cy="200" r="196" fill="#FFFFFF"></circle>
+  <circle cx="200" cy="200" r="190" fill="none" stroke="#94A3B8" stroke-width="7"></circle>
+  <path d="M 116 345.5 A 168 168 0 1 1 284 345.5" fill="none" stroke="#94A3B8" stroke-width="1.5" opacity="0.45"></path>
+  <text font-size="34" font-weight="800" letter-spacing="8" fill="#94A3B8"><textPath href="#topArcS" startOffset="50%" text-anchor="middle">CheckAL</textPath></text>
+  <g transform="translate(140,100) scale(0.667)">
+    <rect width="180" height="180" rx="48" fill="#94A3B8"></rect>
+    <g transform="translate(16,60) scale(0.52)"><path d="M12,54 L40,84 L92,12" fill="none" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"></path></g>
+    <text x="97" y="122" font-size="86" font-weight="800" fill="#FFFFFF" text-anchor="middle">A</text>
+    <text x="147" y="122" font-size="86" font-weight="800" fill="#FFFFFF" text-anchor="middle">L</text>
+  </g>
+  <text x="200" y="284" text-anchor="middle" font-size="24" font-weight="600" fill="#94A3B8">Verificação suspensa</text>
+  <text x="200" y="310" text-anchor="middle" font-size="19" font-weight="500" fill="#94A3B8">Verification paused</text>
+  <text font-size="17" font-weight="500" letter-spacing="3" fill="#94A3B8"><textPath href="#botArcS" startOffset="50%" text-anchor="middle">checkal.pt</textPath></text>
+</svg>

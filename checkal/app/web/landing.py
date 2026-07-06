@@ -1,43 +1,43 @@
-"""Landing pública do CheckAL + healthcheck (SPEC-FDS2.md §landing).
+"""Landing pública consent-first do CheckAL + healthcheck (SPEC-FASE1-WEB §landing).
 
-`GET /` serve a página inicial; `GET /saude` é o healthcheck de uptime/deploy
-(`{"ok": true}`).
+`GET /` serve a página inicial FINAL — a "cara" do produto sobre o motor já feito —
+renderizada por Jinja a partir de `templates/landing.html` (que estende `base.html`).
+`GET /saude` mantém-se como healthcheck de uptime/deploy (`{"ok": true}`).
 
-A copy aqui é deliberadamente PLACEHOLDER: a copy final (carta, headline, selo) é
-canónica em COPY-VENDAS.md e não se inventa neste módulo. O ponto de extensão é a
-constante `_PAGINA_HTML` — no FDS 3 troca-se por template Jinja com a copy real.
+Fronteiras (invioláveis):
+  * a copy é canónica em ``../COPY-VENDAS.md`` e os preços em ``config.PLANOS`` (via
+    ``marca.contexto_base()``, injetado como globais do Jinja) — este módulo NÃO
+    inventa copy nem preços;
+  * o widget é **consent-first**: o JS lê o nº de registo, consulta a vista pública
+    ``GET /api/verificar`` (só dados do estabelecimento — ver ``app.web.verificar``) e
+    só depois oferece o form de email + checkbox de consentimento que faz
+    ``POST /inscrever`` (rota do módulo de consentimento). A checkbox NÃO vem
+    pré-marcada e o JS constrói o cartão de estado com ``textContent`` (anti-XSS);
+  * serviço PRIVADO, nunca aspeto de Estado — a barra de prova e o rodapé afirmam-no.
+
+Puro e sem efeitos: renderizar `/` não toca a rede nem a BD (a verificação e a
+inscrição vivem noutros routers e só se exercitam do lado do cliente / em POST).
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
+
+from app.web.marca import templates
 
 router = APIRouter()
 roteador = router  # alias PT, para montagem por qualquer um dos nomes
 
-# Copy PLACEHOLDER — substituída pela copy canónica de COPY-VENDAS.md (FDS 3).
-_PAGINA_HTML = """<!doctype html>
-<html lang="pt">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CheckAL</title>
-</head>
-<body>
-  <main>
-    <h1>CheckAL</h1>
-    <p>[PLACEHOLDER] Landing do CheckAL &mdash; a copy final vem de COPY-VENDAS.md.</p>
-    <!-- O widget de verificação consome GET /api/verificar?q= (consent-first). -->
-  </main>
-</body>
-</html>
-"""
-
 
 @router.get("/", response_class=HTMLResponse)
-def home() -> HTMLResponse:
-    """Página inicial (placeholder). Devolve HTML com content-type `text/html`."""
-    return HTMLResponse(content=_PAGINA_HTML)
+def home(request: Request) -> HTMLResponse:
+    """Página inicial consent-first (copy de COPY-VENDAS.md, preços de config.PLANOS).
+
+    Renderiza `landing.html` com os globais da marca (`marca.contexto_base()`) já
+    injetados no ambiente Jinja partilhado — hero, widget de verificação gratuita,
+    "como funciona", preços, confiança, FAQ e CTA. Não consulta a BD.
+    """
+    return templates.TemplateResponse(request=request, name="landing.html")
 
 
 @router.get("/saude")

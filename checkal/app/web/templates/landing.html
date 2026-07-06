@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{# Landing consent-first do CheckAL. Copy canónica de ../COPY-VENDAS.md; preços de
+   config.PLANOS (via globais `planos`). NÃO inventar copy nem preços aqui. #}
+
+{% block title %}CheckAL — O teu AL? Check ✓{% endblock %}
+
+{% block head_extra %}
+  <style>
+    /* Espaçamento próprio do widget e das secções da landing (usa os tokens do design system). */
+    .hero { padding-block: clamp(3rem, 2rem + 5vw, 6rem); }
+    .hero__cta { display: flex; flex-wrap: wrap; gap: .75rem 1rem; margin-top: 1.5rem; }
+    .barra-prova { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin: 0; padding: 0; list-style: none; font-weight: 600; }
+    .barra-prova li { color: var(--cor-texto-secundario); }
+    .widget-grelha { display: grid; gap: 1.25rem; max-width: 34rem; margin-top: 1.75rem; }
+    .resultado-check:empty { display: none; }
+    .resultado-check { display: grid; gap: .6rem; }
+    .resultado-check__detalhe { font-weight: 600; margin: 0; }
+    .precos-ancora { font-weight: 700; color: var(--cor-grafite); margin-bottom: 1.5rem; }
+    .plano__preco { font-family: var(--fonte-titulos); font-weight: 800; font-size: 2rem; color: var(--cor-grafite); margin: .25rem 0; }
+    .plano__badge { display: inline-block; font-size: var(--fs-pequeno); font-weight: 700; color: var(--cor-azul-acao); }
+    .faq { display: grid; gap: .75rem; }
+    .faq details { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio); padding: 1rem 1.15rem; }
+    .faq summary { font-weight: 700; cursor: pointer; }
+    .faq details[open] summary { margin-bottom: .6rem; }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+  {# ------------------------------------------------------------------ HERO #}
+  <section class="secao hero">
+    <div class="secao__interior">
+      <p class="tagline" style="color: var(--cor-texto-secundario);">{{ marca.tagline }}</p>
+      <h1>O teu AL? Check&nbsp;<span style="color: var(--cor-verde-check);">✓</span></h1>
+      <p>Mais de 10.000 registos de AL já foram cancelados por prazos falhados. Nós
+        vigiamos o teu registo, o teu seguro e o teu concelho — todas as semanas — e
+        avisamos-te em português claro antes que algo te custe o negócio.</p>
+      <div class="hero__cta">
+        <a class="btn btn--acao btn--grande" href="#verificar">Fazer o check ao meu AL — grátis, 30 segundos</a>
+        <a class="btn btn--contorno btn--grande" href="#como-funciona">Ver como funciona ↓</a>
+      </div>
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------ BARRA DE PROVA #}
+  <section class="secao secao--marfim" style="padding-block: 1.25rem;">
+    <div class="secao__interior">
+      <ul class="barra-prova">
+        <li>✓ 126.000+ registos RNAL monitorizados</li>
+        <li>✓ 308 concelhos cobertos</li>
+        <li>✓ Alertas interpretados por IA</li>
+        <li>✓ Serviço 100% português</li>
+        <li>✓ Independente — não somos o Turismo de Portugal</li>
+      </ul>
+    </div>
+  </section>
+
+  {# ---------------------------------------------------- WIDGET (consent-first) #}
+  <section id="verificar" class="secao">
+    <div class="secao__interior">
+      <h2>Faz o check grátis ao teu AL</h2>
+      <p>Insere o teu n.º de registo RNAL (ou o nome do alojamento) e vê já o estado do
+        teu registo. Recebes o relatório completo no teu email em segundos — sem cartão,
+        sem compromisso.</p>
+
+      <div class="widget-grelha">
+        {# 1) o check em si → GET /api/verificar (não recarrega a página) #}
+        <form id="check-form" class="cartao" novalidate>
+          <div class="campo">
+            <label for="check-q">N.º de registo RNAL ou nome do alojamento</label>
+            <input type="search" id="check-q" name="q" autocomplete="off"
+                   inputmode="text" placeholder="Ex.: 93415 ou Casa da Graça"
+                   aria-describedby="check-ajuda">
+          </div>
+          <button type="submit" class="btn btn--acao btn--grande btn--bloco">Fazer o check</button>
+          <p id="check-ajuda" class="nota" style="margin: .75rem 0 0;">Consultamos apenas dados
+            públicos do RNAL. Não guardamos nada sem a tua autorização.</p>
+        </form>
+
+        {# 2) o cartão de estado 🟢🟡🔴 — preenchido pelo JS via textContent #}
+        <div id="check-resultado" class="resultado-check" role="status" aria-live="polite"></div>
+
+        {# 3) form de email + consentimento → POST /inscrever (consent-first) #}
+        <form id="inscrever-form" class="cartao" method="post" action="/inscrever">
+          <h3 style="margin-top: 0;">Recebe o relatório e ativa a vigilância</h3>
+          <input type="hidden" name="nr_registo" id="insc-nr" value="">
+          <input type="hidden" name="concelho" id="insc-concelho" value="">
+          <div class="campo">
+            <label for="insc-email">O teu email</label>
+            <input type="email" id="insc-email" name="email" required
+                   autocomplete="email" placeholder="tu@exemplo.pt">
+          </div>
+          <div class="campo consentimento">
+            <input type="checkbox" id="insc-consent" name="consentimento" value="1">
+            <label for="insc-consent">Autorizo o CheckAL a enviar-me por email o relatório do
+              meu AL e alertas quando algo o afetar. Posso sair a qualquer momento em
+              <a href="/remover">checkal.pt/remover</a>. Ver a
+              <a href="/privacidade">Política de Privacidade</a>.</label>
+          </div>
+          <button type="submit" class="btn btn--check btn--grande btn--bloco">Enviar-me o relatório</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------ COMO FUNCIONA #}
+  <section id="como-funciona" class="secao secao--frio">
+    <div class="secao__interior">
+      <h2>Como funciona</h2>
+      <ol class="grelha" style="margin: 1.5rem 0 0; padding: 0; list-style: none;">
+        <li class="cartao">
+          <h3>1. Verifica grátis</h3>
+          <p>Insere o teu n.º de registo (ou o nome do alojamento) e recebe um
+            mini-relatório imediato do estado do teu AL.</p>
+        </li>
+        <li class="cartao">
+          <h3>2. Ativa a vigilância</h3>
+          <p>Subscreve em 2 minutos. Não instalas nada, não fazes nada — nós é que
+            trabalhamos.</p>
+        </li>
+        <li class="cartao">
+          <h3>3. Dorme descansado</h3>
+          <p>Só te escrevemos quando algo te afeta, com a explicação e os passos a dar. E
+            no dia 1 de cada mês recebes o relatório "Tudo em ordem".</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------- OS 3 CHECKS #}
+  <section class="secao">
+    <div class="secao__interior">
+      <h2>Os 3 checks que vigiamos por ti</h2>
+      <p class="tagline" style="color: var(--cor-texto-secundario);">Registo: check ✓ · Seguro: check ✓ · Regulamento: check ✓</p>
+      <div class="grelha" style="margin-top: 1.5rem;">
+        <div class="cartao">
+          <h3>🗂 O teu registo no RNAL</h3>
+          <p>Se muda de estado, desaparece ou é alvo de "limpeza", és avisado em dias —
+            não quando a coima chegar.</p>
+        </div>
+        <div class="cartao">
+          <h3>🛡 O seguro obrigatório</h3>
+          <p>A prova anual é lei desde março de 2025; avisamos-te 60, 30 e 7 dias antes do
+            prazo.</p>
+        </div>
+        <div class="cartao">
+          <h3>🏛 O regulamento do teu concelho</h3>
+          <p>O DL 76/2024 pôs dezenas de câmaras a legislar; lemos tudo e dizemos-te se te
+            afeta.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------------ PREÇOS #}
+  <section id="planos" class="secao secao--frio">
+    <div class="secao__interior">
+      <h2>Preços</h2>
+      <p class="precos-ancora">Coima mínima por incumprimento: 2.500€. Registo cancelado:
+        negócio perdido. Vigilância: menos de 1€ por semana.</p>
+
+      <div class="grelha">
+        {# Anual — âncora de referência #}
+        <div class="cartao">
+          <h3>{{ planos.anual.nome }}</h3>
+          <p class="plano__preco">{{ planos.anual.preco | int }}€<span style="font-size: 1rem; font-weight: 600; color: var(--cor-texto-secundario);">/ano</span></p>
+          <p class="nota">{{ planos.anual.als_incluidos }} AL · vigilância semanal completa</p>
+          <a class="btn btn--contorno btn--bloco" href="/precos">Subscrever</a>
+        </div>
+
+        {# Trienal — default visual ("mais popular") #}
+        <div class="cartao cartao--destaque">
+          <span class="plano__badge">⭐ Mais popular</span>
+          <h3>{{ planos.trienal.nome }}</h3>
+          <p class="plano__preco">{{ planos.trienal.preco | int }}€<span style="font-size: 1rem; font-weight: 600; color: var(--cor-texto-secundario);">/3 anos</span></p>
+          <p class="nota">{{ planos.trienal.als_incluidos }} AL · poupas 28€ · esqueces o assunto 3 anos</p>
+          <a class="btn btn--acao btn--bloco" href="/precos">Subscrever</a>
+        </div>
+
+        {# Portfólio — gestores com vários ALs #}
+        <div class="cartao">
+          <h3>{{ planos.portfolio.nome }}</h3>
+          <p class="plano__preco">{{ planos.portfolio.preco | int }}€<span style="font-size: 1rem; font-weight: 600; color: var(--cor-texto-secundario);">/ano</span></p>
+          <p class="nota">até {{ planos.portfolio.als_incluidos }} ALs · selo em todos</p>
+          <a class="btn btn--contorno btn--bloco" href="/precos">Subscrever</a>
+        </div>
+      </div>
+
+      <p style="margin-top: 1.25rem;"><strong>+19€/ano</strong> por cada AL adicional (2.º e 3.º).</p>
+
+      <p class="nota">🛡 <strong>Garantia de 30 dias:</strong> se nos primeiros 30 dias mudares
+        de ideias, devolvemos 100% do valor — um email chega, sem perguntas.
+        <em>(Acresce o direito legal de livre resolução de 14 dias.)</em></p>
+    </div>
+  </section>
+
+  {# ---------------------------------------------------------------- CONFIANÇA #}
+  <section class="secao">
+    <div class="secao__interior">
+      <h2>Confiança</h2>
+      <p>O CheckAL é um serviço da Cosmic Oasis, Lda. <strong>Não somos, nem
+        representamos, o Turismo de Portugal, o RNAL ou qualquer câmara municipal.</strong>
+        Os teus dados são tratados ao abrigo do RGPD e removemos-te da lista num clique.</p>
+      <ul class="checklist" style="margin-top: 1rem;">
+        <li><span class="marca-ok">✓</span> Feito em Portugal, por quem já vigia registos públicos.</li>
+        <li><span class="marca-ok">✓</span> Só informação — não damos aconselhamento jurídico.</li>
+        <li><span class="marca-ok">✓</span> Só usamos dados públicos do RNAL; sais quando quiseres.</li>
+      </ul>
+    </div>
+  </section>
+
+  {# --------------------------------------------------------------------- FAQ #}
+  <section class="secao secao--frio">
+    <div class="secao__interior">
+      <h2>Perguntas frequentes</h2>
+      <div class="faq" style="margin-top: 1.25rem;">
+        <details>
+          <summary>Isto não é grátis no site do Turismo de Portugal?</summary>
+          <p>É — e é exatamente por isso que existimos. Os dados são públicos, mas ninguém
+            te avisa quando mudam. O registo pode ser cancelado, o regulamento do teu
+            concelho pode mudar, o prazo do seguro pode passar — e a informação fica lá,
+            pública, à espera que te lembres de ir ver. Não pagas pelos dados: pagas por
+            alguém que olha para eles todas as semanas por ti.</p>
+        </details>
+        <details>
+          <summary>Isto substitui um advogado ou contabilista?</summary>
+          <p>Não. Nós detetamos e explicamos; não damos aconselhamento jurídico. Mas 90%
+            dos problemas resolvem-se sabendo do prazo a tempo — e é isso que garantimos.</p>
+        </details>
+        <details>
+          <summary>Tenho de instalar alguma coisa?</summary>
+          <p>Não. Recebes tudo por email: os alertas quando algo te afeta e o relatório
+            mensal no dia 1. Feito para quem quer pagar e esquecer.</p>
+        </details>
+        <details>
+          <summary>Se está tudo bem, não vou saber de vocês?</summary>
+          <p>Vais — uma vez por mês. No dia 1 de cada mês recebes o relatório "Tudo em
+            ordem": o que verificámos, o que mudou no teu concelho e a confirmação de que
+            o teu registo e o teu seguro estão em dia.</p>
+        </details>
+        <details>
+          <summary>Funciona no meu concelho?</summary>
+          <p>Sim — cobrimos os 308 concelhos, do RNAL ao regulamento municipal. A pressão
+            regulatória é maior em Lisboa, Porto e Algarve, mas a lei do seguro e o DL
+            76/2024 aplicam-se a todo o país.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  {# ------------------------------------------------------------------ CTA final #}
+  <section class="secao secao--grafite centro">
+    <div class="secao__interior">
+      <h2>O teu AL? Check.</h2>
+      <p>Faz o check grátis em 30 segundos e vê o estado do teu registo agora.</p>
+      <a class="btn btn--check btn--grande" href="#verificar">Fazer o check ao meu AL — grátis</a>
+    </div>
+  </section>
+
+{% endblock %}
+
+{% block scripts %}
+  <script>
+  (function () {
+    var form = document.getElementById('check-form');
+    var input = document.getElementById('check-q');
+    var out = document.getElementById('check-resultado');
+    var inscNr = document.getElementById('insc-nr');
+    var inscConcelho = document.getElementById('insc-concelho');
+    if (!form || !input || !out) { return; }
+
+    // Cria a pílula de estado 🟢🟡🔴 (o emoji vem do CSS ::before via a classe).
+    function pilula(classe, texto) {
+      var span = document.createElement('span');
+      span.className = 'estado ' + classe;
+      span.textContent = texto;              // texto simples — nunca HTML de dados
+      return span;
+    }
+    function limpar(el) { while (el.firstChild) { el.removeChild(el.firstChild); } }
+
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var q = (input.value || '').trim();
+      limpar(out);
+      if (!q) {
+        out.appendChild(pilula('estado--suspenso', 'Escreve o n.º de registo ou o nome do alojamento.'));
+        return;
+      }
+      out.appendChild(pilula('estado--suspenso', 'A verificar…'));
+      fetch('/api/verificar?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          limpar(out);
+          if (!d || !d.encontrado) {
+            out.appendChild(pilula('estado--suspenso',
+              'Não encontrámos esse registo. Confirma o número no teu comprovativo do RNAL.'));
+            return;
+          }
+          var ativo = d.estado === 'ativo';
+          out.appendChild(pilula(
+            ativo ? 'estado--ok' : 'estado--atencao',
+            ativo ? 'Registo ativo no RNAL' : 'Já não consta da lista pública do RNAL'));
+
+          var detalhe = document.createElement('p');
+          detalhe.className = 'resultado-check__detalhe';
+          var nome = d.nome_alojamento || ('Registo n.º ' + d.nr_registo);
+          detalhe.textContent = d.concelho ? (nome + ' · ' + d.concelho) : nome;
+          out.appendChild(detalhe);
+
+          var dica = document.createElement('p');
+          dica.className = 'nota';
+          dica.textContent = 'Este é o retrato de hoje. Deixa o teu email para receberes o ' +
+            'relatório completo (registo, seguro e regulamento) e ativares a vigilância semanal.';
+          out.appendChild(dica);
+
+          // Liga o resultado ao form de inscrição (consent-first).
+          if (inscNr) { inscNr.value = d.nr_registo ? String(d.nr_registo) : ''; }
+          if (inscConcelho) { inscConcelho.value = d.concelho || ''; }
+          var email = document.getElementById('insc-email');
+          if (email && email.focus) { email.focus(); }
+        })
+        .catch(function () {
+          limpar(out);
+          out.appendChild(pilula('estado--suspenso',
+            'Não foi possível verificar agora. Tenta novamente daqui a instantes.'));
+        });
+    });
+  })();
+  </script>
+{% endblock %}

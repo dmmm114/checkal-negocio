@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Preços — {{ marca.nome }}{% endblock %}
+{% block meta %}
+  <meta name="description" content="Preços do {{ marca.nome }}: {{ planos.anual.preco|int }}€/ano por Alojamento Local, {{ planos.trienal.preco|int }}€/3 anos. Vigilância do registo RNAL, do seguro e dos regulamentos. Preços com IVA incluído.">
+{% endblock %}
+
+{% block content %}
+<section class="secao">
+  <div class="secao__interior">
+    <p class="tagline centro" style="color: var(--cor-azul-acao); margin-bottom: .5rem;">O teu AL? Check.</p>
+    <h1 class="centro">Preços simples. Sem letras miúdas.</h1>
+    <p class="centro" style="max-width: 60ch; margin-inline: auto;">
+      Coima mínima por incumprimento: <strong>{{ coima_singular_min }}€</strong>.
+      Registo cancelado: negócio perdido. Vigilância do teu AL: menos de 1€ por semana.
+    </p>
+
+    <div class="grelha" style="margin-top: 2.5rem; align-items: stretch;">
+      {# --- Anual (âncora de referência) --- #}
+      <div class="cartao">
+        <h2 style="font-size: var(--fs-h3);">{{ planos.anual.nome }}</h2>
+        <p style="font-size: 2.25rem; font-weight: 800; margin: .25rem 0; color: var(--cor-grafite);">
+          {{ planos.anual.preco|int }}€<span class="nota" style="font-weight: 500;"> / ano</span>
+        </p>
+        <p class="nota">1 Alojamento Local · 0,13€/dia</p>
+        <ul class="checklist" style="margin: 1rem 0;">
+          <li><span class="marca-ok">✓</span> Vigilância semanal do registo, seguro e concelho</li>
+          <li><span class="marca-ok">✓</span> Alertas interpretados por IA, em português claro</li>
+          <li><span class="marca-ok">✓</span> Avisos do prazo do seguro (60/30/7 dias antes)</li>
+          <li><span class="marca-ok">✓</span> Relatório mensal “Tudo em ordem”, dia 1 de cada mês</li>
+          <li><span class="marca-ok">✓</span> Selo público “AL Verificado”</li>
+        </ul>
+        <a class="btn btn--contorno btn--bloco" href="{{ marca.nav.inicio }}#verificar">Fazer o check grátis</a>
+      </div>
+
+      {# --- Trienal (destaque: "pagar e esquecer") --- #}
+      <div class="cartao cartao--destaque">
+        <p class="estado estado--ok" style="margin-bottom: .5rem;">Mais escolhido</p>
+        <h2 style="font-size: var(--fs-h3);">{{ planos.trienal.nome }}</h2>
+        <p style="font-size: 2.25rem; font-weight: 800; margin: .25rem 0; color: var(--cor-grafite);">
+          {{ planos.trienal.preco|int }}€<span class="nota" style="font-weight: 500;"> / 3 anos</span>
+        </p>
+        <p class="nota">1 Alojamento Local · poupas {{ (planos.anual.preco * 3 - planos.trienal.preco)|int }}€ vs. anual · 0,11€/dia</p>
+        <ul class="checklist" style="margin: 1rem 0;">
+          <li><span class="marca-ok">✓</span> Tudo o que o plano anual inclui</li>
+          <li><span class="marca-ok">✓</span> Três anos de vigilância — pagas uma vez e esqueces</li>
+          <li><span class="marca-ok">✓</span> Preço bloqueado durante toda a vigência</li>
+        </ul>
+        <a class="btn btn--acao btn--bloco" href="{{ marca.nav.inicio }}#verificar">Fazer o check grátis</a>
+      </div>
+
+      {# --- Portfólio (gestores com vários ALs) --- #}
+      <div class="cartao">
+        <h2 style="font-size: var(--fs-h3);">{{ planos.portfolio.nome }}</h2>
+        <p style="font-size: 2.25rem; font-weight: 800; margin: .25rem 0; color: var(--cor-grafite);">
+          {{ planos.portfolio.preco|int }}€<span class="nota" style="font-weight: 500;"> / ano</span>
+        </p>
+        <p class="nota">{{ planos.portfolio.als_min }} a {{ planos.portfolio.als_incluidos }} ALs · ou {{ planos.portfolio3.preco|int }}€/3 anos</p>
+        <ul class="checklist" style="margin: 1rem 0;">
+          <li><span class="marca-ok">✓</span> Vigilância completa de todos os teus ALs</li>
+          <li><span class="marca-ok">✓</span> Relatório mensal consolidado</li>
+          <li><span class="marca-ok">✓</span> Selo público em cada alojamento</li>
+        </ul>
+        <a class="btn btn--contorno btn--bloco" href="{{ marca.nav.inicio }}#verificar">Fazer o check grátis</a>
+      </div>
+    </div>
+
+    {# --- AL adicional (o cliente 2–3 ALs decide sem calculadora) --- #}
+    <div class="cartao" style="margin-top: 1.5rem; background: var(--cor-marfim);">
+      <p style="margin: 0;">
+        <strong>Tens mais do que um AL?</strong>
+        Acrescenta o 2.º e o 3.º alojamento por
+        <strong>+{{ al_adicional_anual|int }}€/ano</strong> cada
+        (ou <strong>+{{ al_adicional_trienal|int }}€/3 anos</strong>).
+        A partir de {{ planos.portfolio.als_min }} ALs, o plano Portfólio fica mais barato por alojamento.
+      </p>
+    </div>
+  </div>
+</section>
+
+{# --- Portfólios maiores --- #}
+<section class="secao secao--frio">
+  <div class="secao__interior">
+    <h2 class="centro">Muitos alojamentos? Há um plano à medida.</h2>
+    <div style="overflow-x: auto; margin-top: 1.5rem;">
+      <table style="width: 100%; border-collapse: collapse; min-width: 32rem;">
+        <thead>
+          <tr style="text-align: left; border-bottom: 2px solid var(--cor-borda-forte);">
+            <th style="padding: .75rem .5rem;">Plano</th>
+            <th style="padding: .75rem .5rem;">Alojamentos</th>
+            <th style="padding: .75rem .5rem;">Preço (IVA incl.)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid var(--cor-borda);">
+            <td style="padding: .75rem .5rem;"><strong>{{ planos.portfolio.nome }}</strong></td>
+            <td style="padding: .75rem .5rem;">{{ planos.portfolio.als_min }} a {{ planos.portfolio.als_incluidos }} ALs</td>
+            <td style="padding: .75rem .5rem;">{{ planos.portfolio.preco|int }}€/ano · {{ planos.portfolio3.preco|int }}€/3 anos</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--cor-borda);">
+            <td style="padding: .75rem .5rem;"><strong>{{ planos.portfolio_plus.nome }}</strong></td>
+            <td style="padding: .75rem .5rem;">{{ planos.portfolio_plus.als_min }} a {{ planos.portfolio_plus.als_incluidos }} ALs</td>
+            <td style="padding: .75rem .5rem;">{{ planos.portfolio_plus.preco|int }}€/ano</td>
+          </tr>
+          <tr>
+            <td style="padding: .75rem .5rem;"><strong>{{ planos.portfolio_max.nome }}</strong></td>
+            <td style="padding: .75rem .5rem;">{{ planos.portfolio_max.als_min }} a {{ planos.portfolio_max.als_incluidos }} ALs</td>
+            <td style="padding: .75rem .5rem;">{{ planos.portfolio_max.preco|int }}€/ano</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="nota" style="margin-top: 1rem;">
+      Tudo self-serve, sem “fale connosco”. Um gestor com 10 ALs tem uma exposição a coimas
+      que pode chegar a {{ coima_coletiva_max }}€ por alojamento — {{ planos.portfolio.preco|int }}€/ano é uma fração disso.
+    </p>
+  </div>
+</section>
+
+{# --- Garantia + IVA --- #}
+<section class="secao">
+  <div class="secao__interior centro">
+    <p class="estado estado--ok" style="margin-inline: auto;">Garantia de 30 dias</p>
+    <h2 style="margin-top: 1rem;">Se em 30 dias não vires valor, devolvemos tudo.</h2>
+    <p style="max-width: 58ch; margin-inline: auto;">
+      Reembolso total, sem perguntas — um email chega. Acresce o direito legal de livre
+      resolução de 14 dias. Cancelas quando quiseres, pelo mesmo meio da contratação.
+    </p>
+    <p class="nota">
+      Todos os preços são <strong>com IVA incluído</strong> — o valor que vês é o valor que pagas.
+      Consulta os <a href="{{ marca.nav.termos }}">Termos</a> e a
+      <a href="{{ marca.nav.privacidade }}">Política de Privacidade</a>.
+    </p>
+    <a class="btn btn--acao btn--grande" href="{{ marca.nav.inicio }}#verificar" style="margin-top: 1rem;">Faz o check grátis ao teu AL</a>
+  </div>
+</section>
+{% endblock %}

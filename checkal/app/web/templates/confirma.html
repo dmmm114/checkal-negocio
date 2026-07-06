@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{# Página do double opt-in (GET /confirmar?token=). `confirmado` decide o estado:
+   True  → inscrição ativada (voz "inspetor amigo": alívio, tudo pronto);
+   False → ligação inválida/expirada/já usada (não rebenta, convida a repetir). #}
+
+{% block title %}
+  {% if confirmado %}Inscrição confirmada ✓ · {{ marca.nome }}
+  {% else %}Ligação inválida · {{ marca.nome }}{% endif %}
+{% endblock %}
+
+{% block meta %}
+  <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block content %}
+<section class="seccao seccao--estreita">
+  {% if confirmado %}
+    <p class="estado estado--ok" role="status">Passou no check ✓</p>
+    <h1>Inscrição confirmada.</h1>
+    <p>Está tudo pronto. A partir de agora o {{ marca.nome }} vigia o teu Alojamento
+    Local — o registo RNAL, o seguro obrigatório e os regulamentos do teu concelho — e
+    só te escreve quando algo o afeta, em português claro.</p>
+    <p>Vais receber em breve, por email, o teu relatório gratuito.</p>
+    <p><a class="btn btn--acao" href="{{ marca.nav.inicio }}">Voltar ao início</a></p>
+  {% else %}
+    <h1>Esta ligação já não é válida.</h1>
+    <p>A ligação de confirmação é inválida, expirou ou já tinha sido usada. Podes
+    inscrever-te de novo a partir da página inicial — leva menos de um minuto.</p>
+    <p><a class="btn btn--acao" href="{{ marca.nav.inicio }}#verificar">Fazer o check ao meu AL</a></p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{#
+  Página pública do selo (SPEC-FASE1-WEB §Wire). Estende base.html (chrome da marca,
+  rodapé legal — serviço PRIVADO). Mostra SÓ dados públicos do estabelecimento (a
+  lista branca `d` de app.web.selo); ZERO PII do titular chega aqui por construção.
+  O selo é o da MARCA (selo-ativo.svg / selo-suspenso.svg, embutido inline por
+  `selo_svg` — asset estático de confiança, daí `| safe`); o coral 🔴 NUNCA entra no
+  selo público (um AL fora do RNAL usa o selo SUSPENSO, cinza). Tudo o que vem de `d`
+  e o `nome` são autoescapados (anti-XSS). noindex: página de atestação, não de SEO.
+#}
+
+{% block title %}{{ marca.nome }} ✓ — {{ titulo_estado }} · {{ nome }}{% endblock %}
+
+{% block head_extra %}
+  <meta name="robots" content="noindex">
+  <style>
+    .selo { max-width: 34rem; margin-inline: auto; }
+    .selo__badge { text-align: center; margin-bottom: 1.25rem; }
+    .selo__badge svg { width: 220px; max-width: 60%; height: auto; }
+    .selo__estab { font-size: 1.15rem; font-weight: 600; margin: .25rem 0 1rem; }
+    .selo dl { display: grid; grid-template-columns: auto 1fr; gap: .45rem 1.5rem;
+               margin: 0 0 1.25rem; }
+    .selo dt { color: var(--cor-texto-secundario); }
+    .selo dd { margin: 0; font-weight: 500; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<section class="secao secao--frio">
+  <div class="secao__interior">
+    <article class="cartao selo">
+      <div class="selo__badge">{{ selo_svg | safe }}</div>
+      <h1>{{ marca.nome }} ✓ — {{ titulo_estado }}</h1>
+      <p class="selo__estab">{{ nome }}</p>
+      <p><strong>AL Monitorizado</strong> pelo {{ marca.nome }}: registo RNAL, seguro
+         obrigatório e regulamentos municipais sob vigilância contínua.</p>
+      <dl>
+        <dt>Registo RNAL</dt><dd>n.º {{ d.nr_registo }}</dd>
+        {% if d.modalidade %}<dt>Modalidade</dt><dd>{{ d.modalidade }}</dd>{% endif %}
+        {% if d.concelho %}<dt>Concelho</dt><dd>{{ d.concelho }}</dd>{% endif %}
+        {% if d.distrito %}<dt>Distrito</dt><dd>{{ d.distrito }}</dd>{% endif %}
+        {% if d.data_registo %}<dt>Data de registo</dt><dd>{{ d.data_registo }}</dd>{% endif %}
+        <dt>Estado no RNAL</dt><dd>{{ estado_rnal }}</dd>
+      </dl>
+      <p class="nota">Página pública do {{ marca.nome }}, gerada a partir de dados
+        públicos do Registo Nacional de Alojamento Local (RNAL). Só informação; não
+        constitui aconselhamento. Sem dados pessoais do titular.
+        <a href="{{ marca.nav.inicio }}">checkal.pt</a></p>
+    </article>
+  </div>
+</section>
+{% endblock %}

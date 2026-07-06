@@ -274,3 +274,64 @@ class ToconlineToken(Base):
     refresh_token: Mapped[str | None] = mapped_column(Text)
     refresh_expira_em: Mapped[datetime | None] = mapped_column(_TS)
     atualizado_em: Mapped[datetime | None] = mapped_column(_TS)
+
+
+class Lead(Base):
+    """Interessado captado consent-first pelo widget da landing (FASE 1, SPEC-FASE1-WEB §consentimento).
+
+    Um `Lead` é alguém que fez o "check" grátis ao seu AL e pediu, com consentimento
+    EXPLÍCITO, para receber o relatório e comunicações — ainda NÃO é um `Cliente`
+    pagante. É a fronteira RGPD nº 1 do projeto materializada em dados: nada de cold,
+    nada de reutilizar contactos do RNAL; só quem carregou na checkbox entra aqui.
+
+    **A PROVA de consentimento (art. 7/1 RGPD — o responsável tem de a demonstrar)**
+    guarda-se junto ao registo, imutável: `consentimento_texto_versao` (o texto EXATO
+    + a versão que o titular viu e aceitou), `consentimento_em` (quando) e `ip` (de
+    onde). Assim, perante a CNPD, prova-se *o quê*, *quando* e *de onde* se consentiu.
+
+    Fluxo de estado (double opt-in): nasce `'pendente'`; o email de confirmação leva
+    `token_confirmacao` e a ligação `/confirmar?token=`; ao clicar passa a
+    `'confirmado'`. O opt-out (`/remover`) leva-o a `'removido'`. O `token_confirmacao`
+    é `unique` (o URL de confirmação é uma capacidade — dois leads nunca o partilham).
+
+    Portátil (SQLite/Postgres): só `Integer`/`Text`/`DateTime(timezone=True)`. Aditivo:
+    tabela nova, não toca nenhuma das anteriores.
+    """
+
+    __tablename__ = "leads"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(Text, nullable=False)
+    # O AL que o interessado verificou no widget (contexto; opcional — pode inscrever-se sem verificar).
+    nr_registo: Mapped[int | None] = mapped_column(Integer)
+    concelho: Mapped[str | None] = mapped_column(Text)
+    # --- PROVA de consentimento (RGPD art. 7/1): texto+versão, quando e de onde ---
+    consentimento_texto_versao: Mapped[str | None] = mapped_column(Text)
+    consentimento_em: Mapped[datetime | None] = mapped_column(_TS)
+    ip: Mapped[str | None] = mapped_column(Text)
+    estado: Mapped[str] = mapped_column(Text, default="pendente", nullable=False)  # pendente|confirmado|removido
+    token_confirmacao: Mapped[str | None] = mapped_column(Text, unique=True)
+    criado_em: Mapped[datetime | None] = mapped_column(_TS)
+
+
+class OptOut(Base):
+    """Lista de supressão persistente — o "não me contactem" (FASE 1 §remover).
+
+    Fonte de verdade do opt-out interno que o núcleo de compliance cruza ANTES de
+    cada envio: `app.compliance.optout.filtrar_optout` recebe hoje um `log_optout`
+    injetado — em produção esse conjunto materializa-se a partir desta tabela. Por
+    isso o `email` é a **chave natural** e guarda-se JÁ NORMALIZADO (minúsculas, sem
+    espaços — igual a `compliance.optout.normalizar_email`): o cruzamento fica
+    simétrico e a operação é idempotente (opor-se N vezes = 1 linha, colisão de PK).
+
+    Escrita por `app.web.remover` (formulário público + link de 1 clique carimbado
+    nos emails de prospeção — LEGAL.md §37, Lei 41/2004 art. 13.º-B, RGPD art. 21.º)
+    e partilhada com o motor de campanhas do FDS 6 ("log de todos os opt-outs",
+    SPEC-FDS6 §motor). Puramente aditiva; portátil SQLite/Postgres (`Text`/`_TS`).
+    """
+
+    __tablename__ = "optouts"
+
+    email: Mapped[str] = mapped_column(Text, primary_key=True)  # normalizado (lower/strip)
+    origem: Mapped[str | None] = mapped_column(Text)  # 'formulario' | 'email_1clique'
+    criado_em: Mapped[datetime | None] = mapped_column(_TS)

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 180" font-family="&#39;Plus Jakarta Sans&#39;,&#39;Trebuchet MS&#39;,&#39;Segoe UI&#39;,system-ui,sans-serif">
+  
+  <rect width="180" height="180" rx="48" fill="#0F172A"></rect>
+  <g transform="translate(16,60) scale(0.52)"><path d="M12,54 L40,84 L92,12" fill="none" stroke="#12B76A" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"></path></g>
+  <text x="97" y="122" font-size="86" font-weight="800" fill="#FFFFFF" text-anchor="middle">A</text>
+  <text x="147" y="122" font-size="86" font-weight="800" fill="#FFFFFF" text-anchor="middle">L</text>
+  <text x="216" y="124" font-size="96" font-weight="800" fill="#0F172A" letter-spacing="-2">CheckAL</text>
+</svg>

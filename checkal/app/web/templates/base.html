@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="{{ cores.grafite }}">
+  <title>{% block title %}{{ marca.nome }} — {{ marca.tagline }}{% endblock %}</title>
+  {% block meta %}
+  <meta name="description" content="{{ marca.nome }}: {{ marca.tagline }} Serviço privado e independente de monitorização de Alojamento Local.">
+  {% endblock %}
+
+  {# Tipografia da marca via Google Fonts (SPEC): títulos Plus Jakarta Sans, texto Inter. #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ marca.google_fonts }}">
+
+  {# Design system do CheckAL. #}
+  <link rel="stylesheet" href="{{ assets.brand_css }}">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <a class="salta-para-conteudo" href="#conteudo">Saltar para o conteúdo</a>
+
+  <header class="cabecalho" role="banner">
+    <div class="cabecalho__interior">
+      <a class="cabecalho__logo" href="{{ marca.nav.inicio }}" aria-label="{{ marca.nome }} — página inicial">
+        <img src="{{ assets.logo_horizontal }}" alt="{{ marca.nome }}" width="210" height="54" decoding="async">
+      </a>
+      <nav class="cabecalho__nav" aria-label="Navegação principal">
+        <a href="{{ marca.nav.precos }}">Preços</a>
+        <a class="btn btn--acao btn--pequeno" href="{{ marca.nav.inicio }}#verificar">Faz o check grátis</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo" class="conteudo" role="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="rodape" role="contentinfo">
+    <div class="rodape__interior">
+      <p class="rodape__legal">{{ marca.qualificador_legal }}</p>
+      <nav class="rodape__links" aria-label="Ligações legais">
+        <a href="{{ marca.nav.privacidade }}">Privacidade</a>
+        <a href="{{ marca.nav.termos }}">Termos</a>
+        <a href="{{ marca.nav.remover }}">Remover os meus dados</a>
+      </nav>
+    </div>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

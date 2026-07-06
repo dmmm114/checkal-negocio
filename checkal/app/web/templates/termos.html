@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Termos e Condições — {{ marca.nome }}{% endblock %}
+{% block meta %}
+  <meta name="description" content="Termos e Condições do {{ marca.nome }} (Cosmic Oasis, Lda.): natureza informativa do serviço, SLA de deteção, garantia, renovação e responsabilidade.">
+  <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block content %}
+<article class="secao">
+  <div class="secao__interior" style="max-width: 760px;">
+    <h1>Termos e Condições</h1>
+    <p class="nota">Última atualização: [data]. Ao subscrever ou usar o {{ marca.nome }},
+      aceitas estes termos. O {{ marca.nome }} é um serviço privado e independente, sem
+      qualquer vínculo ao Turismo de Portugal, ao RNAL ou a câmaras municipais.</p>
+
+    <h2>1. Natureza do serviço</h2>
+    <p>O {{ marca.nome }} presta um serviço de <strong>informação e monitorização</strong> com
+      base em fontes públicas (RNAL, Diário da República, regulamentos municipais). Os alertas
+      interpretados por IA são auxiliares informativos.</p>
+    <p class="estado estado--atencao" style="margin: .5rem 0;">
+      Isto é informação, não aconselhamento jurídico.
+    </p>
+    <p>O serviço <strong>não presta aconselhamento jurídico</strong> nem substitui a consulta a
+      advogado, solicitador ou contabilista. Recomendamos que confirmes com o teu profissional
+      antes de agir.</p>
+
+    <h2>2. Sem garantia de resultado</h2>
+    <p>O serviço não garante a manutenção do teu registo de AL, a validade do seguro nem a tua
+      conformidade legal — essas obrigações são e permanecem tuas, enquanto titular.</p>
+
+    <h2>3. Dependência de fontes de terceiros</h2>
+    <p>A deteção depende da disponibilidade e exatidão das fontes públicas. A indisponibilidade
+      da API do Turismo de Portugal ou um erro nos dados de origem não constitui incumprimento
+      do {{ marca.nome }}, que se obriga a diligenciar meios alternativos.</p>
+
+    <h2>4. Prazo de deteção (SLA)</h2>
+    <p>Alertamos-te <strong>até 7 dias</strong> após uma alteração se tornar detetável nas
+      fontes públicas que monitorizamos. Não prometemos tempo real.</p>
+
+    <h2>5. Limitação de responsabilidade</h2>
+    <p>Na medida máxima permitida por lei, a nossa <strong>responsabilidade</strong> total fica
+      limitada ao valor que pagaste nos 12 meses anteriores ao facto, excluindo lucros cessantes
+      e danos indiretos. Esta limitação não afasta a responsabilidade por dolo ou negligência
+      grosseira, nem os direitos que a lei do consumo te garante de forma imperativa.</p>
+
+    <h2>6. Preços e pagamento</h2>
+    <p>Os preços constam da página de <a href="{{ marca.nav.precos }}">Preços</a> e são
+      apresentados <strong>com IVA incluído</strong>. O pagamento é feito à cabeça pelo período
+      contratado (anual ou trienal).</p>
+
+    <h2>7. Renovação automática</h2>
+    <p>A subscrição renova automaticamente por igual período. Avisamos-te <strong>30 dias
+      antes</strong> de cada renovação, com o preço, a data e um link de cancelamento. Podes
+      cancelar gratuitamente, pelo mesmo meio da contratação, com efeito até ao dia da renovação.</p>
+
+    <h2>8. Livre resolução e garantia</h2>
+    <p>Tens <strong>14 dias</strong> de livre resolução, nos termos do DL 24/2014 (contratos à
+      distância). Como o serviço inicia de imediato a teu pedido, o reembolso é proporcional se
+      resolveres dentro desse prazo. Acresce a nossa <strong>garantia de 30 dias</strong>:
+      se não vires valor, devolvemos 100% — sem perguntas.</p>
+
+    <h2>9. Lei aplicável e resolução de litígios</h2>
+    <p>Aplica-se a lei portuguesa. Em caso de litígio de consumo, podes recorrer a uma entidade
+      de Resolução Alternativa de Litígios (RAL) e à plataforma europeia de resolução de litígios
+      em linha (ODR). Dispomos de <strong>Livro de Reclamações Eletrónico</strong> em
+      <a href="https://www.livroreclamacoes.pt" rel="noopener">livroreclamacoes.pt</a>.</p>
+
+    <h2>10. Identificação e contacto</h2>
+    <p>O {{ marca.nome }} é um serviço de <strong>Cosmic Oasis, Lda.</strong>, NIPC
+      <strong>[NIPC]</strong>, com sede em <strong>[morada]</strong>, Portugal. Contacto:
+      <a href="mailto:{{ email_privacidade }}">{{ email_privacidade }}</a>. Consulta a
+      <a href="{{ marca.nav.privacidade }}">Política de Privacidade</a> para saberes como
+      tratamos os teus dados.</p>
+  </div>
+</article>
+{% endblock %}

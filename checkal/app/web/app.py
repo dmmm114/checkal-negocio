@@ -1,14 +1,17 @@
-"""Composição da aplicação web do CheckAL (FDS 2, SPEC-FDS2.md §app).
+"""Composição da aplicação web do CheckAL (FDS 2/3 + FASE 1 · SPEC-FASE1-WEB §Wire).
 
-`criar_app() -> FastAPI` é a **fábrica** que monta, numa única aplicação, os três
-routers do FDS 2 — mantidos deliberadamente em módulos disjuntos (fronteiras do
+`criar_app() -> FastAPI` é a **fábrica** que monta, numa única aplicação, TODOS os
+routers do website — mantidos deliberadamente em módulos disjuntos (fronteiras do
 SPEC) e reunidos só aqui:
 
-    app.web.landing         → GET /            (landing placeholder)
-                              GET /saude       (healthcheck de uptime/deploy)
-    app.web.verificar       → GET /api/verificar   (verificação pública consent-first)
-    app.web.webhook_stripe  → POST /webhooks/stripe (webhook único da Stripe)
-    app.web.selo            → GET /selo/{nr_registo} (página pública do selo — FDS 3)
+    app.web.landing         → GET /                    (landing consent-first)
+                              GET /saude               (healthcheck de uptime/deploy)
+    app.web.verificar       → GET /api/verificar       (verificação pública consent-first)
+    app.web.paginas         → GET /precos /privacidade /termos /obrigado
+    app.web.consentimento   → POST /inscrever · GET /confirmar (double opt-in)
+    app.web.remover         → GET/POST /remover        (opt-out / direito de oposição)
+    app.web.selo            → GET /selo/{nr_registo}    (página pública do selo — FDS 3)
+    app.web.webhook_stripe  → POST /webhooks/stripe     (webhook único da Stripe)
 
 Porquê uma *fábrica* e não um `app` de módulo: cada teste (e cada processo de
 produção) obtém uma instância fresca com os routers montados, sem estado global de
@@ -19,32 +22,51 @@ efeitos colaterais: importá-lo/instanciá-lo durante a recolha de testes não e
 na BD de dev nem liga a Stripe/InvoiceXpress.
 
 DISCIPLINA (inviolável): **MODO DE TESTE, LIVE-GATED.** Nada aqui faz chamadas HTTP
-reais; o cliente HTTP do InvoiceXpress é composto (e *gated*) dentro do webhook, e
-injetado no fulfillment. Nada de emails, nada de cold.
+reais nem envia emails: o double opt-in passa pelo seam `app.envio.obter_enviador`
+(devolve `None` em teste) e o cliente HTTP do InvoiceXpress é composto (e *gated*)
+dentro do webhook. Nada de emails, nada de cold.
 """
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
-from app.web import landing, selo, verificar, webhook_stripe
+from app.web import (
+    consentimento,
+    landing,
+    marca,
+    paginas,
+    remover,
+    selo,
+    verificar,
+    webhook_stripe,
+)
 
 
 def criar_app() -> FastAPI:
-    """Cria e devolve a aplicação FastAPI do CheckAL com os três routers montados.
+    """Cria e devolve a aplicação FastAPI do CheckAL com TODOS os routers montados.
 
-    Monta, por esta ordem, a landing (+ healthcheck), a verificação pública
-    consent-first, o webhook único da Stripe e a página pública do selo (FDS 3). Não
-    cria tabelas nem abre ligações: a persistência resolve-se em `app.db` no momento de
-    cada request (o que permite aos testes trocarem o motor por um SQLite temporário
-    antes de exercitar as rotas).
+    Monta a landing (+ healthcheck), a verificação pública consent-first, as páginas
+    institucionais, o funil de consentimento (double opt-in), o opt-out, a página
+    pública do selo e o webhook único da Stripe. Não cria tabelas nem abre ligações: a
+    persistência resolve-se em `app.db` no momento de cada request (o que permite aos
+    testes trocarem o motor por um SQLite temporário antes de exercitar as rotas).
     """
     app = FastAPI(
         title="CheckAL",
         description="Monitorização RNAL + seguro + regulamentos municipais de Alojamento Local.",
         version="3.0",  # FDS 3
     )
+    # Design system (FASE 1): serve brand.css + assets de marca em /static. A
+    # instância Jinja2Templates partilhada vive em `app.web.marca` (autoescape
+    # ligado, globais da marca injetados) e é usada pelos routers ao renderizar.
+    app.mount("/static", StaticFiles(directory=str(marca.STATIC_DIR)), name="static")
+
     app.include_router(landing.router)
     app.include_router(verificar.router)
-    app.include_router(webhook_stripe.router)
+    app.include_router(paginas.router)
+    app.include_router(consentimento.router)
+    app.include_router(remover.router)
     app.include_router(selo.router)
+    app.include_router(webhook_stripe.router)
     return app

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Política de Privacidade — {{ marca.nome }}{% endblock %}
+{% block meta %}
+  <meta name="description" content="Como o {{ marca.nome }} (Cosmic Oasis, Lda.) trata os teus dados pessoais ao abrigo do RGPD: finalidade, base legal, prazos, direitos e contacto.">
+  <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block content %}
+<article class="secao">
+  <div class="secao__interior" style="max-width: 760px;">
+    <h1>Política de Privacidade</h1>
+    <p class="nota">Última atualização: [data]. Esta política explica, em linguagem clara, como
+      tratamos os teus dados pessoais. O {{ marca.nome }} é um serviço <strong>privado e
+      independente</strong> — não somos, nem representamos, o Turismo de Portugal, o RNAL ou
+      qualquer câmara municipal.</p>
+
+    <h2>1. Quem é o responsável pelo tratamento</h2>
+    <p>O {{ marca.nome }} é um serviço operado por <strong>Cosmic Oasis, Lda.</strong>,
+      NIPC <strong>[NIPC]</strong>, com sede em <strong>[morada]</strong>, Portugal.
+      Para qualquer questão sobre proteção de dados ou para exercer os teus direitos,
+      contacta-nos em <a href="mailto:{{ email_privacidade }}">{{ email_privacidade }}</a>.</p>
+
+    <h2>2. Que dados tratamos e para quê</h2>
+    <ul class="checklist">
+      <li><span class="marca-ok">·</span> <strong>Dados de contacto de titulares de AL</strong>
+        (nome, morada do alojamento, contactos) — para te informarmos sobre um serviço
+        diretamente relevante para a tua atividade de Alojamento Local.</li>
+      <li><span class="marca-ok">·</span> <strong>Email que nos indicas na verificação gratuita</strong>
+        — para te enviarmos o mini-relatório que pedes e, se e só se o autorizares, os
+        alertas e novidades do {{ marca.nome }}.</li>
+      <li><span class="marca-ok">·</span> <strong>Dados de subscrição e faturação</strong>
+        (se te tornares cliente) — para prestar o serviço, cobrar e emitir a fatura-recibo.</li>
+    </ul>
+
+    <h2>3. De onde vêm os teus dados</h2>
+    <p>Quando não nos deste os dados diretamente, obtivemo-los do <strong>Registo Nacional
+      de Alojamento Local (RNAL)</strong>, público por imposição do art. 10.º do Decreto-Lei
+      n.º 128/2014, de 29 de agosto. Ao abrigo do art. 14.º do RGPD, informamos-te desta
+      origem na primeira comunicação que te dirigimos.</p>
+
+    <h2>4. Com que base legal (RGPD)</h2>
+    <p>Tratamos os teus dados com fundamento em interesse legítimo e, quando aplicável, no teu
+      consentimento — nunca fora das finalidades abaixo:</p>
+    <ul class="checklist">
+      <li><span class="marca-ok">·</span> <strong>Interesse legítimo</strong> (art. 6.º, n.º 1,
+        al. f) — apresentar-te um serviço relevante para a tua atividade de AL, ponderado
+        contra os teus direitos e a tua expectativa razoável.</li>
+      <li><span class="marca-ok">·</span> <strong>Consentimento</strong> (art. 6.º, n.º 1, al. a)
+        — para os emails de alertas e ofertas que só enviamos se marcares a caixa própria;
+        podes retirá-lo a qualquer momento, num clique, em qualquer email.</li>
+      <li><span class="marca-ok">·</span> <strong>Diligências pré-contratuais / execução do
+        contrato</strong> (art. 6.º, n.º 1, al. b) — para te entregar o relatório que pedes e
+        para prestar o serviço que subscreves.</li>
+      <li><span class="marca-ok">·</span> <strong>Obrigação legal</strong> (art. 6.º, n.º 1, al. c)
+        — para cumprir os deveres fiscais e de faturação.</li>
+    </ul>
+
+    <h2>5. Durante quanto tempo guardamos</h2>
+    <p>Os dados de contacto usados em prospeção são conservados por um máximo de
+      <strong>12 meses</strong> após a última interação, ou até te opores — o que ocorrer
+      primeiro. Os dados de clientes são conservados durante a vigência do serviço e pelos
+      prazos legais aplicáveis (nomeadamente fiscais). Quem se opõe entra numa lista de
+      supressão que conservamos como prova do cumprimento.</p>
+
+    <h2>6. Com quem partilhamos</h2>
+    <p>Apenas com subcontratantes que nos prestam serviços essenciais (envio de email,
+      pagamentos, faturação e alojamento técnico), vinculados por contrato e a tratar os
+      dados apenas segundo as nossas instruções. Não vendemos os teus dados a ninguém.</p>
+
+    <h2>7. Os teus direitos</h2>
+    <p>Ao abrigo do RGPD, tens direito de <strong>acesso</strong>, <strong>retificação</strong>,
+      <strong>apagamento</strong>, <strong>limitação</strong>, <strong>portabilidade</strong> e
+      <strong>oposição</strong> ao tratamento — todos gratuitos e a todo o tempo. A oposição
+      ao marketing direto é absoluta (art. 21.º, n.º 2). Exerce-os em
+      <a href="mailto:{{ email_privacidade }}">{{ email_privacidade }}</a> ou remove-te num
+      clique em <a href="{{ marca.nav.remover }}">{{ marca.nav.remover }}</a>.</p>
+
+    <h2>8. Reclamações</h2>
+    <p>Se entenderes que os teus dados não foram tratados corretamente, tens o direito de
+      apresentar reclamação à <strong>Comissão Nacional de Proteção de Dados (CNPD)</strong> —
+      <a href="https://www.cnpd.pt" rel="noopener">cnpd.pt</a>.</p>
+
+    <h2>9. Cookies</h2>
+    <p>Usamos apenas cookies técnicos necessários ao funcionamento do site (isentos de
+      consentimento). Quaisquer cookies de análise só são ativados com o teu consentimento
+      prévio.</p>
+
+    <p class="nota" style="margin-top: 2rem;">
+      Vê também os nossos <a href="{{ marca.nav.termos }}">Termos &amp; Condições</a>.
+    </p>
+  </div>
+</article>
+{% endblock %}
