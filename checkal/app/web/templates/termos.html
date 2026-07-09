@@ -55,8 +55,10 @@
     <p>Respondemos pelos danos que causarmos por incumprimento culposo, nos termos gerais da lei.
       Na medida — e <strong>apenas</strong> na medida — em que a lei o permite, a nossa
       responsabilidade por <strong>negligência leve</strong> e <strong>danos patrimoniais</strong>
-      fica limitada de forma proporcional ao valor que pagaste nos 12 meses anteriores ao facto,
-      excluindo lucros cessantes e danos indiretos.</p>
+      fica limitada ao <strong>maior</strong> destes dois valores: (a) o total que nos pagaste nos
+      <strong>24 meses</strong> anteriores ao facto; ou (b) o <strong>limite por sinistro</strong>
+      da nossa apólice de seguro de responsabilidade civil profissional (E&amp;O). Dentro desse
+      limite, excluem-se os lucros cessantes e os danos indiretos.</p>
     <p>Esta limitação <strong>não exclui nem reduz</strong>, em caso algum, a nossa
       responsabilidade por <strong>dolo</strong>, por <strong>negligência grave</strong>, por
       <strong>danos a pessoas</strong> (vida, integridade física ou saúde), nem os direitos que a
@@ -66,6 +68,22 @@
     <p>A tua proteção real não é um teto de responsabilidade: a Cosmic Oasis, Lda. mantém (ou
       contrata antes de escalar) um <strong>seguro de responsabilidade civil profissional (E&amp;O)</strong>
       para cobrir eventuais danos decorrentes do serviço.</p>
+    {# =======================================================================
+       CHECKLIST INTERNA — apólice E&O (NÃO renderiza: comentário Jinja).
+       O teto por múltiplo acima só é defensável se a apólice o suportar. Um teto a 49 €
+       seria abusivo (quase-exclusão face ao dano previsível — perda do registo AL = dezenas
+       de milhares de €). Antes de subscrever/renovar a apólice, confirmar com o corretor:
+         1. EXCLUSÕES DE CONTEÚDO GERADO POR IA — a apólice cobre danos de alertas redigidos
+            com apoio de IA? Afastar esta exclusão é crítico para o CheckAL.
+         2. BASE CLAIMS-MADE + DATA RETROATIVA — cobre reclamações apresentadas na vigência
+            por factos anteriores? Qual a data retroativa?
+         3. SINISTROS EM SÉRIE — 1 template errado enviado a N clientes conta como 1 sinistro
+            ou N sinistros? (Afeta o limite agregado, a franquia e qual "limite por sinistro"
+            se aplica à alínea (b) acima.)
+         4. TERRITÓRIO E JURISDIÇÃO — cobertura para Portugal / lei portuguesa.
+         5. CUSTOS DE DEFESA — dentro ou fora do limite indemnizatório? Se dentro, esgotam o
+            capital disponível para a indemnização.
+       ======================================================================= #}
 
     <h2>7. Preços e pagamento</h2>
     <p>Os preços constam da página de <a href="{{ marca.nav.precos }}">Preços</a> e são

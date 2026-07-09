@@ -15,18 +15,27 @@ jurídico com uma coima ou um prazo inventados é responsabilidade real (AUTOMAC
      O excerto (partilhado por todos os clientes do mesmo evento) vai no **último bloco**
      do `system` com `cache_control` ttl 1h; os DADOS DO AL (voláteis) vão no `user`
      (estável→volátil — SPEC-IA §4.3).
-  2. **Validação programática (pós-geração).** Corre-se :func:`app.ia.validacao.validar_alerta`
-     (url citada + todo o valor monetário/data ⊂ excerto). Inválido → **regenera**, até
-     :data:`MAX_TENTATIVAS_IA` gerações de IA.
+  2. **Validação programática (pós-geração).** Um alerta só é "aprovado" (:func:`_aprovado`)
+     se passar DUAS redes puras: (a) *grounding* — :func:`app.ia.validacao.validar_alerta`
+     (url citada + todo o valor monetário/data ⊂ excerto); e (b) *anti-atividade-reservada*
+     — :func:`app.ia.guardrails.validar_nao_prescritivo` (sem conclusões jurídicas
+     imperativas/individualizadas: "estás em incumprimento", "tens de regularizar", "vais
+     ser multado"… — Lei 10/2024, LEGAL-PARECER §7). Um template correto não IMPEDE o
+     modelo de derivar para prosa prescritiva; este detetor é a defesa técnica. Não
+     aprovado (valor órfão OU prescritivo) → **regenera**, até :data:`MAX_TENTATIVAS_IA`.
   3. **Formato manual de recurso (rede de segurança).** Falhadas as 2 tentativas (ou sem
      `cliente_ia`), envia-se um alerta por template **sem prosa da IA** — "Foi publicado
-     {titulo} … em {concelho}. Lê aqui: {url}" — que **passa a validação por construção**
-     (só cita a url + factos de metadados; degrada até nenhum valor ser órfão). Nunca fica
-     nada por comunicar.
+     {titulo} … em {concelho}. Lê aqui: {url}" — que **passa por construção** (factual e
+     condicional: "pode afetar"; degrada até nenhum valor ser órfão nem haver prescrição).
+     Nunca fica nada por comunicar.
 
 🧯 Invariante inviolável: :func:`gerar_alerta` **nunca** devolve um alerta que falhe
-:func:`app.ia.validacao.validar_alerta` — nem o da IA (só se aceita depois de validado),
-nem o do fallback (validado por construção). O fallback **cita sempre** a url.
+:func:`_aprovado` — nem grounding nem guardrail —, seja o da IA (só se aceita depois de
+aprovado) ou o do fallback (aprovado por construção). O fallback **cita sempre** a url.
+
+📌 Prova/defesa: o template (:data:`SISTEMA_REGRAS`) e os guardrails são **versionados**
+(:data:`ALERTA_TEMPLATE_VERSAO`); cada :class:`Alerta` carrega o carimbo em
+`template_versao`, para o dossier "templates versionados + guardrails + disclaimers".
 
 DISCIPLINA (inviolável): **MODO DE TESTE, LIVE-GATED.** Este módulo **não** cria nem
 importa nenhum cliente Anthropic — o `cliente_ia` é sempre **injetado** por quem chama
@@ -50,6 +59,7 @@ from typing import Any
 
 import app.config as config
 from app.ia import cliente as _cliente
+from app.ia.guardrails import validar_nao_prescritivo
 from app.ia.validacao import validar_alerta
 
 __all__ = [
@@ -57,12 +67,19 @@ __all__ = [
     "gerar_alerta",
     "MAX_TENTATIVAS_IA",
     "SISTEMA_REGRAS",
+    "ALERTA_TEMPLATE_VERSAO",
 ]
 
 # Nº máximo de gerações de IA por par evento×cliente antes de cair no formato manual
 # (SPEC-IA §5.3 / AUTOMACAO §3: "se a validação falhar 2×"). A 1.ª é a geração; a 2.ª é
 # a regeneração; falhadas ambas, entra a camada 3.
 MAX_TENTATIVAS_IA = 2
+
+# Versão do template de redação + guardrails — PROVA do dossier de defesa (LEGAL-PARECER
+# §7): "templates versionados + guardrails + disclaimers". Registável por alerta
+# (:attr:`Alerta.template_versao`). Bumpar SEMPRE que o `SISTEMA_REGRAS` ou os guardrails
+# mudarem — é o carimbo que prova, à data, que regras/defesas estavam em vigor.
+ALERTA_TEMPLATE_VERSAO = "2026-07-09"
 
 # System da redação — parte **fixa** (papel + regras invioláveis). Estável (sem bytes
 # voláteis: datas/IDs) para não estragar o prefixo em cache. Deriva do template canónico
@@ -77,10 +94,18 @@ SISTEMA_REGRAS = (
     "números, prazos ou coimas — usa apenas os que constam do excerto.\n"
     "3. Na dúvida sobre se afeta o cliente, assume que PODE afetar e recomenda "
     "verificação.\n"
-    "4. Estrutura: (a) O que aconteceu — 1 frase. (b) Afeta o teu AL? sim/não/"
-    "possivelmente + porquê, referindo os dados concretos do AL. (c) O que deves fazer "
-    "+ prazo, se existir.\n"
-    "5. Máximo 180 palavras. Sem jargão jurídico."
+    "4. NÃO dás aconselhamento jurídico (é atividade reservada a advogados/"
+    "solicitadores). É PROIBIDO concluir juridicamente pela situação do cliente: nunca "
+    'escrevas que o AL "está ilegal/irregular", "em incumprimento", que "não cumpre" ou '
+    '"viola", nem "tens de / és obrigado a" seguido de um ato jurídico (regularizar, '
+    "legalizar, alterar, cessar…), nem ameaces com coima individual. Usa linguagem "
+    'GENÉRICA e CONDICIONAL ("pode afetar", "poderá ser necessário", "se aplicável").\n'
+    "5. Estrutura: (a) O que aconteceu — 1 frase. (b) Afeta o teu AL? sim/não/"
+    "possivelmente + porquê, referindo os dados concretos do AL. (c) O que podes fazer: "
+    "recomenda SEMPRE verificar a fonte oficial ou consultar um profissional (advogado/"
+    "solicitador/contabilista); indica o prazo se existir, sem o impor.\n"
+    "6. Máximo 180 palavras. Sem jargão jurídico. Termina com: "
+    '"Isto é informação, não aconselhamento jurídico."'
 )
 
 # Mensagem `user` — os DADOS DO AL, que **variam** por cliente (fora da cache).
@@ -104,12 +129,15 @@ class Alerta:
         — 2 falhas de validação ou IA indisponível.
     :param tentativas_ia: nº de gerações de IA feitas (0 se `cliente_ia` era ``None``;
         1 no caminho feliz; 2 se houve regeneração ou se caiu no manual após 2 falhas).
+    :param template_versao: carimbo da versão do template+guardrails em vigor quando o
+        alerta foi gerado (:data:`ALERTA_TEMPLATE_VERSAO`) — registável como prova.
     """
 
     conteudo: str
     url_fonte: str
     manual: bool
     tentativas_ia: int
+    template_versao: str = ALERTA_TEMPLATE_VERSAO
 
     def __str__(self) -> str:  # o alerta "é" o seu conteúdo, para logging/persistência
         return self.conteudo
@@ -167,6 +195,23 @@ def _montar_utilizador(dados_al: Any) -> str:
 
 
 # ==========================================================================
+#  Definição de "alerta aprovado" — grounding E não-prescritivo (invariante único)
+# ==========================================================================
+def _aprovado(texto: str, *, url: str, excerto: str) -> bool:
+    """Um alerta só sai se **fundamentado** (camada 2) **e não-prescritivo** (guardrail).
+
+    Combina as duas redes de segurança programáticas num único predicado, usado tanto na
+    aceitação da prosa da IA como na escolha do candidato manual — para o invariante ser o
+    mesmo em todo o lado: nunca sai um alerta com um valor órfão NEM com uma conclusão
+    jurídica individualizada (atividade reservada, Lei 10/2024).
+    """
+    return (
+        validar_alerta(texto, url_fonte=url, excerto=excerto).valido
+        and validar_nao_prescritivo(texto).valido
+    )
+
+
+# ==========================================================================
 #  Camada 3 — formato manual de recurso (sem prosa da IA)
 # ==========================================================================
 def _candidatos_manuais(titulo: str, concelho: str, url: str) -> list[str]:
@@ -204,7 +249,7 @@ def _formato_manual(titulo: str, concelho: str, url: str, excerto: str) -> str:
     """Devolve o formato manual mais rico que **passa** a validação (por construção)."""
     candidatos = _candidatos_manuais(titulo, concelho, url)
     for texto in candidatos:
-        if validar_alerta(texto, url_fonte=url, excerto=excerto).valido:
+        if _aprovado(texto, url=url, excerto=excerto):
             return texto
     # Nenhum validou (só acontece sem url para citar) — devolve o mais seguro na mesma.
     return candidatos[-1]
@@ -252,7 +297,7 @@ def gerar_alerta(
                 sistema=sistema,
                 utilizador=utilizador,
             ).strip()
-            if validar_alerta(texto, url_fonte=url, excerto=excerto).valido:
+            if _aprovado(texto, url=url, excerto=excerto):
                 return Alerta(
                     conteudo=texto,
                     url_fonte=url,

@@ -24,15 +24,33 @@
 | **Sede / morada** | `[morada]`, Portugal |
 | **Serviço operado** | CheckAL — monitorização de Alojamento Local |
 | **Contacto de proteção de dados** | privacidade@checkal.pt |
-| **Encarregado de Proteção de Dados (EPD/DPO)** | `[a decidir]` — designação **não obrigatória** por defeito (não há tratamento em larga escala de categorias especiais nem monitorização sistemática em larga escala como atividade principal na aceção do art. 37.º/1). Reavaliar se/quando a prospeção a frio for ativada em larga escala. Até lá, ponto de contacto único: privacidade@checkal.pt |
+| **Encarregado de Proteção de Dados (EPD/DPO)** | **Não designado por defeito** — designação **não obrigatória** hoje (não há tratamento em larga escala de categorias especiais nem monitorização sistemática em larga escala como atividade principal na aceção do art. 37.º/1/b e /c). Avaliação escrita e gatilhos de reavaliação **no bloco abaixo**. Ponto de contacto: privacidade@checkal.pt |
+| **Responsável interno de privacidade** | `[nome — a designar]` (pessoa concreta na Cosmic Oasis, Lda.), contactável em privacidade@checkal.pt — assegura o cumprimento, mantém este registo e reavalia os gatilhos de EPD |
 | **Autoridade de controlo** | Comissão Nacional de Proteção de Dados (CNPD) — cnpd.pt |
 
 > **Nota sobre a fonte RNAL.** Onde uma atividade obtém dados do Registo Nacional de
-> Alojamento Local (RNAL) do Turismo de Portugal, a **base de publicidade legal do
-> campo *email* do titular está por confirmar** (ver parecer §2 e
-> `LEGAL-PARECER-DECISOES.md` §2). Este registo **não afirma** que o email é público
-> por imposição do art. 10.º do DL 128/2014 enquanto essa confirmação documental e a
-> validação por advogado não existirem.
+> Alojamento Local (RNAL) do Turismo de Portugal: o **art. 10.º n.º 5 do DL 128/2014**
+> (publica o *"endereço eletrónico do titular da exploração"* e a validade do seguro
+> obrigatório) está **CONFIRMADO** pelo consultor — falta apenas **CONTRA-verificação** de
+> que nada no consolidado pós-DL 76/2024 o contradiz (ver `LEGAL-PARECER-DECISOES.md` §2).
+> **Princípio que se mantém: publicação obrigatória ≠ licença de reutilização** — para
+> **pessoas singulares**, reutilizar o email/RNAL para prospeção depende do teste de
+> **compatibilidade de finalidades** (art. 6.º/4), que **não** é favorável. **Termos de
+> licença do webservice `list_RNAL`** (dados abertos — **Lei 68/2021** + condições do
+> Turismo de Portugal) a verificar; a sua violação é problema **contratual/administrativo
+> autónomo** do RGPD.
+
+> **Avaliação escrita da designação de EPD (art. 37.º) e gatilhos de reavaliação.**
+> **Decisão hoje: NÃO designar EPD formal** — defensável por o tratamento **não** ser de
+> "larga escala" (nem categorias especiais em larga escala — art. 9.º/37.º/1/c — nem
+> monitorização sistemática em larga escala como atividade principal — art. 37.º/1/b). Fica
+> um **responsável interno de privacidade** nomeado (ver tabela §0). **Gatilhos que obrigam a
+> reavaliar (e provavelmente a designar EPD):** (1) **ingestão da base RNAL completa**
+> (varrimento nacional persistido, não só consultas pontuais); (2) ultrapassar **[X] mil**
+> subscritores/titulares monitorizados de forma contínua; (3) **novas categorias de dados**
+> ou nova finalidade (ex.: perfis, enriquecimento, categorias especiais); (4) ativação da
+> **prospeção a frio em larga escala**. Cada gatilho, quando ocorrer, fica registado com
+> **data e decisão** neste documento.
 
 ---
 
@@ -86,9 +104,9 @@
 | **Finalidade** | Monitorizar fontes públicas (RNAL, Diário da República, regulamentos municipais) e alertar cada cliente quando uma alteração afeta o seu AL (estado do registo, seguro obrigatório, regulamento do concelho). |
 | **Base legal (art. 6.º)** | **Execução do contrato** — 6.º/1/b (é o núcleo do serviço subscrito). |
 | **Categorias de titulares** | Clientes/subscritores e os AL monitorizados. |
-| **Categorias de dados** | N.º de registo AL e dados públicos associados; estado detetado nas fontes; email de destino do alerta; histórico de alertas enviados. **Excertos regulatórios e dados do AL** (públicos) usados na redação do alerta — **não** dados pessoais de terceiros. |
-| **Destinatários / subcontratantes** | Resend (envio); Anthropic (camada de IA que redige o alerta — recebe **excerto do documento + dados do AL**, nunca dados de prospects); Hetzner (alojamento/BD). |
-| **Transferências internacionais** | Anthropic (EUA) e Resend (EUA) — mecanismo (DPF/SCC). Regra de desenho: a IA recebe excerto regulatório + dados do AL, minimizando dados pessoais enviados para fora do EEE (ver `LEGAL-PARECER-DECISOES.md` §6). |
+| **Categorias de dados** | N.º de registo AL e dados públicos associados; estado detetado nas fontes; email de destino do alerta; histórico de alertas enviados; excertos regulatórios usados na redação. **Nota (2.ª opinião):** para clientes **ENI / pessoa singular**, os **dados do AL** usados na redação (n.º RNAL, morada, validade do seguro) **SÃO dados pessoais** — o n.º RNAL é **identificador único** e retirar o nome é **pseudonimização, não anonimização**. Não se tratam dados pessoais de **terceiros/prospects** neste fluxo. |
+| **Destinatários / subcontratantes** | Resend (envio); Anthropic (camada de IA que redige o alerta — recebe excerto do documento + dados do AL; para clientes singulares/ENI esses dados são pessoais, ver acima; nunca dados de prospects); Hetzner (alojamento/BD). |
+| **Transferências internacionais** | Anthropic (EUA — **ou UE via Amazon Bedrock Frankfurt `eu-central-1`**) e Resend (EUA) — mecanismo (**SCCs + TIA**; DPF só com verificação **datada**). **A IA trata dados pessoais de clientes singulares/ENI** (os dados do AL) → **DPA (art. 28.º) + mecanismo de transferência fecham-se já**; a opção **Bedrock UE elimina o Cap. V** para a IA. Para *prospects*, mantém-se a regra: só excerto regulatório + dados do AL, nunca dados de prospects (ver `LEGAL-PARECER-DECISOES.md` §6). |
 | **Prazo de conservação** | Enquanto durar a subscrição; o histórico de alertas conserva-se para prova do serviço prestado e cumprimento do SLA, pelo prazo de defesa de direitos. |
 | **Medidas de segurança** | TLS; minimização dos dados enviados à IA; *prompts* sem dados pessoais de terceiros; disclaimer "informação, não aconselhamento jurídico" em cada alerta (guarda de atividade reservada — Lei 10/2024); registo de envios. |
 
@@ -102,8 +120,8 @@
 | **Base legal (art. 6.º)** | **Obrigação legal** — 6.º/1/c (deveres fiscais/faturação); **execução do contrato** — 6.º/1/b (cobrança do preço). |
 | **Categorias de titulares** | Clientes/subscritores (e, quando aplicável, o adquirente que não coincide com o utilizador). |
 | **Categorias de dados** | Nome/firma, NIF/NIPC, morada de faturação, descritivo do serviço, montante, meio e data de pagamento, referências da transação. |
-| **Destinatários / subcontratantes** | Software/serviço de faturação (**TOConline — Cloudware**); processadores de pagamento (**Stripe** e/ou **IfThenPay**); Administração Tributária (comunicação legal de faturas); contabilista certificado. |
-| **Transferências internacionais** | TOConline (PT) e IfThenPay (PT) — EEE. Stripe (EUA/IE) — mecanismo (DPF/SCC). |
+| **Destinatários / subcontratantes** | Software/serviço de faturação (**TOConline — Cloudware**); processadores de pagamento (**Stripe** e/ou **IfThenPay**) — **DUPLA QUALIFICAÇÃO**: são **subcontratantes** no que tratam por nossa conta **e responsáveis autónomos** nas obrigações próprias de **AML/KYC** (prevenção de branqueamento, identificação), parte em que **não** agem sob as nossas instruções; Administração Tributária (comunicação legal de faturas); contabilista certificado. |
+| **Transferências internacionais** | TOConline (PT) e IfThenPay (PT) — EEE. Stripe (EUA/IE) — mecanismo (**SCCs/DPF**; as SCCs de 2021 já incorporam o art. 28.º, dispensando contrato de subcontratação separado). |
 | **Prazo de conservação** | Documentos de faturação/contabilísticos conservados pelo **prazo legal fiscal** aplicável (regra geral, 10 anos) — independente do fim da relação comercial. |
 | **Medidas de segurança** | Acesso restrito à área de faturação; TLS; segregação de funções; os dados de cartão **não** são tratados/armazenados pela Cosmic Oasis (ficam no processador de pagamento certificado PCI-DSS). |
 
@@ -118,7 +136,7 @@
 | **Categorias de titulares** | Clientes e *leads* que contactam o suporte; qualquer titular que exerça direitos. |
 | **Categorias de dados** | Identificação e contacto; conteúdo da mensagem/ticket; histórico de interações; dados da conta relevantes para resolver o pedido. |
 | **Destinatários / subcontratantes** | Resend (email); Hetzner (alojamento); Anthropic (**apoio de IA à redação/triagem — a instruir para não receber mais dados pessoais do que o necessário e nunca categorias especiais**). |
-| **Transferências internacionais** | Anthropic (EUA) e Resend (EUA) — mecanismo (DPF/SCC); minimização dos dados enviados à IA. |
+| **Transferências internacionais** | Anthropic (EUA — **ou UE via Amazon Bedrock Frankfurt `eu-central-1`**) e Resend (EUA) — mecanismo (**SCCs + TIA**; DPF só com verificação **datada**). No suporte a IA **trata dados pessoais do cliente** (identificação, conteúdo do ticket) → **DPA + mecanismo já**; Bedrock UE elimina o Cap. V. Minimização dos dados enviados à IA; nunca categorias especiais. |
 | **Prazo de conservação** | Histórico de suporte conservado pelo tempo necessário à gestão da relação e prova do exercício de direitos; pedidos de exercício de direitos conservados como prova de cumprimento pelo prazo de defesa. |
 | **Medidas de segurança** | Minimização dos dados enviados à IA; acesso restrito ao suporte; TLS; registo do tratamento dos pedidos de direitos; verificação de identidade antes de dar acesso/apagar. |
 
@@ -149,20 +167,30 @@
 ## Subcontratantes (art. 28.º) e transferências internacionais (art. 44.º e ss.)
 
 Tabela canónica (de `LEGAL-PARECER-DECISOES.md` §6). Cada subcontratante carece de
-**contrato de subcontratação (art. 28.º/3)** antes de tratar dados em produção; os que
-estão fora do EEE carecem de **mecanismo de transferência** válido.
+enquadramento do **art. 28.º/3** antes de tratar dados em produção — **DPA** próprio ou, para
+os prestadores US com Cláusulas-Tipo, o próprio módulo das **SCCs de 2021 (que já incorporam o
+art. 28.º)**, dispensando contrato separado. Os que estão fora do EEE carecem de **mecanismo
+de transferência** válido (Cap. V).
+
+> **CORREÇÃO (2.ª opinião).** A IA **trata dados pessoais HOJE** para clientes ENI/singulares
+> (n.º RNAL = identificador único; **pseudonimização, não anonimização**) → **DPA + mecanismo
+> com a Anthropic fecham-se já**, não "quando ligar o cold". **Stripe e IfThenPay** têm **dupla
+> qualificação** (subcontratante + responsável autónomo AML/KYC). **Hetzner:** fixar região UE
+> + verificar sub-subcontratantes.
 
 | Fornecedor | Função | Sede | Transferência internacional |
 |---|---|---|---|
-| **Resend** | Email transacional / comunicações | EUA | ⚠️ Mecanismo necessário (Data Privacy Framework ou Cláusulas-Tipo/SCC) |
-| **Anthropic** (Haiku/Sonnet) | IA da redação dos alertas/suporte | EUA | ⚠️ Mecanismo necessário; **nunca** enviar dados pessoais de prospects — só excertos regulatórios + dados do AL (públicos) |
+| **Anthropic** (Haiku/Sonnet) | IA da redação dos alertas/suporte | EUA — ou **UE via Bedrock Frankfurt** | ⚠️ **Trata dados pessoais de clientes singulares/ENI** → DPA + mecanismo já. Bedrock `eu-central-1` remove o Cap. V; API EUA = SCCs + TIA (+ DPF só com verificação datada). Para *prospects*: só dados do AL, nunca dados de prospects |
+| **Resend** | Email transacional / comunicações | EUA | ⚠️ Mecanismo (SCCs; DPF só com verificação datada). SCC 2021 já cobre o art. 28.º |
+| **Stripe** | Pagamentos | EUA / IE | ⚠️ Mecanismo (SCCs/DPF) + **dupla qualificação** (subcontratante + responsável autónomo AML/KYC) |
+| **IfThenPay** | Pagamentos | PT | ✅ EEE + **dupla qualificação** (subcontratante + responsável autónomo AML/KYC) |
 | **TOConline** (Cloudware) | Faturação | PT | ✅ EEE |
-| **Stripe** | Pagamentos | EUA / IE | ⚠️ Mecanismo necessário (DPF/SCC) |
-| **IfThenPay** | Pagamentos | PT | ✅ EEE |
-| **Hetzner** | Alojamento aplicacional e BD | DE | ✅ EEE (preferir região UE) |
+| **Hetzner** | Alojamento aplicacional e BD | DE | ✅ EEE — **fixar região UE + verificar sub-subcontratantes** |
 
-> **Regra de desenho (código).** A camada de IA (FDS4) recebe **excerto do documento +
-> dados do AL** (públicos), **não** dados pessoais de prospects. Manter esta fronteira.
+> **Regra de desenho (código).** No fluxo de *prospeção*, a camada de IA (FDS4) recebe
+> **excerto do documento + dados do AL** (públicos), **não** dados pessoais de prospects —
+> manter esta fronteira. Para *clientes* singulares/ENI, note-se que os dados do AL enviados à
+> IA **são pessoais** (daí o DPA + mecanismo serem requisito **já**).
 
 ---
 
@@ -174,6 +202,14 @@ estão fora do EEE carecem de **mecanismo de transferência** válido.
   Proteção de Dados se a prospeção/monitorização atingir larga escala. Por defeito, o
   desenho consent-first e a minimização reduzem o risco; reavaliar a cada mudança de
   escala.
+- **EPD (art. 37.º):** decisão atual = **não designar** (avaliação escrita e **gatilhos de
+  reavaliação** em §0); há **responsável interno de privacidade** nomeado. Rever a cada
+  gatilho (ingestão da base RNAL completa; X mil subscritores; novas categorias de dados;
+  cold em larga escala).
+- **IA = subcontratante de dados pessoais HOJE** para clientes ENI/singulares (não só
+  "quando ligar o cold") → DPA + mecanismo de transferência (ou Bedrock UE) fecham-se já.
+- **Stripe/IfThenPay = dupla qualificação** (subcontratante + responsável autónomo AML/KYC):
+  não os tratar como meros processadores nos contratos e informações.
 - **Prova de consentimento** (Atividade A) e **lista de supressão** (Atividades A/F)
   são os dois artefactos de prova mais importantes perante a CNPD — manter operacionais
   desde o dia 1.

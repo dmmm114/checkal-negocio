@@ -16,23 +16,44 @@
 
 ## 1. Os 3 pontos que exigem validação formal (o parecer deixou-os em aberto)
 
-### (i) Base legal da fonte do email do titular — *pré-verificado por nós*
-- O parecer duvidava que o email fosse campo público por lei. **A nossa verificação (texto
-  consolidado do DL 128/2014 na PGDL) indica que o art. 10.º, n.º 5 lista como público o
-  "endereço eletrónico do titular da exploração" e a validade do seguro obrigatório.**
-- **Pedido:** confirmar a redação exata do art. 10.º n.º 5 no consolidado **pós-DL 76/2024**, e
-  que o webservice `list_RNAL` (que usamos) não expõe mais do que o legalmente público.
-- **Porque importa:** se confirmado, o cold a `geral@` de coletiva (opt-out) fica defensável e a
-  nota de informação pode citar a base; se não, o cold cai e ficamos 100% em consentimento.
+### (i) Base legal da fonte do email do titular — *CONTRA-verificação, não confirmação de raiz*
+- **O art. 10.º n.º 5 está CONFIRMADO** pelo consultor (7.ª versão consolidada): o RNAL
+  publica o **"endereço eletrónico do titular da exploração"** e a **validade do seguro
+  obrigatório**.
+- **DESACOPLAR do canal `geral@`:** o email frio a **pessoa coletiva** assenta na **Lei
+  41/2004, art. 13.º-B** (*opt-out*) + cruzamento **DGC** + identificação/opt-out por
+  mensagem — **NÃO na fonte do endereço**. O ponto (i) serve a **redação da nota do art.
+  14.º** e os **tratamentos que tocam pessoas singulares** (onde o email É dado pessoal), não
+  a legitimação do cold a coletiva.
+- **Pedido (CONTRA-verificação, não confirmação de raiz):** que **nada** no consolidado
+  **pós-DL 76/2024** contradiga a redação do art. 10.º n.º 5; **e** verificar os **termos de
+  licença/reutilização do webservice `list_RNAL`** — regime de **dados abertos (Lei 68/2021)**
+  + condições do **Turismo de Portugal**. Uma violação desses termos é **problema
+  contratual/administrativo autónomo** do RGPD (independente e cumulável).
+- **Princípio a manter:** **publicação obrigatória ≠ licença de reutilização** — para
+  singulares, a reutilização depende do **teste de compatibilidade de finalidades** (art.
+  6.º/4), que se mantém.
 - Fontes: [PGDL — DL 128/2014](https://www.pgdlisboa.pt/leis/lei_mostra_articulado.php?nid=3085&tabela=leis&ficha=1&pagina=1) · [DRE](https://diariodarepublica.pt/dr/detalhe/decreto-lei/128-2014-56384880)
 
 ### (ii) Transferências internacionais + subcontratação (art. 28.º e 44.º e ss.)
 - Fornecedores fora do EEE que tratam dados: **Resend** (email, EUA), **Anthropic** (IA dos
   alertas, EUA), **Stripe** (pagamentos, EUA/IE). Dentro do EEE: TOConline (PT), IfThenPay (PT),
   Hetzner (DE/UE).
-- **Pedido:** validar o **mecanismo de transferência** (Cláusulas-Tipo/DPF/art. 46.º) para cada um
-  de fora do EEE, e a minuta de **contrato de subcontratação (art. 28.º)**. Regra de código que já
-  aplicamos: a IA recebe **excerto do documento + dados do AL**, nunca dados pessoais de prospects.
+- **CORREÇÃO (2.ª opinião):** a IA **trata dados pessoais HOJE** para clientes **ENI/singulares**
+  — o **n.º RNAL + morada + validade do seguro são dados pessoais** (n.º RNAL = identificador
+  único; tirar o nome é **pseudonimização, não anonimização**). Logo **DPA + mecanismo de
+  transferência com a Anthropic fecham-se já**, independentemente do cold. A regra "a IA só vê
+  dados do AL, não de prospects" vale para *prospects*, mas **não** isenta os *clientes* singulares.
+- **Pedido:** validar o **mecanismo de transferência** para cada fornecedor fora do EEE e a minuta
+  de subcontratação, tendo em conta que:
+  - **Claude via Amazon Bedrock (Frankfurt, `eu-central-1`)** mantém a inferência na UE e
+    **elimina o Cap. V** para a IA; a alternativa (API direta EUA) exige **SCCs + TIA** (+ DPF só
+    com verificação **datada** da listagem);
+  - as **SCCs de 2021 já incorporam o art. 28.º** — para os US com DPA adequado, **não** é preciso
+    contrato de subcontratação separado;
+  - **Stripe e IfThenPay** têm **dupla qualificação** (subcontratante + **responsável autónomo** nas
+    obrigações próprias de AML/KYC) — refletir na minuta e no registo art. 30.º;
+  - **Hetzner**: **fixar região UE** + verificar a **cadeia de sub-subcontratantes**.
 
 ### (iii) Fronteira da atividade reservada (Lei 10/2024) — à luz de um alerta REAL
 - O produto interpreta regulamentos para o caso do cliente ("isto pode afetar o teu AL; verifica X").
@@ -47,17 +68,23 @@
 | Documento | Ficheiro | O que validar |
 |---|---|---|
 | Política de privacidade | `checkal/app/web/templates/privacidade.html` | finalidades por canal, bases legais, direitos (oposição absoluta art. 21.º), conservação 6 m, transferências, CNPD |
-| Termos & Condições | `checkal/app/web/templates/termos.html` | serviço = ferramenta informativa (não garantia/aconselhamento); limitação de responsabilidade não excluir dolo/negligência grave; E&O |
+| Termos & Condições | `checkal/app/web/templates/termos.html` | serviço = ferramenta informativa (não garantia/aconselhamento); **teto de responsabilidade = múltiplo (o maior de 12–24 meses de mensalidades OU o limite por sinistro da apólice E&O)**, não excluir dolo/negligência grave/danos a pessoas; **checklist E&O** em comentário interno (exclusões de conteúdo IA; claims-made + data retroativa; sinistros em série; território PT; custos de defesa dentro/fora do limite) |
 | Registo de atividades (art. 30.º) | `REGISTO-ATIVIDADES-ART30.md` | completude das entradas por atividade; cold marcado NÃO ATIVO |
 | LIA (interesse legítimo) — cold `geral@` | `LIA-COLD-GERAL.md` | o teste de equilíbrio aguenta? salvaguardas suficientes? |
-| Nota de informação (art. 14.º) | `ANEXO1-nota-informacao-corrigida.md` | versão email + carta; sem afirmar art. 10.º até (i) fechar |
+| Nota de informação (art. 14.º) | `ANEXO1-nota-informacao-corrigida.md` | versão **email** (art. 10.º n.º 5 já CONFIRMADO — falta só CONTRA-verificar); a **carta a singular é provavelmente inviável na prática** — o art. 10.º/5 publica o **email, não a morada** do titular, e a morada pública é a do **estabelecimento**, raramente a residência |
 
 ---
 
 ## 3. Decisões/aconselhamento que pedimos
-- Necessidade (ou não) de **EPD/DPO** designado.
+- Necessidade (ou não) de **EPD/DPO** designado. **A nossa decisão:** não designar hoje
+  (defensável por não ser "larga escala"), mas **documentámos a avaliação escrita + gatilhos de
+  reavaliação** (ingestão da base RNAL completa; X mil subscritores; novas categorias de dados) e
+  **nomeámos responsável interno de privacidade** — ver `REGISTO-ATIVIDADES-ART30.md §0`. Confirmam?
 - **Prazo de conservação** de prospects: propomos **6 meses** (supressão à parte) — confirmam?
-- A **cláusula de limitação de responsabilidade** + o **seguro RC profissional (E&O)** como proteção real.
+- A **cláusula de limitação de responsabilidade** — agora um **múltiplo** (o maior de 12–24 meses
+  de mensalidades OU o limite por sinistro da apólice E&O), não um teto a 49 € (seria abusivo) — +
+  o **seguro RC profissional (E&O)** como proteção real. Ver a **checklist da apólice E&O** em
+  comentário interno de `termos.html §6`.
 - A **recomendação estratégica**: assentar em **consentimento (widget) + parcerias** (é o nosso plano) —
   confirmam que é o caminho, e o cold só como acelerador limitado a `geral@`/opt-out?
 

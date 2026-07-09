@@ -27,6 +27,7 @@ import pytest
 
 import app.config as config
 from app.ia import alerta as mod
+from app.ia.guardrails import validar_nao_prescritivo
 from app.ia.validacao import validar_alerta
 
 
@@ -304,3 +305,130 @@ def test_prompt_user_traz_os_dados_do_al():
     assert "Loulé" in conteudo_user      # concelho do AL
     # o excerto NÃO se repete no user (fica no system partilhado/cacheado)
     assert EXCERTO not in conteudo_user
+
+
+# ==========================================================================
+#  🛡️ GUARDRAILS ANTI-ATIVIDADE-RESERVADA (Lei 10/2024) — camada 2-bis
+#  Um alerta PRESCRITIVO (conclusão jurídica individualizada) é tratado como as
+#  outras falhas → regenera e, persistindo, cai no formato manual. NUNCA sai.
+# ==========================================================================
+
+# Alerta com conclusão jurídica individualizada MAS grounded (só valores do excerto e cita
+# a url) — isola o guardrail: passa a validação anti-alucinação e falha SÓ o não-prescritivo.
+ALERTA_PRESCRITIVO = (
+    "Foi publicado um regulamento em Loulé. O teu AL está em incumprimento. "
+    "A coima varia entre 2.500 € e 4.000 €. "
+    "Consulta o documento em " + URL
+)
+
+
+def _prescritivo(nucleo: str) -> str:
+    """Envolve uma conclusão prescritiva num frame grounded que cita a url."""
+    return f"Foi publicado um regulamento em Loulé. {nucleo} Consulta o documento em {URL}"
+
+
+# Um núcleo prescritivo por cada padrão do detetor (todos grounded → só o guardrail falha).
+NUCLEOS_PRESCRITIVOS = [
+    "O teu AL está em incumprimento.",
+    "Sem o seguro, estás ilegal.",
+    "O teu registo é ilegal.",
+    "O teu AL não está conforme o regulamento.",
+    "Não cumpres os requisitos.",
+    "Com isto, violas a lei.",
+    "Tens de regularizar a tua situação.",
+    "És obrigado a cessar a atividade.",
+    "Se não agires, vais ser multado.",
+]
+
+
+def test_fixture_prescritivo_passa_grounding_mas_falha_guardrail():
+    # Sanidade: o guardrail é o ÚNICO motivo de rejeição (grounding passa).
+    assert validar_alerta(ALERTA_PRESCRITIVO, url_fonte=URL, excerto=EXCERTO).valido
+    assert not validar_nao_prescritivo(ALERTA_PRESCRITIVO).valido
+
+
+def test_alerta_prescritivo_da_ia_regenera_e_aceita_o_valido():
+    # Prescritivo à 1.ª, informativo fiel à 2.ª → regenera e aceita o 2.º (como as outras falhas).
+    cliente = ClienteFalso(ALERTA_PRESCRITIVO, ALERTA_VALIDO)
+    alerta = _gerar(cliente)
+    assert alerta.conteudo == ALERTA_VALIDO
+    assert alerta.manual is False
+    assert alerta.tentativas_ia == 2
+    assert len(cliente.messages.chamadas) == 2
+    assert validar_nao_prescritivo(alerta.conteudo).valido
+    assert _passa_validacao(alerta)
+
+
+def test_alerta_prescritivo_duas_vezes_cai_no_manual_e_nunca_sai():
+    cliente = ClienteFalso(ALERTA_PRESCRITIVO, ALERTA_PRESCRITIVO)
+    alerta = _gerar(cliente)
+    assert alerta.manual is True
+    assert alerta.tentativas_ia == 2
+    assert len(cliente.messages.chamadas) == 2
+    # não reaproveita a prosa reprovada — a conclusão prescritiva não sai
+    assert "incumprimento" not in alerta.conteudo.lower()
+    assert validar_nao_prescritivo(alerta.conteudo).valido
+    assert _passa_validacao(alerta)
+
+
+@pytest.mark.parametrize("nucleo", NUCLEOS_PRESCRITIVOS)
+def test_cada_padrao_prescritivo_cai_no_manual_e_o_manual_e_seguro(nucleo):
+    texto = _prescritivo(nucleo)
+    # o guardrail é o motivo de rejeição (grounding passa)
+    assert validar_alerta(texto, url_fonte=URL, excerto=EXCERTO).valido
+    assert not validar_nao_prescritivo(texto).valido
+    # 2 gerações prescritivas → formato manual, que passa AMBOS os validadores
+    alerta = _gerar(ClienteFalso(texto, texto))
+    assert alerta.manual is True
+    assert validar_nao_prescritivo(alerta.conteudo).valido
+    assert _passa_validacao(alerta)
+
+
+@pytest.mark.parametrize(
+    "respostas",
+    [
+        (ALERTA_VALIDO,),                          # informativo fiel
+        (ALERTA_PRESCRITIVO, ALERTA_VALIDO),       # prescritivo → regenera → informativo
+        (ALERTA_PRESCRITIVO, ALERTA_PRESCRITIVO),  # 2 prescritivos → manual
+        (ALERTA_INVALIDO, ALERTA_PRESCRITIVO),     # órfão + prescritivo → manual
+        ("", ""),                                  # refusal → manual
+    ],
+)
+def test_gerar_alerta_nunca_devolve_prescritivo(respostas):
+    alerta = _gerar(ClienteFalso(*respostas))
+    assert validar_nao_prescritivo(alerta.conteudo).valido
+    assert _passa_validacao(alerta)  # e continua grounded
+
+
+def test_formato_manual_passa_sempre_o_guardrail():
+    # O próprio formato manual de recurso é factual/condicional ("pode afetar") → seguro.
+    alerta = mod.gerar_alerta(_evento(), _dados_al(), cliente_ia=None, excerto=EXCERTO)
+    assert alerta.manual is True
+    assert validar_nao_prescritivo(alerta.conteudo).valido
+
+
+# ==========================================================================
+#  📌 VERSIONAMENTO — templates versionados como prova do dossier de defesa
+# ==========================================================================
+def test_template_tem_versao_registavel_em_formato_data():
+    import re
+
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", mod.ALERTA_TEMPLATE_VERSAO)
+
+
+def test_alerta_carrega_a_versao_do_template_nos_dois_caminhos():
+    # caminho IA (feliz) e caminho manual carregam ambos a versão — registável por alerta.
+    ia = _gerar(ClienteFalso(ALERTA_VALIDO))
+    assert ia.template_versao == mod.ALERTA_TEMPLATE_VERSAO
+    manual = _gerar(ClienteFalso(ALERTA_INVALIDO, ALERTA_INVALIDO))
+    assert manual.template_versao == mod.ALERTA_TEMPLATE_VERSAO
+
+
+def test_system_instrui_a_nao_concluir_juridicamente():
+    # Camada 1 reforçada: o template proíbe conclusões jurídicas e menciona o disclaimer.
+    cliente = ClienteFalso(ALERTA_VALIDO)
+    _gerar(cliente)
+    system_texto = " ".join(
+        b["text"] for b in cliente.messages.chamadas[0]["system"]
+    ).lower()
+    assert "aconselhamento" in system_texto
