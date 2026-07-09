@@ -9,6 +9,11 @@
 > (`app.crons.resolver_desaparecidos_pendentes`, cron `varrimento`). A guarda de
 > sequência abaixo está **RESOLVIDA**. Testes: `tests/test_breaker.py` +
 > `tests/test_crons.py`.
+>
+> **Estado a 09/07/2026:** o G4 (calibração do estado `cancelado` na página
+> individual) está **RESOLVIDO empiricamente** — ver a secção «G4 resolvido» abaixo.
+> O produto passou a **ENTREGAR cancelamentos reais** (fim do «zero
+> verdadeiros-positivos») via canários no breaker.
 
 ## 🚦 GUARDA DE SEQUÊNCIA — RESOLVIDA no FDS 5
 
@@ -32,29 +37,57 @@ A decisão em **dois níveis** (endurecida no red-team ao FDS 5, 05/07/2026):
 `desambiguar` (maioria da amostra) decide **só** se a API está de pé — evento real vs
 API partida vs ambíguo. No ramo `real`, `resolver_pendentes` **reconfirma CADA nr
 individualmente** (`obter_detalhe(nr)`, propagado pelo wire) antes de enviar: a página
-DAQUELE nr tem de dizer `cancelado`/`suspenso`; se disser `ativo` (AL vivo, ex.: L1) o
-pendente é **suprimido** e o evento reaberto; `nao_encontrado`/`indeterminado`/erro/sem
-seam → **retido, não enviado**. `api_partida` SUPRIME e reabre; `ambiguo` ESCALA. A
-regra inviolável é **por-nr**: um alerta `desaparecido` só sai se a página **daquele
-nr** confirmar positivamente o fim de atividade — a maioria da amostra nunca basta.
-Isolamento por concelho preservado (e agora **transacional**: cada concelho corre no seu
-`SAVEPOINT` — uma falha reverte só esse concelho, não desfaz os já resolvidos). Testes
-ponta-a-ponta em `tests/test_crons.py` (`test_cron_varrimento_*`, `test_L1_*`,
-`test_L2_*`, `test_real_maioria_cancelado_mas_um_nr_vivo_nao_e_enviado`,
+DAQUELE nr tem de confirmar o fim de atividade — por prova **positiva**
+(`cancelado`/`suspenso`, à prova de futuro) ou pela **assinatura empírica**
+(`nao_encontrado` + canário `ativo` na mesma corrida — ver «G4 resolvido» abaixo); se
+disser `ativo` (AL vivo, ex.: L1) o pendente é **suprimido** e o evento reaberto;
+`nao_encontrado` **sem canário saudável**/`indeterminado`/erro/sem seam → **retido,
+não enviado**. `api_partida` SUPRIME e reabre; `ambiguo` ESCALA. A regra inviolável é
+**por-nr**: um alerta `desaparecido` só sai se a página **daquele nr** confirmar o fim
+de atividade — a maioria da amostra nunca basta. Isolamento por concelho preservado (e
+**transacional**: cada concelho corre no seu `SAVEPOINT` — uma falha reverte só esse
+concelho, não desfaz os já resolvidos). Testes ponta-a-ponta em `tests/test_crons.py`
+(`test_cron_varrimento_*`, `test_L1_*`, `test_L2_*`,
+`test_real_maioria_cancelado_mas_um_nr_vivo_nao_e_enviado`,
 `test_falha_num_concelho_nao_desfaz_o_outro`) e em `tests/test_breaker.py`
 (`test_resolver_real_confirma_por_nr_*`).
 
-> ⚠️ **Verdadeiros-positivos ainda dependem da calibração G4 do parser de detalhe.**
-> O parser (`app.rnal.detalhe.parse_detalhe`) **ainda não afirma** `cancelado`/`suspenso`
-> (só `ativo`/`nao_encontrado`/`indeterminado` — ver `_MARCADORES_ESTADO_SUSPEITO`, vazio
-> até haver uma fixture de um `nr` REAL cancelado). Como o envio de um `desaparecido`
-> exige agora, **por-nr**, um estado `cancelado`/`suspenso` positivo, **enquanto G4 não
-> for calibrado a página individual nunca devolve esses estados** → todo o `desaparecido`
-> é suprimido/retido (nunca enviado). É a direção segura desejada (zero falsos
-> «cancelado»), mas significa **zero verdadeiros-positivos de cancelamento** até a
-> calibração (Próximos passos §3: amostrar um `nr` cancelado real, gravar fixture,
-> preencher `_MARCADORES_ESTADO_SUSPEITO`). Só então os cancelamentos REAIS passam a ser
-> entregues.
+## ✅ G4 RESOLVIDO empiricamente (09/07/2026) — cancelamentos reais passam a ser ENTREGUES
+
+**A pergunta em aberto** («como aparece um registo cancelado na página individual?»)
+foi respondida por sondagem dirigida a páginas reais do RNAL a 09/07/2026:
+
+- **Evidência:** o nr **51233** (ativo na `list_RNAL` de Lisboa a 05/07, ausente a
+  09/07 — cancelamento real) devolve na página individual **HTTP 200 + «Registo não
+  encontrado»**. Os **canários** nrs **10 e 32** (ativos estáveis), sondados ao mesmo
+  tempo, devolveram `ativo` → o serviço estava de pé; o «não encontrado» do alvo era
+  REAL, não avaria. Mais **7 nrs ausentes** das listas ativas sondados: todos «não
+  encontrado»; **0 banners** de «Cancelado»/«Suspenso» em 15 páginas vivas.
+- **Conclusão:** o RNAL **remove** o registo cancelado da consulta pública. **Não
+  existe** o estado `cancelado`/`suspenso` na página — o parser
+  (`app.rnal.detalhe.parse_detalhe`) está CORRETO como está e **não ganha marcadores
+  novos** (`_MARCADORES_ESTADO_SUSPEITO` fica vazio de propósito; os rótulos
+  `ESTADO_CANCELADO`/`ESTADO_SUSPENSO` mantêm-se só à prova de futuro).
+- **Nova semântica (breaker, `app/breaker.py`):** a assinatura observável de
+  cancelamento real é **alvo `nao_encontrado` + canário `ativo` na MESMA corrida**.
+  O wire escolhe 1–3 canários na BD (`selecionar_canarios`: registos com
+  `desaparecido_em IS NULL`, mais recentemente vistos primeiro, de preferência do
+  mesmo concelho, fallback nacional; um pendente nunca é canário) e sonda-os via o
+  MESMO `obter_detalhe`. Com ≥1 canário `ativo`, `nao_encontrado` vota/confirma REAL;
+  **sem canário saudável, nada se confirma por ausência** (fail-closed → api_partida/
+  retido — o comportamento antigo). Páginas `cancelado`/`suspenso` (se um dia
+  existirem) continuam a confirmar por si sós (prova positiva direta).
+- **Copy fiel:** o alerta confirmado por ausência diz o que se viu — «deixou de
+  constar da consulta pública do RNAL — confirmámos na página individual» — nunca um
+  «está cancelado» absoluto que a página não afirma.
+- **Consequência de produto:** fim do «zero verdadeiros-positivos» — os cancelamentos
+  REAIS passam a ser entregues, mantendo zero falsos «cancelado» (canário saudável
+  obrigatório; alvo `ativo` nunca envia; erro de transporte retém).
+- **Testes:** `tests/test_detalhe.py::test_parse_registo_cancelado_real_e_removido_da_consulta`
+  (fixture sintética com a estrutura da página real, sem PII),
+  `tests/test_breaker.py` (secções 🐤 canários + red-team fail-closed),
+  `tests/test_crons.py::test_real_empirico_nao_encontrado_liberta_com_canarios_da_bd`,
+  `tests/test_e2e_fds5.py::test_e2e_limpeza_real_removida_confirmada_por_canario`.
 
 ## L1 — [médio] ~~Falso `desaparecido` em mudança de concelho com destino em falha~~ · MITIGADA (FDS 5)
 

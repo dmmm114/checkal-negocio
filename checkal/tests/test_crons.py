@@ -9,6 +9,12 @@ O wire liga o **circuit breaker** ao fluxo pós-varrimento e envolve **cada cron
 
 Contrato verificado aqui:
   · REAL confirmado na página individual → o alerta retido é LIBERTADO (enviado);
+  · 🐤 CANÁRIOS (empírico 09/07/2026): o RNAL remove os registos cancelados da
+    consulta pública (não há banner). O wire escolhe canários na BD (registos vivos,
+    `desaparecido_em IS NULL`, de preferência do mesmo concelho, fallback nacional)
+    e a assinatura «alvo `nao_encontrado` + canário `ativo` na mesma corrida»
+    confirma o cancelamento REAL; sem canário saudável, `nao_encontrado` continua
+    a valer api_partida (fail-closed);
   · 🚦 L1 (mudança de concelho c/ destino em falha) — UM falso `desaparecido` cuja
     página individual mostra o AL VIVO → SUPRIMIDO, nunca enviado (mesmo abaixo do
     limiar do breaker: a amostragem por página individual corre sempre);
@@ -300,6 +306,93 @@ def test_real_confirmado_liberta_o_pendente(bd):
     a = _alerta_de(100031)
     assert a.enviado_em is not None and a.canal == CANAL_EMAIL
     assert "cancel" in (a.conteudo or "").lower()
+
+
+# ==========================================================================
+#  🐤 Assinatura empírica (09/07/2026) no WIRE — canários escolhidos na BD
+# ==========================================================================
+def test_real_empirico_nao_encontrado_liberta_com_canarios_da_bd(bd):
+    """🐤 O caso 51233 ponta-a-ponta no wire: o registo do cliente foi REMOVIDO da
+    consulta pública (página `nao_encontrado`) e os canários — registos VIVOS do
+    mesmo concelho, escolhidos automaticamente na BD (`desaparecido_em IS NULL`) —
+    respondem `ativo` na mesma corrida → veredicto REAL → confirmação POR-NR →
+    o alerta retido é LIBERTADO. Fim do «zero verdadeiros-positivos» do G4."""
+    _cenario_pendente(51233, concelho="Porto")
+    _semear_base("Porto", 3, base_nr=910000)      # canários vivos do concelho
+
+    # só o alvo está removido; tudo o resto (incl. canários) responde vivo
+    obter = ObterDetalheFalso({51233: ESTADO_NAO_ENCONTRADO}, padrao=ESTADO_ATIVO)
+    enviar = FakeEnviar()
+    with db.get_session() as s:
+        res = resolver_desaparecidos_pendentes(
+            s, obter_detalhe=obter, enviar=enviar, escalar=FakeEscalar()
+        )
+
+    assert res.enviados == 1
+    assert enviar.n == 1
+    a = _alerta_de(51233)
+    assert a.enviado_em is not None and a.canal == CANAL_EMAIL
+    # copy fiel ao que se viu: removido da consulta pública, confirmado na página
+    assert "deixou de constar" in (a.conteudo or "")
+    assert "consulta pública" in (a.conteudo or "")
+    # os canários sondados vieram da BD (base 910000+), via o MESMO obter_detalhe
+    assert any(nr >= 910000 for nr in obter.chamadas)
+
+
+def test_pendente_nunca_e_canario_de_si_proprio(bd):
+    """🚦 RED-TEAM: um pendente cuja linha em `registos` ainda NÃO tem
+    `desaparecido_em` carimbado (corrida a meio/estado raro) não pode ser escolhido
+    como canário de si próprio. Sem NENHUM outro registo vivo na BD não há canários
+    → a ausência não confirma → NADA é enviado (fail-closed)."""
+    # registo SEM desaparecido_em (ao contrário de _semear_registo_desaparecido)
+    with db.get_session() as s:
+        s.add(models.Registo(
+            nr_registo=51233, nome_alojamento="Casa X", concelho="Porto", distrito="X",
+            hash_campos="h", ausencias_consecutivas=2, desaparecido_em=None,
+        ))
+    _semear_cliente(51233)
+    _semear_evento_desaparecido(51233)
+    _mint_pendentes()
+
+    # a página do alvo está removida; QUALQUER outro nr responderia vivo — mas não
+    # existe mais nenhum registo na BD, logo não pode haver canário
+    obter = ObterDetalheFalso({51233: ESTADO_NAO_ENCONTRADO}, padrao=ESTADO_ATIVO)
+    enviar = FakeEnviar()
+    with db.get_session() as s:
+        res = resolver_desaparecidos_pendentes(
+            s, obter_detalhe=obter, enviar=enviar, escalar=FakeEscalar()
+        )
+
+    assert enviar.n == 0                          # 🚦 nada sai sem canário INDEPENDENTE
+    assert res.enviados == 0
+    # o alvo só foi sondado UMA vez (como amostra do desambiguar); se tivesse sido
+    # selecionado como canário de si próprio haveria uma 2.ª sonda — a exclusão conta
+    assert obter.chamadas.count(51233) == 1
+
+
+def test_servico_nao_encontrado_para_tudo_e_api_partida_zero_envios(bd):
+    """🚦 RED-TEAM (d) no wire: o serviço devolve `nao_encontrado` para TUDO — alvos
+    E canários (que existem na BD e SÃO sondados) → sem canário saudável não há
+    prova de serviço de pé → api_partida → suprime + reabre + FYI, ZERO envios.
+    (É o que preserva a proteção antiga contra API partida.)"""
+    _cid, ev_id = _cenario_pendente(100031, concelho="Porto")
+    _semear_base("Porto", 3, base_nr=910000)      # há canários na BD… mas vão falhar
+
+    obter = _uniforme(ESTADO_NAO_ENCONTRADO)      # tudo nao_encontrado, canários incl.
+    enviar = FakeEnviar()
+    escalar = FakeEscalar()
+    with db.get_session() as s:
+        res = resolver_desaparecidos_pendentes(
+            s, obter_detalhe=obter, enviar=enviar, escalar=escalar
+        )
+
+    assert enviar.n == 0                          # 🚦 nada sai
+    assert res.enviados == 0
+    assert res.suprimidos == 1
+    assert escalar.n == 1
+    assert any(nr >= 910000 for nr in obter.chamadas)   # os canários FORAM sondados
+    with db.get_session() as s:
+        assert s.get(models.EventoRegisto, ev_id).processado is False  # retry
 
 
 # ==========================================================================

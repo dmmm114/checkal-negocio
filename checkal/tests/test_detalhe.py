@@ -132,6 +132,25 @@ HTML_DATA_MALFORMADA = _pagina(
     )
 )
 
+# Página REAL de um registo CANCELADO/REMOVIDO — calibração G4 CONCLUÍDA a 09/07/2026.
+# Empírico: um nr comprovadamente cancelado (51233 — ativo na list_RNAL de Lisboa a
+# 05/07, ausente a 09/07) devolve HTTP 200 com a página de consulta e o marcador
+# «Registo não encontrado, pesquise por Atividade!» num <span class="Text_Error">
+# dentro de um div de erro OutSystems (display:none no HTML estático — o texto conta
+# na mesma para o parser). NÃO existe banner «Cancelado»/«Suspenso»: o RNAL REMOVE o
+# registo da consulta pública (mais 7 nrs ausentes sondados → todos assim; 0 banners
+# em 15 páginas vivas). Fixture SINTÉTICA anonimizada com a MESMA estrutura (sem PII).
+HTML_CANCELADO_REAL_REMOVIDO = _pagina(
+    "<div id=\"RichWidgets_wt38_block_wtMainContent_wtdivError\" "
+    "style=\"font-size: 14px; margin-bottom: 0px; margin-top: 5px;display:none\">"
+    "<span id=\"RichWidgets_wt38_block_wtMainContent_wttxtErr2\" class=\"Text_Error\" "
+    "style=\"font-size: 14px;\">Registo n&#227;o encontrado, pesquise por Atividade!</span>"
+    "</div>"
+    "<div class=\"ThemeGrid_Width3\">"
+    "<a id=\"RichWidgets_wt38_block_wtMainContent_wt125\" href=\"Pesquisa_AAT.aspx\">"
+    "Nova pesquisa</a></div>"
+)
+
 TODAS_AS_FIXTURES = [
     HTML_ATIVO,
     HTML_CADUCADO,
@@ -141,6 +160,7 @@ TODAS_AS_FIXTURES = [
     HTML_SEGURO_VAZIO,
     HTML_MULTI_SEGURO,
     HTML_DATA_MALFORMADA,
+    HTML_CANCELADO_REAL_REMOVIDO,
 ]
 
 
@@ -304,15 +324,34 @@ def test_g4_parser_nunca_afirma_cancelado_ou_suspenso():
         assert d.estado not in {ESTADO_CANCELADO, ESTADO_SUSPENSO}
 
 
-@pytest.mark.skip(
-    reason="G4/TODO: calibrar com um nr REAL cancelado/suspenso (SPEC-DETALHE §4 item 1). "
-    "Enquanto o estado não for observado na página, o parser mantém-no em 'indeterminado'."
-)
-def test_parse_cancelado_real_TODO_calibrar():  # pragma: no cover
-    # Quando o dono fornecer um nr comprovadamente cancelado, gravar a fixture real e
-    # decidir aqui se a página o mostra por banner (→ ESTADO_CANCELADO) ou se some
-    # (→ ESTADO_NAO_ENCONTRADO). Até lá, NÃO afirmar 'cancelado' a partir do detalhe.
-    raise NotImplementedError
+def test_parse_registo_cancelado_real_e_removido_da_consulta():
+    """Calibração G4 CONCLUÍDA (09/07/2026, sondagem dirigida a páginas reais): um
+    registo REALMENTE cancelado devolve a página com «Registo não encontrado» — o
+    RNAL remove-o da consulta pública; não há banner de estado. O parser devolve
+    `nao_encontrado` e NÃO ganha marcadores novos (`_MARCADORES_ESTADO_SUSPEITO`
+    fica vazio de propósito). A CONFIRMAÇÃO de cancelamento NÃO é papel do parser:
+    pertence ao breaker (`app.breaker`) — assinatura «alvo `nao_encontrado` + canário
+    ativo `ativo` na MESMA corrida» (evidência: nr 51233 removido + canários 10/32
+    vivos ao mesmo tempo → o serviço estava de pé, a ausência do alvo era real)."""
+    d = parse_detalhe(HTML_CANCELADO_REAL_REMOVIDO, nr_registo=51233)
+    assert d.estado == ESTADO_NAO_ENCONTRADO
+    # o parser continua sem afirmar cancelado/suspenso — não é observável na página
+    assert d.estado not in {ESTADO_CANCELADO, ESTADO_SUSPENSO}
+    # página de consulta sem bloco de seguro → campos limpos
+    assert d.seguro_companhia is None
+    assert d.seguro_apolice is None
+    assert d.seguro_inicio is None
+    assert d.seguro_validade is None
+
+
+def test_parse_marcador_conta_mesmo_dentro_de_div_escondido():
+    """Fidelidade ao HTML real: o marcador vive num div com `display:none` no HTML
+    estático (OutSystems mostra-o por JS). O parser extrai TEXTO, não estilos —
+    o marcador conta na mesma. Regressão contra um futuro parser \"esperto\" que
+    passasse a ignorar nós escondidos e reabrisse o G4."""
+    assert "display:none" in HTML_CANCELADO_REAL_REMOVIDO  # sanidade da fixture
+    d = parse_detalhe(HTML_CANCELADO_REAL_REMOVIDO, nr_registo=99999)
+    assert d.estado == ESTADO_NAO_ENCONTRADO
 
 
 # ==========================================================================

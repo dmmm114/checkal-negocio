@@ -15,9 +15,13 @@ ramos da 🚦 guarda de sequência, mais o isolamento e o dunning:
                      alertas `desaparecido` RETIDOS são LIBERTADOS e enviados (mock);
                      um concelho VIZINHO (Lisboa), cujo AL continua vivo no varrimento,
                      NÃO é afetado (nenhum falso «cancelado» sai);
+  1-b. REAL EMPÍRICO — (09/07/2026) o RNAL remove os registos cancelados da consulta
+                     pública (não há banner): alvos `nao_encontrado` + canário `ativo`
+                     escolhido na BD (fallback nacional) → cancelamentos ENTREGUES;
   2. API PARTIDA   — as páginas devolvem `nao_encontrado`/erro (resposta nacional
-                     truncada ou concelho em falha) → os pendentes são SUPRIMIDOS (nada
-                     enviado) e o evento de origem reabre para retry (`processado=False`);
+                     truncada ou concelho em falha) SEM canário saudável → os pendentes
+                     são SUPRIMIDOS (nada enviado) e o evento de origem reabre para
+                     retry (`processado=False`);
   3. AMBÍGUO       — as páginas ficam `indeterminado` → ESCALA ao dono, nada é enviado,
                      os pendentes ficam RETIDOS;
   4. DUNNING       — um cartão falhado percorre a régua D-30 → D-7 → D+3 → D+7 → D+21,
@@ -367,6 +371,66 @@ def test_e2e_limpeza_real_liberta_e_vizinho_nao_afetado(bd):
         assert _eventos_desaparecido(200001) == []       # nem sequer um evento
 
     # --- dead-man switch: pingou SUCESSO da check "varrimento" (nunca /fail) ---
+    assert any(u.endswith(f"/{SLUG_VARRIMENTO}") for u in hc.gets)
+    assert not any(u.endswith(f"/{SLUG_VARRIMENTO}/fail") for u in hc.gets)
+
+
+# ==========================================================================
+#  INTEGRAÇÃO 1-b — REAL (assinatura empírica 09/07/2026): o RNAL não mostra
+#  banner de cancelado; um registo cancelado é REMOVIDO da consulta pública.
+#  Alvo `nao_encontrado` + canário `ativo` na mesma corrida → ENTREGA.
+# ==========================================================================
+def test_e2e_limpeza_real_removida_confirmada_por_canario(bd):
+    """A realidade observada a 09/07/2026 (nr 51233 + canários 10/32): as páginas dos
+    ALs cancelados devolvem «Registo não encontrado» (não há banner). O vizinho VIVO
+    de Lisboa serve de canário (fallback nacional — o Porto ficou sem vivos) e prova
+    o serviço de pé → os 5 cancelamentos REAIS são finalmente ENTREGUES, com copy
+    fiel («deixou de constar da consulta pública»), e o vizinho fica intocado."""
+    porto_nrs = [100001, 100002, 100003, 100004, 100005]
+    emails_porto = _preparar_limpeza_porto(porto_nrs)
+
+    raw_lisboa = _raw(200001, concelho="Lisboa", nome="Casa Lisboa", email="lx@ex.pt")
+    _semear_registo_presente(raw_lisboa)
+    _semear_cliente_do_registo(200001, email="vizinho@ex.pt")
+
+    cliente = ClienteVarrimentoFalso(_resultado_scan({"Porto": [], "Lisboa": [raw_lisboa]}))
+    # páginas: alvos removidos (nao_encontrado, o padrao); o canário 200001 está vivo
+    obter = ObterDetalheFalso({200001: ESTADO_ATIVO}, padrao=ESTADO_NAO_ENCONTRADO)
+    enviar = FakeEnviar()
+    escalar = FakeEscalar()
+    hc = FakeClienteHTTP()
+
+    res = cron_varrimento(
+        ["Porto", "Lisboa"], cliente=cliente,
+        obter_detalhe=obter, enviar=enviar, escalar=escalar, cliente_hc=hc,
+    )
+
+    # --- o breaker confirmou por canário e ENTREGOU os 5 cancelamentos reais ---
+    assert isinstance(res.breaker, ResultadoBreaker)
+    assert res.breaker.enviados == 5
+    assert res.breaker.suprimidos == 0 and res.breaker.retidos == 0
+    assert enviar.n == 5
+    assert enviar.destinatarios == set(emails_porto.values())
+    assert "vizinho@ex.pt" not in enviar.destinatarios
+
+    # --- o canário (vivo, escolhido na BD) foi sondado na MESMA corrida ---
+    assert 200001 in obter.chamadas
+
+    # --- copy FIEL ao observado: removido da consulta pública, sem «está cancelado» ---
+    for nr in porto_nrs:
+        a = _alertas_do_registo(nr)[0]
+        assert a.enviado_em is not None and a.canal == CANAL_EMAIL
+        assert pendente_desambiguacao(a) is False
+        assert "deixou de constar" in (a.conteudo or "")
+        assert "consulta pública" in (a.conteudo or "")
+        assert "está cancelado" not in (a.conteudo or "").lower()
+
+    # --- o vizinho de Lisboa continua vivo e intocado ---
+    assert _alertas_do_registo(200001) == []
+    with db.get_session() as s:
+        assert s.get(models.Registo, 200001).desaparecido_em is None
+
+    # --- dead-man switch pingou sucesso ---
     assert any(u.endswith(f"/{SLUG_VARRIMENTO}") for u in hc.gets)
     assert not any(u.endswith(f"/{SLUG_VARRIMENTO}/fail") for u in hc.gets)
 

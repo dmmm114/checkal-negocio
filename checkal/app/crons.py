@@ -20,7 +20,12 @@ o circuito, correndo o breaker por concelho **antes de deixar sair qualquer aler
               avaliar_concelho → desambiguar (página individual) → resolver_pendentes
 
 :func:`resolver_desaparecidos_pendentes` agrupa os pendentes **por concelho** e, para
-cada concelho, corre a cadeia do breaker. Sobre a leitura do limiar
+cada concelho, corre a cadeia do breaker — incluindo a **seleção de canários** na BD
+(🐤 calibração empírica de 09/07/2026: o RNAL remove os registos cancelados da
+consulta pública, não há banner «Cancelado»; a assinatura de cancelamento real é
+«alvo `nao_encontrado` + canário sabidamente ativo a responder `ativo` na mesma
+corrida», e sem canário saudável a ausência continua a valer `api_partida`,
+fail-closed). Sobre a leitura do limiar
 (`avaliar_concelho.disparar`): o limiar `BREAKER_PCT_CONCELHO` mede um **salto anómalo**
 (L2 — resposta nacional truncada; L1 em massa) e é registado como metadado; **mas a
 amostragem da página individual (`desambiguar`) corre para TODO o concelho que tenha
@@ -84,6 +89,7 @@ from app.breaker import (
     avaliar_concelho,
     desambiguar,
     resolver_pendentes,
+    selecionar_canarios,
 )
 from app.dunning import PassoDunning, correr_dunning
 from app.envio import obter_enviador
@@ -255,12 +261,17 @@ def resolver_desaparecidos_pendentes(
     Para cada concelho com pendentes:
       1. `avaliar_concelho(concelho, nrs, base_total)` — computa o limiar (metadado de
          anomalia) e normaliza os nrs a amostrar;
-      2. `desambiguar(concelho, dec.nrs, obter_detalhe)` — amostra as páginas individuais
-         (corre SEMPRE que há pendentes: a guarda exige confirmação positiva antes de
-         enviar, e um falso L1 único fica abaixo do limiar);
-      3. `resolver_pendentes(session, concelho, veredicto, enviar, obter_detalhe, escalar)`
-         — LIBERTA (real, mas SÓ os nrs que confirmam cancelado/suspenso na sua própria
-         página individual — `obter_detalhe` é propagado para essa confirmação POR-NR),
+      2. 🐤 `selecionar_canarios(session, concelho, excluir=<todos os pendentes>)` —
+         escolhe na BD nrs sabidamente ATIVOS (`desaparecido_em IS NULL`, mais
+         recentemente vistos primeiro; mesmo concelho, fallback nacional). Nenhum
+         pendente (de qualquer concelho) pode ser canário;
+      3. `desambiguar(concelho, dec.nrs, obter_detalhe, canarios)` — sonda os canários
+         e amostra as páginas individuais (corre SEMPRE que há pendentes: a guarda
+         exige confirmação antes de enviar, e um falso L1 único fica abaixo do limiar);
+      4. `resolver_pendentes(session, concelho, veredicto, enviar, obter_detalhe,
+         escalar, canarios)` — LIBERTA (real, mas SÓ os nrs confirmados na sua própria
+         página individual: `cancelado`/`suspenso` positivo OU `nao_encontrado` + ≥1
+         canário `ativo` na mesma corrida — a assinatura empírica de 09/07/2026),
          SUPRIME (api_partida) ou ESCALA (ambiguo), com isolamento por concelho.
 
     **Isolamento transacional POR CONCELHO:** cada concelho corre no seu próprio
@@ -287,7 +298,11 @@ def resolver_desaparecidos_pendentes(
     da fila (canal `email`), pelo que uma 2.ª corrida não o reenvia.
     """
     resultado = ResultadoBreaker()
-    for concelho, nrs in _pendentes_por_concelho(session):
+    grupos = _pendentes_por_concelho(session)
+    # 🐤 nenhum pendente (de QUALQUER concelho) pode servir de canário — mesmo que a
+    # sua linha em `registos` ainda não tenha `desaparecido_em` carimbado.
+    nrs_pendentes = {nr for _, nrs in grupos for nr in nrs}
+    for concelho, nrs in grupos:
         # 🚦 ISOLAMENTO POR CONCELHO (FIX C): cada concelho corre no seu próprio SAVEPOINT.
         # Uma exceção ao resolver um concelho reverte SÓ esse (rollback ao savepoint) e a
         # corrida continua — nunca desfaz os concelhos já resolvidos nesta transação.
@@ -295,13 +310,19 @@ def resolver_desaparecidos_pendentes(
             with session.begin_nested():
                 base_total = _base_total_concelho(session, concelho)
                 decisao = avaliar_concelho(concelho, nrs, base_total)
+                # 🐤 canários da BD (vivos, mesmo concelho de preferência) para validar
+                # a prova por ausência — sondados via o MESMO obter_detalhe injetado.
+                canarios = selecionar_canarios(session, concelho, excluir=nrs_pendentes)
                 veredicto = desambiguar(
-                    concelho, decisao.nrs, obter_detalhe=obter_detalhe, limite=limite_amostra
+                    concelho, decisao.nrs,
+                    obter_detalhe=obter_detalhe, limite=limite_amostra, canarios=canarios,
                 )
-                # obter_detalhe é propagado ao resolver para a confirmação POR-NR (FIX A).
+                # obter_detalhe e canarios são propagados ao resolver para a confirmação
+                # POR-NR (FIX A + assinatura empírica de 09/07/2026).
                 resolucao = resolver_pendentes(
                     session, concelho, veredicto,
                     enviar=enviar, obter_detalhe=obter_detalhe, escalar=escalar,
+                    canarios=canarios,
                 )
                 resultado.concelhos.append(concelho)
                 resultado.disparados += 1 if decisao.disparar else 0

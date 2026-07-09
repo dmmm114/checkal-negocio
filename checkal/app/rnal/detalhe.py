@@ -13,11 +13,15 @@ Disciplina inviolável (SPEC-FDS3 §G4 + AUTOMACAO.md §1: «o ambíguo pára e 
     **parser só afirma** `ativo` (a página tem o bloco de dados "RNAL nº <n>/AL") e
     `nao_encontrado` (marcador textual "Registo não encontrado", em HTTP 200). Tudo o
     resto → **`indeterminado`**. NUNCA se afirma `cancelado`/`suspenso` a partir do
-    detalhe: esse estado **ainda não foi observado** na página (SPEC-DETALHE §2.3) e a
-    fonte de verdade do cancelamento é o diffing nacional (FDS 1). Os rótulos
-    `ESTADO_CANCELADO`/`ESTADO_SUSPENSO` existem para calibração futura (ver o TODO em
-    :data:`_MARCADORES_ESTADO_SUSPEITO` e o teste `..._TODO_calibrar`), não para os
-    emitir hoje.
+    detalhe: a **calibração empírica de 09/07/2026** (nr 51233, realmente cancelado
+    entre 05/07 e 09/07) concluiu que esse estado **não é observável na página** — o
+    RNAL REMOVE o registo da consulta pública (HTTP 200 + «Registo não encontrado»);
+    não existe banner de estado (7 nrs ausentes sondados: todos assim; 0 banners em 15
+    páginas vivas). Os rótulos `ESTADO_CANCELADO`/`ESTADO_SUSPENSO` mantêm-se apenas à
+    prova de futuro (se o RNAL algum dia os mostrar), nunca emitidos hoje. A
+    CONFIRMAÇÃO de cancelamento pertence ao breaker (`app.breaker`): assinatura
+    «alvo `nao_encontrado` + canário sabidamente ativo a responder `ativo` na mesma
+    corrida» — o parser limita-se a reportar fielmente o que a página diz.
   - **Falha de transporte (rede/5xx/timeout) levanta** — nunca se escreve estado por
     falha de rede (não marcar "cancelado" por timeout). Só uma resposta HTTP 200 lida
     com sucesso produz um `DetalheRegisto` persistível.
@@ -50,8 +54,8 @@ from app.models import DetalheCliente
 
 # --- Estados possíveis do detalhe (o parser só afirma ATIVO e NAO_ENCONTRADO) ---
 ESTADO_ATIVO = "ativo"
-ESTADO_CANCELADO = "cancelado"          # reservado p/ calibração futura — nunca afirmado hoje
-ESTADO_SUSPENSO = "suspenso"            # idem
+ESTADO_CANCELADO = "cancelado"          # NUNCA observado na página (calibração 09/07/2026:
+ESTADO_SUSPENSO = "suspenso"            # o RNAL remove o registo) — mantidos à prova de futuro
 ESTADO_NAO_ENCONTRADO = "nao_encontrado"
 ESTADO_INDETERMINADO = "indeterminado"  # G4: default conservador (pára e avisa)
 ESTADOS = frozenset(
@@ -74,10 +78,15 @@ _MARCADOR_NAO_ENCONTRADO = "registo nao encontrado"  # "Registo não encontrado,
 _MARCADOR_BLOCO_DADOS = "rnal n"                      # "RNAL nº <n>/AL" (deteta detalhe válido)
 _CABECALHO_SEGURO = "companhia"                       # cabeçalho "Companhia de Seguros"
 
-# 🚦 TODO (SPEC-DETALHE §4 item 1): quando o dono fornecer um `nr` REAL cancelado/suspenso,
-# gravar a fixture e — se a página mostrar um banner de estado — acrescentar aqui os
-# marcadores (já normalizados, sem acentos) que devem levar a página para `indeterminado`
-# (pára e avisa), NUNCA diretamente a `cancelado`. Enquanto vazio, mantém-se G4 puro.
+# 🚦 CALIBRAÇÃO CONCLUÍDA (09/07/2026, sondagem dirigida): um `nr` REALMENTE cancelado
+# (51233 — ativo na list_RNAL a 05/07, ausente a 09/07) devolve HTTP 200 + «Registo não
+# encontrado» — o RNAL REMOVE o registo da consulta pública; **não existe banner de
+# estado** (mais 7 nrs ausentes sondados: idem; 0 banners em 15 páginas vivas). Este
+# tuple fica VAZIO de propósito: não há marcadores a acrescentar. Mantém-se como ponto
+# de extensão defensivo — se o RNAL algum dia mostrar um banner, os marcadores entram
+# aqui (normalizados, sem acentos) e levam a página a `indeterminado` (pára e avisa),
+# NUNCA diretamente a `cancelado`. A confirmação de cancelamento vive no breaker
+# (`app.breaker`: alvo `nao_encontrado` + canário `ativo` na mesma corrida).
 _MARCADORES_ESTADO_SUSPEITO: tuple[str, ...] = ()
 
 
@@ -287,7 +296,9 @@ def parse_detalhe(html: str, *, nr_registo: int) -> DetalheRegisto:
       2. senão, se há bloco de dados ("RNAL nº") → `ativo` (e faz parse do seguro);
          uma data de seguro malformada, porém, promove o estado a `indeterminado`;
       3. caso contrário → `indeterminado`.
-    Nunca devolve `cancelado`/`suspenso` (esse estado não é observável na página hoje).
+    Nunca devolve `cancelado`/`suspenso` — calibração de 09/07/2026: esse estado NÃO é
+    observável na página (registos cancelados são removidos da consulta pública e caem
+    na regra 1); a confirmação de cancelamento pertence ao breaker, não ao parser.
     """
     parser = _analisar_html(html)
     texto = _norm(" ".join(parser.textos))
