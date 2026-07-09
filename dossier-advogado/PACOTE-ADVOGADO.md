@@ -21,8 +21,8 @@
   publica o **"endereço eletrónico do titular da exploração"** e a **validade do seguro
   obrigatório**.
 - **DESACOPLAR do canal `geral@`:** o email frio a **pessoa coletiva** assenta na **Lei
-  41/2004, art. 13.º-A (opt-out coletivas) + art. 13.º-B (listas/DGC)** + cruzamento **DGC** +
-  identificação/opt-out por mensagem — **NÃO na fonte do endereço**. O ponto (i) serve a **redação da nota do art.
+  41/2004, art. 13.º-B** (*opt-out*) + cruzamento **DGC** + identificação/opt-out por
+  mensagem — **NÃO na fonte do endereço**. O ponto (i) serve a **redação da nota do art.
   14.º** e os **tratamentos que tocam pessoas singulares** (onde o email É dado pessoal), não
   a legitimação do cold a coletiva.
 - **Pedido (CONTRA-verificação, não confirmação de raiz):** que **nada** no consolidado

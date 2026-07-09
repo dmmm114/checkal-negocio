@@ -17,7 +17,7 @@ Função **pura**, determinística e **conservadora** (na dúvida REPROVA — a 
 o alerta regenerar e, persistindo, cair no formato manual de recurso, que é factual e
 seguro; nunca deixa sair um alerta prescritivo).
 
-As TRÊS distinções que o produto tem de respeitar (do consultor):
+As distinções que o produto tem de respeitar (do consultor):
 
 * **Facto vs conselho.** Monitorizar estado/seguro/publicação e CITAR a fonte = informação
   (OK). Concluir juridicamente pela situação do cliente = reservado (PROIBIDO).
@@ -26,6 +26,17 @@ As TRÊS distinções que o produto tem de respeitar (do consultor):
   o teu **tem de** fazer W" = reservado.
 * **Encaminhamento, não prescrição.** "Recomendamos que verifiques X" só é seguro se X = a
   fonte oficial ou um profissional; nunca um ato jurídico concreto.
+* **FACTOS COM DONO (regra do consultor jurídico, 2026-07-09).** Um **prazo**, **valor** ou
+  **dever** é sempre **ATRIBUÍDO à FONTE** ("segundo o regulamento, os titulares abrangidos
+  **dispõem de** um prazo de 30 dias para **efetuar** a comunicação"), **nunca dirigido ao
+  CLIENTE** na 2.ª pessoa ("há um prazo de 30 dias, a contar de 15/06/2026, **para
+  efetuares** a comunicação" / "**tens** 30 dias **para** comunicar"). Dirigir a 2.ª pessoa
+  um ato jurídico — pelo **infinitivo pessoal** ("para **efetuares/regularizares/…**") ou
+  por um **prazo com dono** ("tens N dias para …") — é aplicação individualizada, logo
+  reservado. O par seguro usa o **infinitivo IMPESSOAL** ("para efetuar", "-ar"/"-er"/"-ir"
+  sem o "-es" da 2.ª pessoa) e atribui o prazo ao documento. Corolário: **valores** só
+  entram com **âncora direta no texto citado** (a coima é "a indicada no regulamento", não
+  um número que o alerta afirme por si — as molduras diferem entre singular/coletiva).
 
 O detetor incide sobre o **texto do ALERTA dirigido ao cliente**, não sobre o **excerto
 citado da fonte**: um excerto do regulamento pode conter "tem de" e é legítimo citá-lo.
@@ -71,8 +82,28 @@ _RE_CITACAO = re.compile(r"«[^»]*»|“[^”]*”|\"[^\"]*\"")
 _ATO = (
     r"(?:regulariz|legaliz|altera|corrig|cess[ae]|suspend|encerr|cancel|averb|"
     r"adapt|comunic|declar|regist|renov|requer|submet|paga|retir|remov|desativ|"
-    r"sana|resolv|sane[ai])\w*"
+    r"efetu|apresenta|sana|resolv|sane[ai])\w*"
 )
+
+# ==========================================================================
+#  FACTOS COM DONO — o ato dirigido ao CLIENTE (2.ª pessoa)
+# ==========================================================================
+# Radicais dos MESMOS atos, SEM o sufixo livre, para montar a 2.ª pessoa do **infinitivo
+# pessoal** ("efetuar**es**", "comunicar**es**", "corrigir**es**", "resolver**es**"):
+# radical + (ar|er|ir) + "es". Essa desinência "-es" é a marca da 2.ª pessoa (é o que
+# distingue o dirigido-ao-cliente do impessoal/atribuído-à-fonte "efetuar/comunicar"). A
+# mesma forma serve o conjuntivo futuro ("se regularizares…"), também dirigido ao cliente:
+# a sobre-deteção é o lado seguro. O ENCAMINHAMENTO (verific/consult/confirm/rev/ler) fica
+# FORA de propósito — "para confirmares/verificares" continua seguro.
+_ATO_RAIZ = (
+    r"(?:regulariz|legaliz|alter|corrig|cess|suspend|encerr|cancel|averb|adapt|"
+    r"comunic|declar|regist|renov|requer|submet|pag|retir|remov|desativ|efetu|"
+    r"san|resolv|apresent)"
+)
+# Infinitivo PESSOAL da 2.ª pessoa singular de um ato: "(para )efetuares/comunicares/…".
+_ATO_PESSOAL = _ATO_RAIZ + r"(?:ar|er|ir)es"
+# Unidade de prazo, para o "prazo com dono" ("tens N dias/meses para <ato>").
+_UNIDADE_PRAZO = r"(?:dias?|semanas?|meses|m[êe]s|anos?|horas?)"
 
 # Prefixos de OBRIGAÇÃO/NECESSIDADE/DEVER dirigidos ao cliente (todos IMPERATIVOS ou de
 # certeza — NUNCA condicionais). Gated sempre por um _ATO (ato jurídico concreto): assim
@@ -197,6 +228,31 @@ _REGRAS: list[tuple[re.Pattern[str], str]] = [
             r"(?:coima|multa|san[çc]\w*|contraordena\w*|penaliza\w*)"
         ),
         "ameaça o cliente com o risco de uma sanção",
+    ),
+    # 9. FACTOS COM DONO — infinitivo PESSOAL da 2.ª pessoa a mandar o cliente praticar um
+    #    ato ("para efetuares a comunicação", "para regularizares", "a contar de {data} …
+    #    para efetuares"). O prazo/dever fica DIRIGIDO ao cliente em vez de ATRIBUÍDO à
+    #    fonte. O par seguro usa o infinitivo IMPESSOAL ("os titulares dispõem de 30 dias
+    #    para efetuar a comunicação"), que NÃO casa — não traz a desinência "-es".
+    (
+        re.compile(r"\b" + _ATO_PESSOAL + r"\b"),
+        "dirige ao cliente (2.ª pessoa) a prática de um ato jurídico (infinitivo pessoal)",
+    ),
+    # 10. FACTOS COM DONO — prazo com dono: um verbo de POSSE/DISPOSIÇÃO do prazo na 2.ª/3.ª
+    #     pessoa ("tens/tem/têm", o FUTURO "terás/terá/terão" — imperativo velado — e "dispões",
+    #     2.ª p. de dispor, o espelho perigoso do seguro "os titulares DISPÕEM de …") + N
+    #     <unidade> + "para <ato>". Aceita o conector opcional "de"/"até" e a interposição
+    #     "(um/o) prazo de" ("tens um prazo de 30 dias para comunicar"). O prazo passa a
+    #     pertencer ao destinatário; ATRIBUÍDO à fonte seria "há/existe um prazo de N dias …"
+    #     ou "os titulares dispõem de N dias …" (verbos "há"/"dispõem" fora desta lista → seguro).
+    (
+        re.compile(
+            r"(?:\bten?s\b|\btem\b|\bt[êe]m\b|\bter[áa]s?\b|\bter[ãa]o\b|\bdisp[õo]es\b)"
+            r"\s+(?:de\s+|at[ée]\s+|(?:um|o)\s+prazo\s+de\s+)?\d+\s+"
+            + _UNIDADE_PRAZO
+            + r"\s+para\s+(?:\w+\s+){0,3}(?:" + _ATO + r")\b"
+        ),
+        "atribui ao cliente um prazo para praticar um ato (prazo com dono)",
     ),
 ]
 

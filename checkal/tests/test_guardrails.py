@@ -14,12 +14,22 @@ individualizada. Na dúvida REPROVA. TDD: escrito ANTES da implementação.
 """
 from __future__ import annotations
 
+import html
+import pathlib
+import re
+
 import pytest
 
 from app.ia.guardrails import GUARDRAILS_VERSAO, validar_nao_prescritivo
 from app.ia.validacao import ResultadoValidacao
 
 URL = "https://files.diariodarepublica.pt/gratuitos/2s/2025/07/2S142A0000S00.pdf"
+
+# Anexo 3 renderizado (exemplo de alerta enviado ao jurista). O corpo VISÍVEL deste HTML
+# tem de passar o guardrail — é a prova de que o exemplo que promovemos é não-prescritivo.
+_ANEXO3 = (
+    pathlib.Path(__file__).resolve().parents[2] / "ANEXO3-alerta-exemplo.html"
+)
 
 
 # ==========================================================================
@@ -225,9 +235,125 @@ def test_conclusao_do_proprio_alerta_fora_de_aspas_continua_a_reprovar():
 
 
 # ==========================================================================
+#  FACTOS COM DONO (2026-07-09) — o consultor apanhou que o Anexo 3 dizia ao cliente
+#  "…para efetuares a comunicação": uma INSTRUÇÃO INDIVIDUALIZADA (infinitivo pessoal
+#  da 2.ª pessoa) que o guardrail deixava passar. Prazo/valor/dever é ATRIBUÍDO à fonte,
+#  nunca dirigido ao cliente. Regressão CRÍTICA: estas formas TÊM de reprovar.
+# ==========================================================================
+# A frase exata do Anexo 3 antigo — o bypass concreto que motivou o reforço.
+FRASE_ANTIGA_ANEXO3 = (
+    "Há um prazo de 30 dias, a contar de 15/06/2026, para efetuares a comunicação. "
+    f"Lê aqui: {URL}"
+)
+# A redação corrigida (colada do consultor) — atribuída à FONTE, infinitivo IMPESSOAL.
+FRASE_NOVA_ANEXO3 = (
+    "Próximo passo: consulta o regulamento oficial e confirma a tua situação. Segundo o "
+    "documento, os titulares abrangidos dispõem de um prazo de 30 dias, contado de "
+    "15/06/2026, para efetuar a comunicação ali prevista, e a exploração irregular fica "
+    "sujeita à coima indicada no regulamento. Em caso de dúvida sobre a tua situação "
+    "concreta, confirma com um advogado, solicitador ou o teu contabilista. "
+    f"Lê aqui: {URL}"
+)
+
+# (a) Infinitivo PESSOAL da 2.ª pessoa a mandar praticar um ato ("(para) efetuares …").
+ATO_PESSOAL_2P = [
+    f"Há um prazo para efetuares a comunicação. Lê aqui: {URL}",
+    f"Tens 15 dias, a contar de hoje, para comunicares a alteração. Lê aqui: {URL}",
+    f"O prazo serve para regularizares a tua situação. Lê aqui: {URL}",
+    f"É o momento de legalizares o registo. Lê aqui: {URL}",
+    f"Precisarás disto para corrigires o averbamento. Lê aqui: {URL}",
+    f"Isto ajuda-te a sanares a irregularidade. Lê aqui: {URL}",
+    f"Terás tempo para resolveres a situação. Lê aqui: {URL}",
+    f"Convém para alterares os dados. Lê aqui: {URL}",
+    f"Há um prazo para cessares a exploração. Lê aqui: {URL}",
+    f"Serve para apresentares o pedido. Lê aqui: {URL}",
+    f"O prazo é para averbares o seguro. Lê aqui: {URL}",
+]
+# (b) Prazo COM DONO — "tens/tem/têm N <unidade> para <ato>" (com ou sem "de"/"até").
+PRAZO_COM_DONO = [
+    f"Tens 30 dias para comunicar a situação à câmara. Lê aqui: {URL}",
+    f"O teu AL tem 30 dias para regularizar. Lê aqui: {URL}",
+    f"Têm 15 dias para averbar o seguro. Lê aqui: {URL}",
+    f"Tens até 30 dias para comunicar a alteração. Lê aqui: {URL}",
+    f"Tens 2 meses para legalizar o registo. Lê aqui: {URL}",
+    # RED-TEAM 2026-07-09 (2.ª ronda) — imperativo velado no FUTURO ("terás/terá/terão N
+    # dias para …"), "dispões" (2.ª p. de dispor, o espelho do seguro "dispõem") e a
+    # interposição "(um/o) prazo de" entre o verbo e o número. Todos ESCAPAVAM à rule 10.
+    f"Terás até 30 dias para comunicar a situação. Lê aqui: {URL}",
+    f"Terás 30 dias para regularizar. Lê aqui: {URL}",
+    f"O teu AL terá 30 dias para comunicar. Lê aqui: {URL}",
+    f"Os titulares terão 30 dias para averbar. Lê aqui: {URL}",
+    f"Dispões de 30 dias para comunicar a situação. Lê aqui: {URL}",
+    f"Tens um prazo de 30 dias para comunicar. Lê aqui: {URL}",
+    f"Tens o prazo de 30 dias para regularizar. Lê aqui: {URL}",
+]
+
+
+@pytest.mark.parametrize("texto", [FRASE_ANTIGA_ANEXO3, *ATO_PESSOAL_2P, *PRAZO_COM_DONO])
+def test_factos_com_dono_dirigidos_ao_cliente_reprovam(texto):
+    r = validar_nao_prescritivo(texto)
+    assert r.valido is False, f"BYPASS CRÍTICO — deveria reprovar: {texto!r}"
+    assert r.motivos
+
+
+# Pares SEGUROS — o MESMO facto ATRIBUÍDO à fonte / no infinitivo IMPESSOAL passa. É a
+# distinção que separa o dirigido-ao-cliente do sinalizado: NÃO pode virar falso positivo.
+FACTO_ATRIBUIDO_A_FONTE = [
+    FRASE_NOVA_ANEXO3,
+    # Infinitivo IMPESSOAL ("para efetuar/comunicar/regularizar") atribuído aos titulares.
+    f"Segundo o regulamento, os titulares dispõem de 30 dias para efetuar a comunicação. Lê aqui: {URL}",
+    f"O documento prevê um prazo de 30 dias para comunicar a alteração. Lê aqui: {URL}",
+    f"Há um prazo de 30 dias para regularizar, se aplicável. Lê aqui: {URL}",
+    # Espelho SEGURO do prazo-com-dono no futuro/dispor: o mesmo prazo ATRIBUÍDO à fonte
+    # (verbos "dispõem"/"existe"/"há", nunca "tens/terás/dispões") NÃO pode virar falso positivo.
+    f"Os titulares dispõem de um prazo de 30 dias para efetuar a comunicação. Lê aqui: {URL}",
+    f"Existe um prazo de 30 dias para comunicar, contado da publicação. Lê aqui: {URL}",
+    # Encaminhamento em infinitivo pessoal (verbos NÃO-jurídicos) continua seguro.
+    f"Convém confirmares se a tua morada está no perímetro. Lê aqui: {URL}",
+    f"Serve para verificares a tua situação junto da câmara. Lê aqui: {URL}",
+    f"É útil para consultares o regulamento. Lê aqui: {URL}",
+]
+
+
+@pytest.mark.parametrize("texto", FACTO_ATRIBUIDO_A_FONTE)
+def test_facto_atribuido_a_fonte_ou_encaminhamento_passa(texto):
+    r = validar_nao_prescritivo(texto)
+    assert r.valido is True, f"FALSO POSITIVO — devia passar: {texto!r} / {r.motivos}"
+
+
+def test_par_exato_do_anexo3_antigo_reprova_novo_passa():
+    # O núcleo da correção: a frase antiga do Anexo 3 reprova; a nova (do consultor) passa.
+    assert validar_nao_prescritivo(FRASE_ANTIGA_ANEXO3).valido is False
+    assert validar_nao_prescritivo(FRASE_NOVA_ANEXO3).valido is True
+
+
+# ==========================================================================
+#  Prova do artefacto — o Anexo 3 REGENERADO (HTML) passa o guardrail
+# ==========================================================================
+def _texto_visivel(html_bruto: str) -> str:
+    """Corpo visível do email (sem <head>, sem tags, entidades resolvidas)."""
+    corpo = html_bruto.split("</head>", 1)[-1]
+    texto = html.unescape(re.sub(r"<[^>]+>", " ", corpo))
+    return re.sub(r"\s+", " ", texto).strip()
+
+
+def test_anexo3_regenerado_passa_o_guardrail():
+    bruto = _ANEXO3.read_text(encoding="utf-8")
+    # Já não contém a instrução individualizada antiga…
+    assert "para efetuares" not in bruto
+    # …e contém a redação atribuída à fonte, no infinitivo impessoal.
+    assert "para efetuar a comunicação" in bruto
+    # A coima já não é afirmada como número solto (só "a indicada no regulamento").
+    assert "2.500" not in bruto and "4.000" not in bruto
+    # Gralha do H1 corrigida.
+    assert "«Casa da Graça» — 1 ponto sem check" in bruto
+    # E o corpo visível é NÃO-prescritivo.
+    r = validar_nao_prescritivo(_texto_visivel(bruto))
+    assert r.valido is True, r.motivos
+
+
+# ==========================================================================
 #  Versão do detetor (dossier de defesa)
 # ==========================================================================
 def test_versao_do_guardrail_e_uma_data_estavel():
-    import re
-
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", GUARDRAILS_VERSAO)

@@ -1,8 +1,6 @@
 # Briefing para consulta jurídica — Proteção de dados (RGPD) e prospeção
 ### Projeto CheckAL · Cosmic Oasis, Lda.
 
-> **Documento histórico — prevalecem as minutas corrigidas (conservação 6 meses, Anexo 1 corrigido).**
-
 > **Para:** [Jurista/Advogado de proteção de dados]
 > **De:** [Diogo Mendes], Cosmic Oasis, Lda., NIPC [—]
 > **Objetivo:** decisão **go / no-go** sobre uma estratégia de aquisição de clientes, antes de a executar. Não procuramos um parecer académico extenso — procuramos **respostas objetivas, por canal, que nos digam o que podemos e não podemos fazer, e sob que condições.**

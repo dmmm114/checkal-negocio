@@ -25,7 +25,7 @@
 | **Serviço operado** | CheckAL — monitorização de Alojamento Local |
 | **Contacto de proteção de dados** | privacidade@checkal.pt |
 | **Encarregado de Proteção de Dados (EPD/DPO)** | **Não designado por defeito** — designação **não obrigatória** hoje (não há tratamento em larga escala de categorias especiais nem monitorização sistemática em larga escala como atividade principal na aceção do art. 37.º/1/b e /c). Avaliação escrita e gatilhos de reavaliação **no bloco abaixo**. Ponto de contacto: privacidade@checkal.pt |
-| **Responsável interno de privacidade** | `[Diogo Mendes]` (pessoa concreta na Cosmic Oasis, Lda.), contactável em privacidade@checkal.pt — assegura o cumprimento, mantém este registo e reavalia os gatilhos de EPD |
+| **Responsável interno de privacidade** | `[nome — a designar]` (pessoa concreta na Cosmic Oasis, Lda.), contactável em privacidade@checkal.pt — assegura o cumprimento, mantém este registo e reavalia os gatilhos de EPD |
 | **Autoridade de controlo** | Comissão Nacional de Proteção de Dados (CNPD) — cnpd.pt |
 
 > **Nota sobre a fonte RNAL.** Onde uma atividade obtém dados do Registo Nacional de
@@ -46,8 +46,8 @@
 > monitorização sistemática em larga escala como atividade principal — art. 37.º/1/b). Fica
 > um **responsável interno de privacidade** nomeado (ver tabela §0). **Gatilhos que obrigam a
 > reavaliar (e provavelmente a designar EPD):** (1) **ingestão da base RNAL completa**
-> (varrimento nacional persistido, não só consultas pontuais); (2) ultrapassar **5.000
-> titulares monitorizados** de forma contínua; (3) **novas categorias de dados**
+> (varrimento nacional persistido, não só consultas pontuais); (2) ultrapassar **[X] mil**
+> subscritores/titulares monitorizados de forma contínua; (3) **novas categorias de dados**
 > ou nova finalidade (ex.: perfis, enriquecimento, categorias especiais); (4) ativação da
 > **prospeção a frio em larga escala**. Cada gatilho, quando ocorrer, fica registado com
 > **data e decisão** neste documento.
@@ -204,7 +204,7 @@ de transferência** válido (Cap. V).
   escala.
 - **EPD (art. 37.º):** decisão atual = **não designar** (avaliação escrita e **gatilhos de
   reavaliação** em §0); há **responsável interno de privacidade** nomeado. Rever a cada
-  gatilho (ingestão da base RNAL completa; 5.000 titulares monitorizados; novas categorias de dados;
+  gatilho (ingestão da base RNAL completa; X mil subscritores; novas categorias de dados;
   cold em larga escala).
 - **IA = subcontratante de dados pessoais HOJE** para clientes ENI/singulares (não só
   "quando ligar o cold") → DPA + mecanismo de transferência (ou Bedrock UE) fecham-se já.

@@ -15,8 +15,8 @@
 
 ## 2. Base legal da fonte do email — DESACOPLADA do canal `geral@`
 > **CORREÇÃO (2.ª opinião, 9/7):** o email frio a coletiva **NÃO depende da fonte do
-> endereço**. A sua base é a **Lei 41/2004, art. 13.º-A (opt-out coletivas) + art. 13.º-B
-> (listas/DGC)** + **cruzamento DGC** + **identificação do remetente e *opt-out* em cada
+> endereço**. A sua base é a **Lei 41/2004, art. 13.º-B** (regime de *opt-out* para pessoa
+> coletiva) + **cruzamento DGC** + **identificação do remetente e *opt-out* em cada
 > mensagem**. A origem do endereço (portal, `list_RNAL`, art. 10.º) **não** é o que legitima
 > o envio — deixa por isso de ser o "bloqueador crítico" do cold a `geral@`.
 
@@ -45,8 +45,8 @@ um **problema contratual/administrativo autónomo** do RGPD (pode existir mesmo 
 cumprido, e vice-versa). Confirmar antes de usar o webservice em produção.
 
 → **Ação do Diogo/advogado:** (a) CONTRA-verificar o art. 10.º n.º 5; (b) confirmar termos de
-licença do `list_RNAL`; (c) o cold a coletiva assenta na Lei 41/2004 art. 13.º-A (opt-out
-coletivas) + art. 13.º-B (listas/DGC) + §4, não na fonte do email.
+licença do `list_RNAL`; (c) o cold a coletiva assenta na Lei 41/2004 art. 13.º-B + §4, não na
+fonte do email.
 
 ## 3. Requisitos do widget de consentimento (implementados / a implementar)
 - ✅ Checkbox **não pré-marcada** e **não condicionada** ao relatório.
@@ -58,7 +58,7 @@ coletivas) + art. 13.º-B (listas/DGC) + §4, não na fonte do email.
 
 ## 4. Pré-requisitos para alguma vez ligar `CHECKAL_PARECER_RGPD_OK=True` (cold `geral@`)
 Todos, cumulativos:
-1. **Regime de comunicações verificado** — Lei 41/2004 **art. 13.º-A (opt-out coletivas) + art. 13.º-B (listas/DGC)** + cruzamento **DGC** + identificação/opt-out por mensagem. (A fonte do email **deixou de ser** o bloqueador — §2; falta só a CONTRA-verificação do art. 10.º n.º 5 e dos termos de licença do `list_RNAL`.)
+1. **Regime de comunicações verificado** — Lei 41/2004 **art. 13.º-B** (*opt-out* coletiva) + cruzamento **DGC** + identificação/opt-out por mensagem. (A fonte do email **deixou de ser** o bloqueador — §2; falta só a CONTRA-verificação do art. 10.º n.º 5 e dos termos de licença do `list_RNAL`.)
 2. **LIA escrita** (avaliação de interesse legítimo) arquivada.
 3. **Anexo 1 corrigido** (§5) — sem afirmações falsas.
 4. **Contratos art. 28.º** com subcontratantes + **mecanismo de transferência internacional** resolvido (§6).

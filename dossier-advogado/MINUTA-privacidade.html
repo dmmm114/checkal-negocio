@@ -1,28 +1,55 @@
-{% extends "base.html" %}
-{# MINUTA — a validar por advogado/EPD antes de publicar. Placeholders [NIPC]/[morada]
-   e [data] bloqueiam a publicação até haver dados reais e revisão jurídica. #}
-
-{% block title %}Política de Privacidade — {{ marca.nome }}{% endblock %}
-{% block meta %}
-  <meta name="description" content="Como o {{ marca.nome }} (Cosmic Oasis, Lda.) trata os teus dados pessoais ao abrigo do RGPD: finalidade, base legal, prazos, direitos e contacto.">
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0F172A">
+  <title>Política de Privacidade — CheckAL</title>
+  
+  <meta name="description" content="Como o CheckAL (Cosmic Oasis, Lda.) trata os teus dados pessoais ao abrigo do RGPD: finalidade, base legal, prazos, direitos e contacto.">
   <meta name="robots" content="noindex">
-{% endblock %}
 
-{% block content %}
+
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&amp;family=Inter:wght@400;500;600&amp;display=swap">
+
+  
+  <link rel="stylesheet" href="/static/brand.css">
+  
+</head>
+<body>
+  <a class="salta-para-conteudo" href="#conteudo">Saltar para o conteúdo</a>
+
+  <header class="cabecalho" role="banner">
+    <div class="cabecalho__interior">
+      <a class="cabecalho__logo" href="/" aria-label="CheckAL — página inicial">
+        <img src="/static/marca/logo-horizontal.svg" alt="CheckAL" width="210" height="54" decoding="async">
+      </a>
+      <nav class="cabecalho__nav" aria-label="Navegação principal">
+        <a href="/precos">Preços</a>
+        <a class="btn btn--acao btn--pequeno" href="/#verificar">Faz o check grátis</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo" class="conteudo" role="main">
+    
 <article class="secao">
   <div class="secao__interior" style="max-width: 760px;">
     <h1>Política de Privacidade</h1>
     <p class="nota">Última atualização: [data]. Esta política explica, em linguagem clara, como
       tratamos os teus dados pessoais ao abrigo do RGPD (Regulamento (UE) 2016/679). O
-      {{ marca.nome }} é um serviço <strong>privado e independente</strong> — não somos, nem
+      CheckAL é um serviço <strong>privado e independente</strong> — não somos, nem
       representamos, o Turismo de Portugal, o RNAL ou qualquer câmara municipal.</p>
 
     <h2>1. Quem é o responsável pelo tratamento</h2>
-    <p>O {{ marca.nome }} é um serviço operado por <strong>Cosmic Oasis, Lda.</strong>,
+    <p>O CheckAL é um serviço operado por <strong>Cosmic Oasis, Lda.</strong>,
       NIPC <strong>[NIPC]</strong>, com sede em <strong>[morada]</strong>, Portugal. É a Cosmic
       Oasis, Lda. o responsável pelo tratamento dos teus dados. Para qualquer questão sobre
       proteção de dados ou para exercer os teus direitos, contacta-nos em
-      <a href="mailto:{{ email_privacidade }}">{{ email_privacidade }}</a> — o nosso ponto de
+      <a href="mailto:privacidade@checkal.pt">privacidade@checkal.pt</a> — o nosso ponto de
       contacto de proteção de dados.</p>
 
     <h2>2. Que dados tratamos, para quê e com que base legal</h2>
@@ -74,7 +101,7 @@
 
     <h3>e) Apresentação do serviço a titulares de AL (prospeção)</h3>
     <ul class="checklist">
-      <li><span class="marca-ok">·</span> Quando te apresentamos o {{ marca.nome }} sem teres
+      <li><span class="marca-ok">·</span> Quando te apresentamos o CheckAL sem teres
         sido tu a procurar-nos, fazemo-lo com base no <strong>interesse legítimo</strong>
         (art. 6.º, n.º 1, al. f), ponderado contra os teus direitos e a tua expectativa razoável,
         e informamos-te da origem dos dados na <strong>primeira comunicação</strong> (art. 14.º
@@ -108,15 +135,8 @@
     <p>Alguns destes prestadores estão <strong>fora do Espaço Económico Europeu</strong> (por
       exemplo, nos EUA). Nesses casos, asseguramos <strong>garantias adequadas</strong> — as
       Cláusulas Contratuais-Tipo da Comissão Europeia ou mecanismo equivalente (art. 46.º do
-      RGPD). Na camada de IA que apoia a redação dos alertas, enviamos apenas o excerto do
-      documento regulatório e os dados do teu estabelecimento (n.º de registo, concelho, estado,
-      validade do seguro). Quando és pessoa singular ou empresário em nome individual, estes dados
-      são <strong>dados pessoais teus</strong> — por isso este prestador está vinculado por contrato
-      de subcontratação (art. 28.º) e pelas garantias de transferência internacional acima referidas.
-      Nunca enviamos à IA dados de quem não é nosso cliente.</p>
-    <p>Os prestadores de pagamentos tratam parte dos dados como <strong>responsáveis autónomos</strong>,
-      no cumprimento das suas próprias obrigações legais (p. ex., prevenção de branqueamento e
-      identificação) — nessa parte não atuam sob as nossas instruções.</p>
+      RGPD). Na camada de IA que redige alertas, enviamos apenas o excerto do documento e os
+      dados públicos do AL — nunca dados pessoais de terceiros.</p>
 
     <h2>6. Os teus direitos</h2>
     <p>Ao abrigo do RGPD, tens direito de <strong>acesso</strong>, <strong>retificação</strong>,
@@ -125,8 +145,8 @@
       <strong>oposição ao marketing direto é absoluta</strong> (art. 21.º, n.º 2): basta pedires
       e paramos de imediato. Podes ainda retirar a qualquer momento o consentimento que tenhas
       dado, sem afetar a licitude do tratamento anterior. Exerce os teus direitos em
-      <a href="mailto:{{ email_privacidade }}">{{ email_privacidade }}</a> ou remove-te num
-      clique em <a href="{{ marca.nav.remover }}">{{ marca.nav.remover }}</a>.</p>
+      <a href="mailto:privacidade@checkal.pt">privacidade@checkal.pt</a> ou remove-te num
+      clique em <a href="/remover">/remover</a>.</p>
 
     <h2>7. Reclamações</h2>
     <p>Se entenderes que os teus dados não foram tratados corretamente, tens o direito de
@@ -135,8 +155,8 @@
 
     <h2>8. Decisões automatizadas</h2>
     <p>Não tomamos decisões exclusivamente automatizadas com efeitos jurídicos sobre ti. Os
-      alertas gerados com apoio de IA são <strong>informativos</strong> e sujeitos a verificações
-      automáticas e a amostragem humana periódica — são informação, não aconselhamento jurídico.</p>
+      alertas gerados com apoio de IA são <strong>informativos</strong> e revistos segundo as
+      nossas regras — são informação, não aconselhamento jurídico.</p>
 
     <h2>9. Cookies</h2>
     <p>Usamos apenas cookies técnicos necessários ao funcionamento do site (isentos de
@@ -144,8 +164,24 @@
       prévio.</p>
 
     <p class="nota" style="margin-top: 2rem;">
-      Vê também os nossos <a href="{{ marca.nav.termos }}">Termos &amp; Condições</a>.
+      Vê também os nossos <a href="/termos">Termos &amp; Condições</a>.
     </p>
   </div>
 </article>
-{% endblock %}
+
+  </main>
+
+  <footer class="rodape" role="contentinfo">
+    <div class="rodape__interior">
+      <p class="rodape__legal">CheckAL — serviço privado e independente de monitorização de Alojamento Local · Cosmic Oasis, Lda.</p>
+      <nav class="rodape__links" aria-label="Ligações legais">
+        <a href="/privacidade">Privacidade</a>
+        <a href="/termos">Termos</a>
+        <a href="/remover">Remover os meus dados</a>
+      </nav>
+    </div>
+  </footer>
+
+  
+</body>
+</html>

@@ -1,30 +1,57 @@
-{% extends "base.html" %}
-{# MINUTA — a validar por advogado/EPD antes de publicar. Placeholders [NIPC]/[morada]
-   e [data] bloqueiam a publicação até haver dados reais e revisão jurídica. #}
-
-{% block title %}Termos e Condições — {{ marca.nome }}{% endblock %}
-{% block meta %}
-  <meta name="description" content="Termos e Condições do {{ marca.nome }} (Cosmic Oasis, Lda.): natureza informativa do serviço, SLA de deteção, garantia, renovação e responsabilidade.">
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0F172A">
+  <title>Termos e Condições — CheckAL</title>
+  
+  <meta name="description" content="Termos e Condições do CheckAL (Cosmic Oasis, Lda.): natureza informativa do serviço, SLA de deteção, garantia, renovação e responsabilidade.">
   <meta name="robots" content="noindex">
-{% endblock %}
 
-{% block content %}
+
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&amp;family=Inter:wght@400;500;600&amp;display=swap">
+
+  
+  <link rel="stylesheet" href="/static/brand.css">
+  
+</head>
+<body>
+  <a class="salta-para-conteudo" href="#conteudo">Saltar para o conteúdo</a>
+
+  <header class="cabecalho" role="banner">
+    <div class="cabecalho__interior">
+      <a class="cabecalho__logo" href="/" aria-label="CheckAL — página inicial">
+        <img src="/static/marca/logo-horizontal.svg" alt="CheckAL" width="210" height="54" decoding="async">
+      </a>
+      <nav class="cabecalho__nav" aria-label="Navegação principal">
+        <a href="/precos">Preços</a>
+        <a class="btn btn--acao btn--pequeno" href="/#verificar">Faz o check grátis</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo" class="conteudo" role="main">
+    
 <article class="secao">
   <div class="secao__interior" style="max-width: 760px;">
     <h1>Termos e Condições</h1>
-    <p class="nota">Última atualização: [data]. Ao subscrever ou usar o {{ marca.nome }},
-      aceitas estes termos. O {{ marca.nome }} é um serviço privado e independente, sem
+    <p class="nota">Última atualização: [data]. Ao subscrever ou usar o CheckAL,
+      aceitas estes termos. O CheckAL é um serviço privado e independente, sem
       qualquer vínculo ao Turismo de Portugal, ao RNAL ou a câmaras municipais.</p>
 
     <h2>1. Objeto</h2>
-    <p>Estes termos regulam a subscrição e o uso do {{ marca.nome }}, um serviço prestado por
+    <p>Estes termos regulam a subscrição e o uso do CheckAL, um serviço prestado por
       <strong>Cosmic Oasis, Lda.</strong> (NIPC <strong>[NIPC]</strong>, sede em
       <strong>[morada]</strong>, Portugal). O serviço consiste em monitorizar fontes públicas
       relativas ao teu Alojamento Local (registo RNAL, seguro obrigatório e regulamentos
       municipais) e enviar-te alertas quando algo o afeta.</p>
 
     <h2>2. Natureza do serviço — ferramenta informativa</h2>
-    <p>O {{ marca.nome }} é uma <strong>ferramenta de informação e monitorização</strong> baseada
+    <p>O CheckAL é uma <strong>ferramenta de informação e monitorização</strong> baseada
       em fontes públicas (RNAL, Diário da República, regulamentos municipais). Os alertas,
       incluindo os redigidos com apoio de IA, são <strong>auxiliares informativos</strong> de
       caráter geral.</p>
@@ -37,7 +64,7 @@
       situação é tua. Recomendamos que confirmes com o teu profissional antes de agir.</p>
 
     <h2>3. Sem garantia de conformidade nem de resultado</h2>
-    <p>O {{ marca.nome }} <strong>não garante</strong> a tua conformidade legal, a manutenção do
+    <p>O CheckAL <strong>não garante</strong> a tua conformidade legal, a manutenção do
       teu registo de AL nem a validade do teu seguro — essas obrigações são e permanecem
       <strong>tuas</strong>, enquanto titular. O serviço ajuda-te a acompanhá-las, mas não as
       cumpre por ti nem certifica que estás conforme.</p>
@@ -45,7 +72,7 @@
     <h2>4. Dependência de fontes de terceiros</h2>
     <p>A deteção depende da disponibilidade e exatidão das fontes públicas. A indisponibilidade
       da API do Turismo de Portugal ou um erro nos dados de origem não constitui incumprimento
-      do {{ marca.nome }}, que se obriga a diligenciar meios alternativos.</p>
+      do CheckAL, que se obriga a diligenciar meios alternativos.</p>
 
     <h2>5. Prazo de deteção (SLA)</h2>
     <p>Alertamos-te <strong>até 7 dias</strong> após uma alteração se tornar detetável nas
@@ -55,39 +82,23 @@
     <p>Respondemos pelos danos que causarmos por incumprimento culposo, nos termos gerais da lei.
       Na medida — e <strong>apenas</strong> na medida — em que a lei o permite, a nossa
       responsabilidade por <strong>negligência leve</strong> e <strong>danos patrimoniais</strong>
-      fica limitada ao <strong>total que nos pagaste nos 24 meses</strong> anteriores ao facto.
-      Dentro desse limite, excluem-se os lucros cessantes e os danos indiretos.</p>
+      fica limitada ao <strong>maior</strong> destes dois valores: (a) o total que nos pagaste nos
+      <strong>24 meses</strong> anteriores ao facto; ou (b) o <strong>limite por sinistro</strong>
+      da nossa apólice de seguro de responsabilidade civil profissional (E&amp;O). Dentro desse
+      limite, excluem-se os lucros cessantes e os danos indiretos.</p>
     <p>Esta limitação <strong>não exclui nem reduz</strong>, em caso algum, a nossa
       responsabilidade por <strong>dolo</strong>, por <strong>negligência grave</strong>, por
       <strong>danos a pessoas</strong> (vida, integridade física ou saúde), nem os direitos que a
       lei do consumo te garante de forma imperativa (DL 446/85, Lei 24/96 e DL 84/2021). Se
       alguma parte desta cláusula for tida por abusiva ou inválida, o restante mantém-se e aplica-se
       o regime legal supletivo.</p>
-    <p>A tua proteção real não se limita ao teto de responsabilidade: <strong>caso</strong> a
-      Cosmic Oasis, Lda. venha a contratar um <strong>seguro de responsabilidade civil profissional
-      (E&amp;O)</strong>, este cobrirá, dentro dos respetivos limites, eventuais danos decorrentes do
-      serviço.</p>
-    {# =======================================================================
-       CHECKLIST INTERNA — apólice E&O (NÃO renderiza: comentário Jinja).
-       O teto contratual acima (total pago nos 24 meses) é a proteção mínima; a apólice E&O,
-       SE/QUANDO vier a ser contratada, é a proteção real. Um teto a 49 € seria abusivo
-       (quase-exclusão face ao dano previsível — perda do registo AL = dezenas de milhares de €).
-       [Nota: o dono decide contratar E&O antes do lançamento — até lá, sem promessa em T&C.]
-       Antes de subscrever/renovar a apólice, confirmar com o corretor:
-         1. EXCLUSÕES DE CONTEÚDO GERADO POR IA — a apólice cobre danos de alertas redigidos
-            com apoio de IA? Afastar esta exclusão é crítico para o CheckAL.
-         2. BASE CLAIMS-MADE + DATA RETROATIVA — cobre reclamações apresentadas na vigência
-            por factos anteriores? Qual a data retroativa?
-         3. SINISTROS EM SÉRIE — 1 template errado enviado a N clientes conta como 1 sinistro
-            ou N sinistros? (Afeta o limite agregado, a franquia e o "limite por sinistro"
-            relevante — a definir na apólice, se vier a ser contratada.)
-         4. TERRITÓRIO E JURISDIÇÃO — cobertura para Portugal / lei portuguesa.
-         5. CUSTOS DE DEFESA — dentro ou fora do limite indemnizatório? Se dentro, esgotam o
-            capital disponível para a indemnização.
-       ======================================================================= #}
+    <p>A tua proteção real não é um teto de responsabilidade: a Cosmic Oasis, Lda. mantém (ou
+      contrata antes de escalar) um <strong>seguro de responsabilidade civil profissional (E&amp;O)</strong>
+      para cobrir eventuais danos decorrentes do serviço.</p>
+    
 
     <h2>7. Preços e pagamento</h2>
-    <p>Os preços constam da página de <a href="{{ marca.nav.precos }}">Preços</a> e são
+    <p>Os preços constam da página de <a href="/precos">Preços</a> e são
       apresentados <strong>com IVA incluído</strong>. O pagamento é feito à cabeça pelo período
       contratado (anual ou trienal).</p>
 
@@ -104,7 +115,7 @@
 
     <h2>10. Proteção de dados</h2>
     <p>O tratamento dos teus dados pessoais rege-se pela nossa
-      <a href="{{ marca.nav.privacidade }}">Política de Privacidade</a>, que faz parte integrante
+      <a href="/privacidade">Política de Privacidade</a>, que faz parte integrante
       destes termos.</p>
 
     <h2>11. Lei aplicável e resolução de litígios</h2>
@@ -113,25 +124,28 @@
       em linha (ODR). Dispomos de <strong>Livro de Reclamações Eletrónico</strong> em
       <a href="https://www.livroreclamacoes.pt" rel="noopener">livroreclamacoes.pt</a>.</p>
 
-    <h2>12. Suspensão do serviço</h2>
-    <p>Se não regularizares um pagamento em dívida, podemos <strong>suspender o serviço</strong> —
-      deixando de te enviar alertas — depois de te <strong>interpelarmos</strong> para regularizar
-      e de decorrer um prazo razoável sem pagamento. A suspensão mantém-se até à regularização;
-      retomamos o serviço logo que o pagamento seja regularizado.</p>
-
-    <h2>13. Alterações aos Termos</h2>
-    <p>Podemos alterar estes termos (por exemplo, por mudanças legais ou do próprio serviço).
-      Comunicamos-te qualquer alteração com <strong>pré-aviso de, no mínimo, 30 dias</strong> antes
-      de ela produzir efeitos. Se não concordares, podes <strong>cessar a subscrição sem qualquer
-      penalização</strong> até à data em que a alteração entra em vigor; se mantiveres o serviço
-      depois dessa data, entendemos que aceitaste os novos termos.</p>
-
-    <h2>14. Identificação e contacto</h2>
-    <p>O {{ marca.nome }} é um serviço de <strong>Cosmic Oasis, Lda.</strong>, NIPC
+    <h2>12. Identificação e contacto</h2>
+    <p>O CheckAL é um serviço de <strong>Cosmic Oasis, Lda.</strong>, NIPC
       <strong>[NIPC]</strong>, com sede em <strong>[morada]</strong>, Portugal. Contacto:
-      <a href="mailto:{{ email_privacidade }}">{{ email_privacidade }}</a>. Consulta a
-      <a href="{{ marca.nav.privacidade }}">Política de Privacidade</a> para saberes como
+      <a href="mailto:privacidade@checkal.pt">privacidade@checkal.pt</a>. Consulta a
+      <a href="/privacidade">Política de Privacidade</a> para saberes como
       tratamos os teus dados.</p>
   </div>
 </article>
-{% endblock %}
+
+  </main>
+
+  <footer class="rodape" role="contentinfo">
+    <div class="rodape__interior">
+      <p class="rodape__legal">CheckAL — serviço privado e independente de monitorização de Alojamento Local · Cosmic Oasis, Lda.</p>
+      <nav class="rodape__links" aria-label="Ligações legais">
+        <a href="/privacidade">Privacidade</a>
+        <a href="/termos">Termos</a>
+        <a href="/remover">Remover os meus dados</a>
+      </nav>
+    </div>
+  </footer>
+
+  
+</body>
+</html>
