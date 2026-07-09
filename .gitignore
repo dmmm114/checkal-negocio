@@ -11,8 +11,9 @@ venv/
 checkal/.env
 
 # Dados locais / snapshots RNAL (podem conter dados pessoais — fora do git)
-checkal/data/
-checkal/data/snapshots/
+checkal/data/*
+# exceção: lista de concelhos (sem dados pessoais; o varrimento nacional depende dela)
+!checkal/data/concelhos.txt
 *.db
 *.sqlite3
 
