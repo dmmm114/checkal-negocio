@@ -37,12 +37,26 @@ Subscrição (49€/ano) que vigia o registo RNAL, o seguro obrigatório e os re
 - Página individual `rnt.turismodeportugal.pt/rnt/rnal.aspx?nr=X` é server-rendered (GET simples chega; tem bloco do seguro RC)
 - Mercado: 120k+ registos, ~70k titulares; 56% singular/44% coletiva; multi-AL detêm 56% dos registos; Açores fora do RNAL (fase 2)
 
-## Próximos passos (por ordem)
+## Estado da construção (a 09/07/2026)
 
-0. 🚦 [BLOQUEANTE] Marcar consulta com jurista de proteção de dados (reutilização do RNAL) — antes de qualquer cold
-1. Registar checkal.pt + chekal.pt + checal.pt + getcheckal.com — urgente (e decidir radaral.pt/.com defensivos); cotar seguro E&O; angariar 3–5 contabilistas-piloto
-2. Submeter marca INPI nominativa CHECKAL classes 35/42/45 (~194€) — antes de qualquer envio público
-3. Amostrar 200 páginas individuais RNAL → medir preenchimento do bloco seguro (decide copy do pilar seguro — PRODUTO.md §2)
-4. Construção: 6 sprints de fim-de-semana (AUTOMACAO.md §7) — MVP vendável no FDS 3
-5. Checklist legal bloqueante antes da 1.ª campanha (LEGAL.md §7)
-6. Lançamento M1: gatilhos Porto (1.413 cancelamentos, mai/2026) e Funchal (regulamento, jun/2026)
+**Software 100% construído** — ver `ESTADO-DO-PROJETO.md` (fonte de verdade). Núcleo de compliance
++ FDS 1–6 + swap TOConline + Fase 1 (website consent-first, emails, dashboard admin) + deploy
+(docker/caddy/systemd) + runbook. **1202 testes verdes, 0 skips.** Tudo LIVE-GATED (nada envia/cobra
+sem chaves). Marca final aplicada (✓AL badge). Parecer RGPD recebido e traduzido em decisões
+(`LEGAL-PARECER-DECISOES.md`): cold DESLIGADO por código; motor = consent-first + parcerias.
+
+- ✅ [feito] Parecer jurista RGPD · amostra 200 páginas seguro (`ANALISE-SEGURO.md`: 64,5% em
+  falta/caducado) · construção dos 6 sprints · marca · G4 resolvido empiricamente (breaker entrega
+  cancelamentos reais) · lista nacional de 289 concelhos.
+
+## Próximos passos (o que falta — depende do dono)
+
+0. 🚦 [BLOQUEANTE cold] Advogado VALIDA as minutas (`REGISTO-ATIVIDADES-ART30.md`, `LIA-COLD-GERAL.md`,
+   `ANEXO1-*`, privacidade/T&C) + os 3 pontos do parecer (base legal do email/art.10.º n.º 5 —
+   forte indício de que É público; transferências internacionais; atividade reservada via `ANEXO3`)
+1. Contas/chaves (RUNBOOK-GO-LIVE §0): TOConline (série→sequence_id), Stripe, Anthropic, Resend+DNS;
+   registar chekal.pt/checal.pt/getcheckal.com; cotar seguro E&O; angariar 3–5 contabilistas-piloto
+2. Submeter marca INPI (nominativa CHECKAL 35/42/45 + mista com o logo)
+3. Deploy (RUNBOOK-GO-LIVE) → ensaio test→live (pagar-me a mim próprio + fatura AT) → ligar consent-first
+4. Lançamento M1: gatilhos Porto (1.413 cancelamentos) e Funchal (regulamento) como conteúdo→widget
+5. [pós-validação e §4 do parecer] só então ligar o cold `geral@` (opt-out, semi-manual). Singulares: nunca.
