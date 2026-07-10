@@ -328,6 +328,115 @@ def test_par_exato_do_anexo3_antigo_reprova_novo_passa():
 
 
 # ==========================================================================
+#  RED-TEAM (2026-07-09, 3.ª ronda) — CONJUNTIVO IMPESSOAL dirigido ao cliente.
+#  "é necessário/preciso/obrigatório que <ato no conjuntivo 2.ª pessoa>" é uma
+#  ORDEM velada (procuradoria ilícita). As formas do conjuntivo 2.ª p. sing. dos
+#  atos são LISTA FECHADA (comuniques, regularizes, alteres, …) → baixo risco de
+#  FP porque a desinência "-es/-as" é inequivocamente 2.ª pessoa. TÊM de reprovar.
+# ==========================================================================
+CONJUNTIVO_IMPESSOAL_2P = [
+    f"É necessário que regularizes a tua situação. Lê aqui: {URL}",
+    f"É preciso que regularizes a tua situação. Lê aqui: {URL}",
+    f"É obrigatório que comuniques a alteração à câmara. Lê aqui: {URL}",
+    f"Torna-se necessário que averbes o seguro. Lê aqui: {URL}",
+    f"É necessário que alteres o averbamento. Lê aqui: {URL}",
+    f"É preciso que corrijas os dados do registo. Lê aqui: {URL}",
+    f"É necessário que resolvas a irregularidade. Lê aqui: {URL}",
+    f"É obrigatório que sanes a situação. Lê aqui: {URL}",
+    f"É necessário que legalizes o registo. Lê aqui: {URL}",
+    f"É preciso que apresentes o pedido. Lê aqui: {URL}",
+    f"É necessário que ceses a exploração. Lê aqui: {URL}",
+    f"É obrigatório que cesses a atividade. Lê aqui: {URL}",
+    f"É necessário que pagues a taxa devida. Lê aqui: {URL}",
+    f"É preciso que efetues a comunicação. Lê aqui: {URL}",
+]
+
+
+@pytest.mark.parametrize("texto", CONJUNTIVO_IMPESSOAL_2P)
+def test_conjuntivo_impessoal_2a_pessoa_reprova(texto):
+    r = validar_nao_prescritivo(texto)
+    assert r.valido is False, f"BYPASS CRÍTICO — deveria reprovar: {texto!r}"
+    assert r.motivos
+
+
+# Espelho SEGURO — a MESMA construção impessoal na 3.ª pessoa (dever de um TERCEIRO:
+# município/câmara/plataforma/titular), com o conjuntivo em "-e" (comunique/regularize/
+# atualize), NÃO é dirigida ao cliente → tem de PASSAR (sem falso positivo).
+CONJUNTIVO_IMPESSOAL_3P_SEGURO = [
+    f"É necessário que o município comunique os dados. Lê aqui: {URL}",
+    f"É necessário que a plataforma atualize o registo. Lê aqui: {URL}",
+    f"É preciso que a câmara regularize os registos. Lê aqui: {URL}",
+    f"É obrigatório que o titular abrangido comunique, se aplicável. Lê aqui: {URL}",
+    f"Torna-se necessário que a entidade averbe o seguro. Lê aqui: {URL}",
+    # Radical REGULAR (regularize/averbe) — o 3.º-pessoa que o léxico _ATO casaria: só
+    # a exclusão de "que" no salto da regra do modal impede o falso positivo.
+    f"É necessário que a câmara regularize os registos pendentes. Lê aqui: {URL}",
+    f"É necessário que a entidade averbe o seguro dos titulares. Lê aqui: {URL}",
+]
+
+
+@pytest.mark.parametrize("texto", CONJUNTIVO_IMPESSOAL_3P_SEGURO)
+def test_conjuntivo_impessoal_3a_pessoa_passa(texto):
+    r = validar_nao_prescritivo(texto)
+    assert r.valido is True, (
+        f"FALSO POSITIVO — devia passar (3.ª pessoa): {texto!r} / {r.motivos}"
+    )
+
+
+# ==========================================================================
+#  RED-TEAM (2026-07-09, 3.ª ronda) — OBRIGAÇÃO IMPESSOAL CLÍTICA dirigida ao cliente.
+#  "compete-te / cabe-te / incumbe-te <ato jurídico>" atribui o dever ao cliente
+#  (o clítico "-te" é 2.ª pessoa) → reservado. TÊM de reprovar.
+# ==========================================================================
+OBRIGACAO_CLITICA_2P = [
+    f"Compete-te regularizar a tua situação. Lê aqui: {URL}",
+    f"Cabe-te comunicar a alteração à câmara. Lê aqui: {URL}",
+    f"Incumbe-te averbar o seguro obrigatório. Lê aqui: {URL}",
+    f"Compete-te legalizar o registo. Lê aqui: {URL}",
+]
+
+
+@pytest.mark.parametrize("texto", OBRIGACAO_CLITICA_2P)
+def test_obrigacao_clitica_dirigida_reprova(texto):
+    r = validar_nao_prescritivo(texto)
+    assert r.valido is False, f"BYPASS CRÍTICO — deveria reprovar: {texto!r}"
+    assert r.motivos
+
+
+# Espelho SEGURO — a MESMA obrigação atribuída a um TERCEIRO (município/câmara), sem o
+# clítico "-te" (3.ª pessoa), NÃO é dirigida ao cliente → tem de PASSAR.
+OBRIGACAO_IMPESSOAL_3P_SEGURO = [
+    f"Compete ao município regularizar os registos. Lê aqui: {URL}",
+    f"Cabe à câmara comunicar aos titulares abrangidos. Lê aqui: {URL}",
+    f"Incumbe à plataforma averbar os dados, se aplicável. Lê aqui: {URL}",
+]
+
+
+@pytest.mark.parametrize("texto", OBRIGACAO_IMPESSOAL_3P_SEGURO)
+def test_obrigacao_impessoal_a_terceiro_passa(texto):
+    r = validar_nao_prescritivo(texto)
+    assert r.valido is True, (
+        f"FALSO POSITIVO — devia passar (3.ª pessoa): {texto!r} / {r.motivos}"
+    )
+
+
+# ==========================================================================
+#  RESIDUAL CONHECIDO E DOCUMENTADO — imperativo nu de um ato jurídico
+#  ("Regulariza a tua situação"). NÃO é fechado por regex (colidiria com a 3.ª
+#  pessoa descritiva "o município regulariza os registos" → falsos positivos). É
+#  coberto pelas camadas 1/3/4 (ver docstring do módulo). Este teste FIXA a
+#  fronteira: a 3.ª pessoa descritiva NÃO pode ser reprovada por engano.
+# ==========================================================================
+def test_terceira_pessoa_descritiva_do_ato_nao_e_falso_positivo():
+    # Descrição factual de que um TERCEIRO pratica o ato — lado seguro, tem de passar.
+    for texto in (
+        f"Segundo a notícia, o município regulariza os registos pendentes. Lê aqui: {URL}",
+        f"A plataforma atualiza automaticamente os dados dos titulares. Lê aqui: {URL}",
+    ):
+        assert validar_nao_prescritivo(texto).valido is True, texto
+
+
+# ==========================================================================
 #  Prova do artefacto — o Anexo 3 REGENERADO (HTML) passa o guardrail
 # ==========================================================================
 def _texto_visivel(html_bruto: str) -> str:

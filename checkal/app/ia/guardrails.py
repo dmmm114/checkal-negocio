@@ -49,6 +49,46 @@ individualizada. A lista de padrões é **curada e conservadora** (alargar a det
 sempre seguro — só gera MAIS rejeições → formato manual —, nunca um falso "válido"). Não
 reprova linguagem **informativa/condicional** ("pode afetar", "verifica", "se aplicável",
 "consulta a fonte/um profissional"), que é o lado seguro.
+
+DEFESA EM CAMADAS (honesta — este filtro NÃO é um regex perfeito)
+=================================================================
+Nenhum regex apanha **todas** as conjugações do português; a defesa real contra a
+procuradoria ilícita é a **soma de quatro camadas** + a **supervisão humana**, não este
+módulo isolado:
+
+* **Camada 1 — template restritivo.** O prompt/template instrui o modelo a escrever
+  informação factual atribuída à fonte, condicional e com encaminhamento (nunca conclusão
+  jurídica individualizada). Reduz a probabilidade de o texto derivar; não a elimina.
+* **Camada 2 — este filtro programático** (:func:`validar_nao_prescritivo`). Confere o
+  texto gerado ANTES de sair e apanha os padrões prescritivos/individualizados **mais
+  comuns**, a saber: incumprimento/ilegalidade/irregularidade afirmados sobre o cliente
+  ou o AL (inclusive por verbo reflexivo "encontra-se/fica em incumprimento"); "não
+  cumpres/violas"; **obrigação/necessidade/dever pessoal + ato jurídico** ("tens de /
+  terás de / vais ter de / é necessário / precisas de / deves … regularizar/legalizar/…");
+  **conjuntivo impessoal 2.ª pessoa** ("é necessário/preciso/obrigatório que regularizes/
+  comuniques/…", lista fechada); **obrigação clítica** ("compete-te/cabe-te/incumbe-te
+  <ato>"); ameaça individualizada de sanção ("vais ser multado", "a tua coima",
+  "arriscas uma coima"); e **factos com dono** dirigidos ao cliente — infinitivo pessoal
+  ("para efetuares/regularizares/…") e prazo com dono ("tens/terás/dispões de N dias
+  para <ato>"). As **citações da fonte** entre aspas são removidas antes da varredura.
+* **Camada 3 — formato factual de recurso.** Quando um alerta é reprovado (aqui) e a
+  regeneração persiste, cai num formato **manual/factual** — atribuído à fonte, sem
+  conclusão jurídica —, que é seguro por construção.
+* **Camada 4 — amostragem humana periódica.** Revisão manual de uma amostra dos alertas
+  emitidos, para apanhar o que escapou às camadas 1–3 e realimentar as regras/o template.
+
+RESIDUAIS CONHECIDOS (documentados, não fechados aqui)
+------------------------------------------------------
+* **Imperativo nu de um ato jurídico** — "Regulariza a tua situação", "Comunica já à
+  câmara". **NÃO** é fechado por regex: a forma imperativa da 2.ª pessoa colide com a
+  **3.ª pessoa descritiva** do mesmo verbo ("o município **regulariza** os registos", "a
+  plataforma **atualiza** os dados") — apanhá-la geraria **falsos positivos** de alto
+  volume sobre texto legítimo. Fica coberto pelas **camadas 1** (o template não manda no
+  imperativo), **3** (formato de recurso) e **4** (amostragem humana). Risco de FP de
+  fechar por regex: **alto** → decisão deliberada de o deixar às outras camadas.
+* Princípio geral: qualquer conjugação nova que o modelo invente e que escape às regras
+  curadas é apanhada, em última instância, pela **soma das camadas + a supervisão
+  humana** — não pela pretensão de um regex exaustivo.
 """
 from __future__ import annotations
 
@@ -104,6 +144,38 @@ _ATO_RAIZ = (
 _ATO_PESSOAL = _ATO_RAIZ + r"(?:ar|er|ir)es"
 # Unidade de prazo, para o "prazo com dono" ("tens N dias/meses para <ato>").
 _UNIDADE_PRAZO = r"(?:dias?|semanas?|meses|m[êe]s|anos?|horas?)"
+
+# ==========================================================================
+#  CONJUNTIVO IMPESSOAL — "é necessário/preciso/obrigatório QUE <ato>" (2.ª pessoa)
+# ==========================================================================
+# LISTA FECHADA das formas do **presente do conjuntivo, 2.ª pessoa do singular** dos atos
+# jurídicos ("que TU regularizes/comuniques/…"). É uma lista, não um radical + "\w*",
+# porque (a) a desinência "-es/-as" é a marca INEQUÍVOCA da 2.ª pessoa (o 3.º-pessoa faz
+# "-e/-a": "que o município comunique/regularize" — dever de TERCEIRO, lado seguro), e
+# (b) muitos destes verbos mudam de radical no conjuntivo (comunicar→comuni**qu**es,
+# pagar→pa**gu**es, corrigir→corri**j**as) e por isso NÃO seriam apanhados pelos radicais
+# de :data:`_ATO`. Baixo risco de FP: nenhuma 3.ª pessoa termina em "-es/-as" da 2.ª p.
+_ATO_CONJUNTIVO_2P = (
+    r"(?:comuniques|regularizes|alteres|corrijas|resolvas|sanes|legalizes|"
+    r"apresentes|averbes|ceses|cesses|pagues|efetues)"
+)
+# Modais IMPESSOAIS de necessidade/obrigação seguidos de "que" ("é necessário que", "é
+# preciso que", "é obrigatório que", "torna-se necessário que"). Só disparam com um verbo
+# de :data:`_ATO_CONJUNTIVO_2P` a seguir — logo a 3.ª pessoa ("… que o município
+# comunique") nunca casa (o conjuntivo "-e" não está na lista fechada).
+_MODAL_IMPESSOAL_QUE = (
+    r"(?:[ée]\s+necess[áa]rio|[ée]\s+preciso|[ée]\s+obrigat[óo]rio|"
+    r"torna-se\s+necess[áa]rio)\s+que"
+)
+
+# ==========================================================================
+#  OBRIGAÇÃO IMPESSOAL CLÍTICA — "compete-te / cabe-te / incumbe-te <ato>"
+# ==========================================================================
+# O clítico "-te" é a 2.ª pessoa: o dever fica ATRIBUÍDO AO CLIENTE. O espelho seguro é a
+# 3.ª pessoa a um terceiro ("compete AO município regularizar", "cabe À câmara comunicar"),
+# que não traz o "-te" e por isso não casa. Gated por _ATO: "compete-te verificar/consultar"
+# (encaminhamento) fica de fora.
+_OBRIG_CLITICA = r"(?:compete|cabe|incumbe)-te"
 
 # Prefixos de OBRIGAÇÃO/NECESSIDADE/DEVER dirigidos ao cliente (todos IMPERATIVOS ou de
 # certeza — NUNCA condicionais). Gated sempre por um _ATO (ato jurídico concreto): assim
@@ -200,9 +272,30 @@ _REGRAS: list[tuple[re.Pattern[str], str]] = [
     # 6. Obrigação/necessidade/dever pessoal + ato jurídico concreto ("tens de / terás de /
     #    vais ter de / é necessário / precisas de / deves … regularizar/legalizar/…"). O
     #    ato tem de ser um _ATO (jurídico); "<modal> verificar/consultar/rever" fica de fora.
+    #    O salto entre o modal e o ato **não atravessa "que"**: assim "é necessário QUE o
+    #    município regularize" (dever de TERCEIRO, 3.ª pessoa) já não é apanhado por engano
+    #    — a construção "modal + que + <2.ª pessoa>" fica a cargo da regra 6-bis (conjuntivo
+    #    de lista fechada), que distingue a 2.ª da 3.ª pessoa pela desinência.
     (
-        re.compile(_MODAL_OBRIG + r"(?:\s+\w+){0,4}\s+(?:" + _ATO + r")\b"),
+        re.compile(_MODAL_OBRIG + r"(?:\s+(?!que\b)\w+){0,4}\s+(?:" + _ATO + r")\b"),
         "prescreve um ato jurídico concreto ao cliente",
+    ),
+    # 6-bis. CONJUNTIVO IMPESSOAL dirigido ao cliente: "é necessário/preciso/obrigatório
+    #    que <ato no conjuntivo 2.ª pessoa>" ("… que regularizes/comuniques/…"). A lista
+    #    fechada _ATO_CONJUNTIVO_2P só tem formas da 2.ª pessoa ("-es/-as"); a 3.ª pessoa
+    #    ("… que o município comunique/regularize") NÃO casa → sem falso positivo.
+    (
+        re.compile(
+            _MODAL_IMPESSOAL_QUE + r"(?:\s+\w+){0,2}\s+" + _ATO_CONJUNTIVO_2P + r"\b"
+        ),
+        "prescreve um ato jurídico ao cliente (conjuntivo impessoal, 2.ª pessoa)",
+    ),
+    # 6-ter. OBRIGAÇÃO IMPESSOAL CLÍTICA: "compete-te/cabe-te/incumbe-te <ato jurídico>".
+    #    O clítico "-te" dirige o dever ao cliente; a 3.ª pessoa ("compete AO município
+    #    regularizar") não traz "-te" e fica de fora. Gated por _ATO (encaminhamento fora).
+    (
+        re.compile(_OBRIG_CLITICA + r"(?:\s+\w+){0,4}\s+(?:" + _ATO + r")\b"),
+        "atribui ao cliente (clítico -te) o dever de praticar um ato jurídico",
     ),
     # 7. Ameaça individualizada de sanção ("vais ser multado", "a tua coima").
     (
