@@ -1,0 +1,1983 @@
+<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>Dossier CheckAL — Advogado</title><style>
+@page { size: A4; margin: 22mm 18mm; }
+body { font: 15px/1.55 -apple-system,Segoe UI,Roboto,Arial,sans-serif; color:#0F172A; max-width:820px; margin:0 auto; padding:20px; }
+h1{font-size:26px;border-bottom:3px solid #12B76A;padding-bottom:6px} h2{font-size:20px;margin-top:1.6em;color:#0F172A} h3{font-size:16px}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px} th,td{border:1px solid #CBD5E1;padding:6px 8px;text-align:left;vertical-align:top} th{background:#F1F5F9}
+code{background:#F1F5F9;padding:1px 4px;border-radius:3px;font-size:.9em} a{color:#2563EB}
+.capa{text-align:center;padding:60px 0 40px} .capa .marca{font-weight:800;font-size:40px} .capa .marca .v{color:#12B76A}
+.toc{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:16px 24px;margin:24px 0}
+.sec{ page-break-before: always; break-before: page; }
+.sub{color:#64748B;font-size:13px}
+@media print{a{color:#0F172A;text-decoration:none} .noprint{display:none}}
+</style></head><body>
+<div class="capa"><div class="marca">Check<span class="v">AL</span> ✓</div><h1 style="border:none">Dossier de validação jurídica</h1><p class="sub">Cosmic Oasis, Lda. · RGPD, transferências internacionais e atividade reservada<br>10 de julho de 2026 · Documento único — Imprimir → Guardar como PDF</p></div>
+<div class="toc noprint"><strong>Índice</strong><ol><li><a href="#s1">Carta de apresentação</a></li><li><a href="#s2">Índice do pacote</a></li><li><a href="#s3">Nota de decisão jurídica recebida</a></li><li><a href="#s4">Briefing factual (histórico)</a></li><li><a href="#s5">Exemplo real de alerta — o «Anexo 3» referido na nota de decisão</a></li><li><a href="#s6">Decisões implementadas no software</a></li><li><a href="#s7">Minuta 1 — Política de Privacidade</a></li><li><a href="#s8">Minuta 2 — Termos & Condições</a></li><li><a href="#s9">Minuta 3 — Registo de atividades (art. 30.º)</a></li><li><a href="#s10">Minuta 4 — Avaliação de Interesse Legítimo (LIA)</a></li><li><a href="#s11">Minuta 5 — Nota de informação (art. 14.º)</a></li></ol></div>
+<section class="sec" id="s1"><h2 class="sub">Carta de apresentação</h2><h1 id="pedido-de-validacao-juridica-projeto-checkal">Pedido de validação jurídica — Projeto CheckAL</h1>
+<p><strong>Cosmic Oasis, Lda.</strong> · NIPC [NIPC] · [morada] · privacidade@checkal.pt</p>
+<p><strong>Para:</strong> [Dr.(a). / nome — ver nota sobre o destinatário no fim]
+<strong>De:</strong> Diogo Mendes, em representação da Cosmic Oasis, Lda.
+<strong>Data:</strong> 10 de julho de 2026
+<strong>Assunto:</strong> Validação formal de 3 pontos + revisão de 5 minutas — RGPD e aquisição de clientes (serviço CheckAL)</p>
+<hr />
+<p>Exmo.(a) Senhor(a) Dr.(a),</p>
+<p>Na sequência da nota de decisão jurídica que nos facultou, vimos pedir a <strong>validação formal</strong> de três pontos aí deixados em aberto e a <strong>revisão de cinco minutas</strong> que preparámos. Pretendemos sair com <strong>uma decisão executável</strong> — <em>"podem fazer X, desta forma, com estas salvaguardas; evitem Y"</em> — e a documentação pronta.</p>
+<p>Nota de accountability: <strong>desativámos em código qualquer contacto comercial a frio</strong> (interruptor <code>CHECKAL_PARECER_RGPD_OK</code>, hoje desligado). O nosso motor de aquisição é <strong>consentimento</strong> (formulário de verificação gratuita, onde o próprio titular consente) + <strong>parcerias</strong>; esse caminho arranca independentemente desta consulta. Em anexo seguem todas as minutas e o Anexo 3.</p>
+<hr />
+<h2 id="1-enquadramento-factual-minimo">1. Enquadramento factual (mínimo)</h2>
+<p>O CheckAL é um serviço privado de subscrição (49 €/ano) que, por cada Alojamento Local (AL), monitoriza o estado do registo no RNAL, a validade do seguro obrigatório e os regulamentos municipais, enviando alertas. Sem vínculo ao Estado. Os contactos provêm do RNAL (Turismo de Portugal), público e também acessível por webservice. Os registos distinguem titular <strong>coletiva</strong> de <strong>singular/ENI</strong>.</p>
+<p><strong>Dimensão da fatia endereçável a frio (já calculada — o "Passo 0"):</strong> de ~72.900 registos amostrados (≈60% do universo nacional), a fatia <strong>coletiva com email genérico</strong> (<code>geral@</code>, <code>info@</code>, <code>reservas@</code>) é de <strong>7.779 registos ≈ 1.914 empresas distintas (10,7%)</strong>. É este — e só este — o universo do canal frio que ponderamos.</p>
+<hr />
+<h2 id="2-os-tres-pontos-para-validacao-formal">2. Os três pontos para validação formal</h2>
+<h3 id="i-base-legal-da-fonte-do-email-ja-verificada-por-nos-pedimos-contra-verificacao">(i) Base legal da fonte do email — <em>já verificada por nós; pedimos contra-verificação</em></h3>
+<p>Verificámos o texto consolidado (PGDL, versão vigente): o <strong>art. 10.º, n.º 5 do DL 128/2014</strong> (na redação do DL 76/2024) determina que o Turismo de Portugal disponibiliza publicamente, além do n.º 1, o <em>"endereço eletrónico do titular da exploração"</em> e a <em>validade do seguro obrigatório (art. 13.º-A)</em>. Pedimos:
+- <strong>contra-verificação</strong> dessa redação e que o webservice <code>list_RNAL</code> não exponha mais do que o site público ("nomeadamente" é enumeração exemplificativa);
+- verificação dos <strong>termos de licença/reutilização</strong> do webservice (regime de dados abertos, <strong>Lei 68/2021</strong>, + condições do TdP) — uma violação aí é problema contratual/administrativo autónomo do RGPD.</p>
+<p><strong>Importante (desacoplamento):</strong> este ponto <strong>não é o portão do canal <code>geral@</code></strong>. A licitude do email frio a pessoa coletiva assenta na <strong>Lei 41/2004, art. 13.º-A (opt-out coletivas) + art. 13.º-B (listas/DGC)</strong> + consulta à lista da DGC + identificação do remetente e opt-out em cada mensagem — não na fonte do endereço. O ponto (i) releva sobretudo para a <strong>redação da nota do art. 14.º</strong> e para qualquer tratamento que toque dados de <strong>singulares</strong>. E mantemos presente: <strong>publicação obrigatória ≠ licença de reutilização</strong> — a análise de compatibilidade de finalidades (arts. 5.º/1/b e 6.º/4) mantém-se para singulares/ENI (o próprio art. 10.º/3 remete para a Lei 58/2019).</p>
+<h3 id="ii-transferencias-internacionais-e-subcontratacao-arts-28o-e-44o-e-ss">(ii) Transferências internacionais e subcontratação (arts. 28.º e 44.º e ss.)</h3>
+<p>Subcontratantes fora do EEE: <strong>Resend</strong> (email, EUA), <strong>Anthropic</strong> (IA dos alertas, EUA), <strong>Stripe</strong> (pagamentos, EUA/IE — via Stripe Payments Europe, IE). No EEE: TOConline (PT), IfThenPay (PT), Hetzner (DE).</p>
+<p><strong>Correção que assumimos face à nota anterior:</strong> a IA <strong>trata dados pessoais</strong>. Quando o titular é <strong>ENI/singular</strong>, os "dados do estabelecimento" (nº RNAL — identificador único —, morada, validade do seguro) são dados pessoais de pessoa identificável; remover o nome é pseudonimização, não anonimização. Logo, <strong>a Anthropic é subcontratante de dados pessoais hoje</strong>, exigindo DPA + mecanismo de transferência <strong>independentemente da estratégia de aquisição</strong>. Pedimos que valide:
+- o <strong>mecanismo do Cap. V</strong> por prestador (SCCs 2021 e/ou Data Privacy Framework, com verificação <strong>datada</strong> das listagens ativas para Stripe/Resend/Anthropic);
+- que as <strong>SCCs de 2021 já incorporam o art. 28.º</strong> (dispensando contrato separado com os prestadores US que tenham DPA adequado) — a nossa minuta de subcontratação destina-se apenas às relações onde ditamos o papel;
+- a <strong>dupla qualificação</strong> provável de <strong>Stripe</strong> e <strong>IfThenPay</strong> (subcontratantes + responsáveis autónomos nas obrigações próprias de AML/KYC), a refletir no registo do art. 30.º;
+- em alternativa que ponderamos: correr o modelo Claude via <strong>Amazon Bedrock, região Frankfurt (eu-central-1)</strong>, mantendo a inferência <strong>na UE</strong> e eliminando a questão do Cap. V para a componente de IA. Merece a sua opinião custo/benefício vs. manter EUA com SCCs+TIA.</p>
+<h3 id="iii-fronteira-da-atividade-reservada-lei-no-102024">(iii) Fronteira da atividade reservada (Lei n.º 10/2024)</h3>
+<p>A Lei 10/2024 (que revogou a Lei 49/2004) reserva a <strong>consulta jurídica</strong> — "interpretação e aplicação de normas jurídicas mediante solicitação de terceiro" — a advogados/solicitadores. Reconhecemos que a definição está <strong>próxima</strong> do que o produto faz. A nossa defesa assenta em três distinções que garantimos no produto real:
+- <strong>facto, não conselho:</strong> monitorizar estado/seguro/publicação e <strong>citar a fonte oficial</strong> é informação; concluir juridicamente pela situação do cliente ("estás em incumprimento", "tens de alterar X") não;
+- <strong>sinalização genérica, não aplicação individualizada;</strong>
+- <strong>encaminhamento, não prescrição</strong> (só remetemos para a fonte oficial ou para um profissional).</p>
+<p>Como os alertas são <strong>gerados por IA</strong>, um template correto não basta. Implementámos uma <strong>defesa em camadas</strong> (e não afirmamos um filtro perfeito — a defesa é a soma delas): <strong>(1)</strong> um <strong>template restritivo</strong> que instrui o modelo a citar a fonte e a não concluir juridicamente; <strong>(2)</strong> um <strong>filtro automático</strong> que deteta os padrões prescritivos/individualizados <strong>mais comuns</strong> — deveres, prazos e valores dirigidos ao cliente ("tens de…", "para efetuares…", "tens N dias para…") — e os <strong>substitui por um formato factual de recurso</strong>, atribuindo os factos à fonte ("segundo o regulamento, os titulares dispõem de…"); <strong>(3)</strong> <strong>amostragem humana periódica</strong>; <strong>(4)</strong> <strong>versionamento dos templates</strong> como prova. Anexamos um <strong>alerta real</strong> (Anexo 3) para validar a linguagem concreta.</p>
+<hr />
+<h2 id="3-as-cinco-minutas-a-revervalidar">3. As cinco minutas a rever/validar</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Documento</th>
+<th>O que validar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Política de Privacidade</td>
+<td>finalidades/bases por canal, direitos (oposição absoluta art. 21.º/2), conservação 6 m, transferências, CNPD</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Termos &amp; Condições</td>
+<td>serviço = ferramenta informativa (não garantia/aconselhamento); <strong>teto de responsabilidade = total pago nos 24 meses anteriores</strong> (a perna do limite da apólice acrescenta-se quando a E&amp;O for contratada); sem excluir dolo/negligência grave/danos a pessoas; cláusulas de <strong>alterações</strong> e de <strong>suspensão por falta de pagamento</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Registo de Atividades (art. 30.º)</td>
+<td>entradas por atividade; dupla qualificação Stripe/IfThenPay; IA como tratamento de dados pessoais de clientes ENI</td>
+</tr>
+<tr>
+<td>4</td>
+<td>LIA — cold <code>geral@</code></td>
+<td><strong>validar para preservar a opção (ativação não iminente):</strong> o teste de equilíbrio aguenta? as salvaguardas — universo ~1.914 empresas, cadência 1 apresentação + 1 follow-up, cruzamento DGC — são suficientes?</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Nota de Informação (art. 14.º)</td>
+<td>conteúdo mínimo; base do art. 10.º só após (i)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-decisoes-em-que-pedimos-aconselhamento">4. Decisões em que pedimos aconselhamento</h2>
+<ul>
+<li><strong>EPD/DPO:</strong> propomos <strong>não designar formalmente</strong> (defensável por não ser "grande escala": ~centenas/poucos milhares de subscritores), nomeando responsável interno + apoio externo, e <strong>documentando a avaliação + gatilhos de reavaliação</strong> (ingestão da base RNAL completa; N mil subscritores; novas categorias). Confirma esta posição?</li>
+<li><strong>Conservação:</strong> <strong>6 meses</strong> para prospects sem interação; lista de supressão à parte, minimizada, sem prazo (art. 21.º). Confirma?</li>
+<li><strong>Limitação de responsabilidade + E&amp;O:</strong> aceitamos que um cap de 49 € seria derrubado; o teto fica no <strong>total pago nos 24 meses anteriores</strong> e <strong>não prometemos, para já, um seguro que ainda não temos</strong>. Ao contratar a <strong>E&amp;O</strong>, acrescentaremos a perna do limite por sinistro — e pedimos desde já orientação sobre a apólice: <strong>exclusões de conteúdo gerado por IA</strong> (decisivo), <em>claims-made</em> + data retroativa, <strong>sinistros em série</strong>, território Portugal, custos de defesa dentro/fora do limite.</li>
+<li><strong>Estratégia:</strong> confirmamos <strong>consentimento + parcerias</strong> como motor. O <code>geral@</code> (opt-out) fica como <strong>opção a preservar</strong> — uma eventual <strong>campanha única e curada</strong> às ~1.914 empresas, semi-manual e depois desligada; <strong>ativação não iminente</strong>. Pedimos que valide a LIA para <strong>preservar essa opção</strong>, não para a ativar já.</li>
+</ul>
+<p><strong>A nossa leitura por canal (para confirmar/corrigir):</strong>
+| Canal | Leitura |
+|---|---|
+| Formulário de verificação (consentimento) | <strong>Pode</strong> (consentimento granular, com prova) |
+| Frio a coletiva <code>geral@</code> (opt-out) | <strong>Pode</strong>, sob Lei 41/2004 + DGC + opt-out por mensagem (o ponto (i) reforça, não é o portão) |
+| Frio a coletiva, pessoa identificada | <strong>Excluído por desenho</strong> |
+| <strong>Carta postal a singular/ENI</strong> | <strong>Provavelmente inviável:</strong> o art. 10.º/5 publica o <em>email</em>, não a <em>morada</em> do titular; a morada pública é a do <strong>estabelecimento</strong>, raramente a residência |
+| Frio a singular/ENI | <strong>Não</strong> (opt-in, art. 13.º-A) |</p>
+<hr />
+<h2 id="5-documentos-deste-dossier">5. Documentos deste dossier</h2>
+<p>Além desta carta, o dossier reproduz: a <strong>nota de decisão jurídica recebida</strong>, o <strong>briefing factual (histórico)</strong>, o <strong>exemplo real de alerta</strong> (para 2(iii)), o <strong>documento de decisões implementadas</strong> e as <strong>5 minutas</strong> da secção 3.</p>
+<p><strong>Nota de leitura (numeração de anexos):</strong> os documentos reproduzidos referem-se aos seus <strong>próprios anexos internos</strong> — «<strong>Anexo 1</strong>» designa a <strong>Nota de informação do art. 14.º</strong> (que aqui é a <strong>Minuta 5</strong>); «<strong>Anexo 2</strong>», o <strong>texto de consentimento do funil</strong> (reproduzido dentro do briefing); «<strong>Anexo 3</strong>», o <strong>exemplo de alerta</strong>. Esse <strong>Anexo 3 consta deste dossier</strong> (a nota de decisão, redigida antes, dava-o por não fornecido) — é o documento a que se refere a análise da atividade reservada em 2(iii).</p>
+<h2 id="6-o-que-so-a-cosmic-oasis-fornece">6. O que só a Cosmic Oasis fornece</h2>
+<p><strong>NIPC</strong> e <strong>morada</strong> da sociedade (<code>[NIPC]</code>/<code>[morada]</code> nas minutas).</p>
+<h2 id="7-resultado-pretendido-destinatario-e-honorarios">7. Resultado pretendido, destinatário e honorários</h2>
+<p>Pretendemos: confirmação/correção de 2(i)–(iii); as 5 minutas validadas; aconselhamento nas decisões da secção 4, sob a forma de <strong>recomendação clara</strong>. <strong>Nota sobre o destinatário:</strong> o ponto (ii) exige conforto em <strong>proteção de dados/transferências</strong>; o ponto (iii) exige conforto em <strong>deontologia da Ordem</strong> — pode justificar dois pareceres. Agradecemos indicação de honorários para (i) esta validação e (ii) a eventual finalização/assinatura.</p>
+<p>Com os melhores cumprimentos,
+Diogo Mendes — Cosmic Oasis, Lda.</p>
+<blockquote>
+<p><em>Redações legais verificadas na versão consolidada (PGDL) à data; para citação externa, confirmar no DRE.</em></p>
+</blockquote></section>
+<section class="sec" id="s2"><h2 class="sub">Índice do pacote</h2><h1 id="pacote-para-o-advogado-epd-checkal-cosmic-oasis-lda">Pacote para o advogado / EPD — CheckAL (Cosmic Oasis, Lda.)</h1>
+<blockquote>
+<p>Tudo o que precisa de validação jurídica, num só sítio. Estado: 09/07/2026.
+O parecer recebido é uma <strong>nota de decisão</strong> (não um parecer formal assinado). Pede
+validação de advogado inscrito em <strong>3 pontos</strong> antes de produção + revisão das minutas.
+<strong>O contacto a frio está DESLIGADO em código</strong> (<code>CHECKAL_PARECER_RGPD_OK=false</code>) até isto fechar.
+O lançamento por <strong>consentimento + parcerias NÃO depende disto</strong> e pode arrancar já.</p>
+</blockquote>
+<hr />
+<h2 id="o-que-pedimos-ao-advogado-uma-frase">O que pedimos ao advogado (uma frase)</h2>
+<blockquote>
+<p>"Confirmem-nos os 3 pontos abaixo, validem as 5 minutas, e digam-nos <strong>o que podemos ligar,
+desta forma, com estas salvaguardas</strong> — de preferência uma decisão, não só opções."</p>
+</blockquote>
+<hr />
+<h2 id="1-os-3-pontos-que-exigem-validacao-formal-o-parecer-deixou-os-em-aberto">1. Os 3 pontos que exigem validação formal (o parecer deixou-os em aberto)</h2>
+<h3 id="i-base-legal-da-fonte-do-email-do-titular-contra-verificacao-nao-confirmacao-de-raiz">(i) Base legal da fonte do email do titular — <em>CONTRA-verificação, não confirmação de raiz</em></h3>
+<ul>
+<li><strong>O art. 10.º n.º 5 está CONFIRMADO</strong> pelo consultor (7.ª versão consolidada): o RNAL
+  publica o <strong>"endereço eletrónico do titular da exploração"</strong> e a <strong>validade do seguro
+  obrigatório</strong>.</li>
+<li><strong>DESACOPLAR do canal <code>geral@</code>:</strong> o email frio a <strong>pessoa coletiva</strong> assenta na <strong>Lei
+  41/2004, art. 13.º-A (opt-out coletivas) + art. 13.º-B (listas/DGC)</strong> + cruzamento <strong>DGC</strong> +
+  identificação/opt-out por mensagem — <strong>NÃO na fonte do endereço</strong>. O ponto (i) serve a <strong>redação da nota do art.
+  14.º</strong> e os <strong>tratamentos que tocam pessoas singulares</strong> (onde o email É dado pessoal), não
+  a legitimação do cold a coletiva.</li>
+<li><strong>Pedido (CONTRA-verificação, não confirmação de raiz):</strong> que <strong>nada</strong> no consolidado
+  <strong>pós-DL 76/2024</strong> contradiga a redação do art. 10.º n.º 5; <strong>e</strong> verificar os <strong>termos de
+  licença/reutilização do webservice <code>list_RNAL</code></strong> — regime de <strong>dados abertos (Lei 68/2021)</strong></li>
+<li>condições do <strong>Turismo de Portugal</strong>. Uma violação desses termos é <strong>problema
+  contratual/administrativo autónomo</strong> do RGPD (independente e cumulável).</li>
+<li><strong>Princípio a manter:</strong> <strong>publicação obrigatória ≠ licença de reutilização</strong> — para
+  singulares, a reutilização depende do <strong>teste de compatibilidade de finalidades</strong> (art.
+  6.º/4), que se mantém.</li>
+<li>Fontes: <a href="https://www.pgdlisboa.pt/leis/lei_mostra_articulado.php?nid=3085&amp;tabela=leis&amp;ficha=1&amp;pagina=1">PGDL — DL 128/2014</a> · <a href="https://diariodarepublica.pt/dr/detalhe/decreto-lei/128-2014-56384880">DRE</a></li>
+</ul>
+<h3 id="ii-transferencias-internacionais-subcontratacao-art-28o-e-44o-e-ss">(ii) Transferências internacionais + subcontratação (art. 28.º e 44.º e ss.)</h3>
+<ul>
+<li>Fornecedores fora do EEE que tratam dados: <strong>Resend</strong> (email, EUA), <strong>Anthropic</strong> (IA dos
+  alertas, EUA), <strong>Stripe</strong> (pagamentos, EUA/IE). Dentro do EEE: TOConline (PT), IfThenPay (PT),
+  Hetzner (DE/UE).</li>
+<li><strong>CORREÇÃO (2.ª opinião):</strong> a IA <strong>trata dados pessoais HOJE</strong> para clientes <strong>ENI/singulares</strong>
+  — o <strong>n.º RNAL + morada + validade do seguro são dados pessoais</strong> (n.º RNAL = identificador
+  único; tirar o nome é <strong>pseudonimização, não anonimização</strong>). Logo <strong>DPA + mecanismo de
+  transferência com a Anthropic fecham-se já</strong>, independentemente do cold. A regra "a IA só vê
+  dados do AL, não de prospects" vale para <em>prospects</em>, mas <strong>não</strong> isenta os <em>clientes</em> singulares.</li>
+<li><strong>Pedido:</strong> validar o <strong>mecanismo de transferência</strong> para cada fornecedor fora do EEE e a minuta
+  de subcontratação, tendo em conta que:</li>
+<li><strong>Claude via Amazon Bedrock (Frankfurt, <code>eu-central-1</code>)</strong> mantém a inferência na UE e
+    <strong>elimina o Cap. V</strong> para a IA; a alternativa (API direta EUA) exige <strong>SCCs + TIA</strong> (+ DPF só
+    com verificação <strong>datada</strong> da listagem);</li>
+<li>as <strong>SCCs de 2021 já incorporam o art. 28.º</strong> — para os US com DPA adequado, <strong>não</strong> é preciso
+    contrato de subcontratação separado;</li>
+<li><strong>Stripe e IfThenPay</strong> têm <strong>dupla qualificação</strong> (subcontratante + <strong>responsável autónomo</strong> nas
+    obrigações próprias de AML/KYC) — refletir na minuta e no registo art. 30.º;</li>
+<li><strong>Hetzner</strong>: <strong>fixar região UE</strong> + verificar a <strong>cadeia de sub-subcontratantes</strong>.</li>
+</ul>
+<h3 id="iii-fronteira-da-atividade-reservada-lei-102024-a-luz-de-um-alerta-real">(iii) Fronteira da atividade reservada (Lei 10/2024) — à luz de um alerta REAL</h3>
+<ul>
+<li>O produto interpreta regulamentos para o caso do cliente ("isto pode afetar o teu AL; verifica X").</li>
+<li><strong>Pedido:</strong> confirmar que a linguagem nos mantém do lado da <strong>informação</strong> e não do <strong>aconselhamento
+  jurídico reservado</strong>. Anexámos um <strong>alerta real renderizado</strong> (<code>ANEXO3-alerta-exemplo.html</code>) —
+  o parecer disse que a avaliação definitiva dependia dele. Já usa disclaimer "informação, não
+  aconselhamento jurídico" e cita a fonte oficial.</li>
+</ul>
+<hr />
+<h2 id="2-as-5-minutas-a-reveraprovar-ja-redigidas-por-nos">2. As 5 minutas a rever/aprovar (já redigidas por nós)</h2>
+<table>
+<thead>
+<tr>
+<th>Documento</th>
+<th>Ficheiro</th>
+<th>O que validar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Política de privacidade</td>
+<td><code>checkal/app/web/templates/privacidade.html</code></td>
+<td>finalidades por canal, bases legais, direitos (oposição absoluta art. 21.º), conservação 6 m, transferências, CNPD</td>
+</tr>
+<tr>
+<td>Termos &amp; Condições</td>
+<td><code>checkal/app/web/templates/termos.html</code></td>
+<td>serviço = ferramenta informativa (não garantia/aconselhamento); <strong>teto = total pago nos 24 meses anteriores</strong> (NÃO se promete a apólice ainda inexistente; a perna do limite por sinistro acrescenta-se quando a E&amp;O for contratada); não excluir dolo/negligência grave/danos a pessoas; <strong>checklist E&amp;O</strong> em comentário interno (exclusões de conteúdo IA; claims-made + data retroativa; sinistros em série; território PT; custos de defesa)</td>
+</tr>
+<tr>
+<td>Registo de atividades (art. 30.º)</td>
+<td><code>REGISTO-ATIVIDADES-ART30.md</code></td>
+<td>completude das entradas por atividade; cold marcado NÃO ATIVO</td>
+</tr>
+<tr>
+<td>LIA (interesse legítimo) — cold <code>geral@</code></td>
+<td><code>LIA-COLD-GERAL.md</code></td>
+<td><strong>validar para PRESERVAR A OPÇÃO (ativação não iminente):</strong> o teste de equilíbrio aguenta? salvaguardas (universo ~1.914 empresas; cadência 1 + 1 follow-up; DGC) suficientes?</td>
+</tr>
+<tr>
+<td>Nota de informação (art. 14.º)</td>
+<td><code>ANEXO1-nota-informacao-corrigida.md</code></td>
+<td>versão <strong>email</strong> (art. 10.º n.º 5 já CONFIRMADO — falta só CONTRA-verificar); a <strong>carta a singular é provavelmente inviável na prática</strong> — o art. 10.º/5 publica o <strong>email, não a morada</strong> do titular, e a morada pública é a do <strong>estabelecimento</strong>, raramente a residência</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-decisoesaconselhamento-que-pedimos">3. Decisões/aconselhamento que pedimos</h2>
+<ul>
+<li>Necessidade (ou não) de <strong>EPD/DPO</strong> designado. <strong>A nossa decisão:</strong> não designar hoje
+  (defensável por não ser "larga escala"), mas <strong>documentámos a avaliação escrita + gatilhos de
+  reavaliação</strong> (ingestão da base RNAL completa; <strong>5.000 subscritores</strong>; novas categorias de dados) e
+  <strong>nomeámos responsável interno de privacidade</strong> — ver <code>REGISTO-ATIVIDADES-ART30.md §0</code>. Confirmam?</li>
+<li><strong>Prazo de conservação</strong> de prospects: propomos <strong>6 meses</strong> (supressão à parte) — confirmam?</li>
+<li>A <strong>cláusula de limitação de responsabilidade</strong> — teto = <strong>total pago nos 24 meses anteriores</strong>
+  (não um teto a 49 €, que seria abusivo). <strong>Decidimos NÃO prometer nos T&amp;C um seguro que ainda não
+  temos</strong> — a perna do limite por sinistro e a menção à E&amp;O acrescentam-se quando a apólice for
+  contratada. Ver a <strong>checklist da apólice E&amp;O</strong> em comentário interno de <code>termos.html §6</code>.</li>
+<li>A <strong>recomendação estratégica</strong>: assentar em <strong>consentimento (widget) + parcerias</strong> (é o motor).
+  O cold <code>geral@</code> fica como <strong>opção a preservar</strong> (campanha única e curada, semi-manual, ativação não
+  iminente) — pedimos que valide a LIA para <strong>preservar a opção</strong>, não para ativar já. Confirmam o caminho?</li>
+</ul>
+<hr />
+<h2 id="4-o-que-enviar-ao-advogado-o-dossier">4. O que enviar ao advogado (o dossier)</h2>
+<ol>
+<li><code>Parecer_jurista/Parecer_CheckAL_RGPD.md</code> (a nota de decisão recebida)</li>
+<li><code>BRIEFING-JURISTA-RGPD.md</code> (o contexto factual que preparámos)</li>
+<li><code>LEGAL-PARECER-DECISOES.md</code> (o que decidimos e encodámos no software)</li>
+<li>As 5 minutas da secção 2</li>
+<li><code>ANEXO3-alerta-exemplo.html</code> (o alerta real, para o ponto (iii))</li>
+</ol>
+<h2 id="5-o-que-so-a-cosmic-oasis-preenche">5. O que só a Cosmic Oasis preenche</h2>
+<ul>
+<li><strong>NIPC</strong> e <strong>morada</strong> da Cosmic Oasis, Lda. (placeholders <code>[NIPC]</code>/<code>[morada]</code> em todas as minutas).</li>
+</ul>
+<hr />
+<h2 id="resultado-que-queremos-desta-consulta">Resultado que queremos desta consulta</h2>
+<p>Uma frase executável: <em>"Podem ligar o canal X, desta forma, com estas salvaguardas; evitem Y"</em> —
+e as 5 minutas validadas (ou com as correções necessárias). Enquanto os pontos (i)–(iii) não
+fecharem, o cold permanece desligado; o consent-first arranca sem depender disto.</p></section>
+<section class="sec" id="s3"><h2 class="sub">Nota de decisão jurídica recebida</h2><h1 id="parecer-juridico">PARECER JURÍDICO</h1>
+<h2 id="aquisicao-de-clientes-e-protecao-de-dados-rgpd-projeto-checkal">Aquisição de clientes e proteção de dados (RGPD) — Projeto CheckAL</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Responsável</strong></td>
+<td>Cosmic Oasis, Lda. (operadora do serviço CheckAL)</td>
+</tr>
+<tr>
+<td><strong>Data</strong></td>
+<td>6 de julho de 2026</td>
+</tr>
+<tr>
+<td><strong>Objeto</strong></td>
+<td>Decisão <em>go / no-go</em> sobre a estratégia de aquisição de clientes proprietários de Alojamento Local (AL)</td>
+</tr>
+<tr>
+<td><strong>Natureza</strong></td>
+<td>Nota de decisão — informação jurídica (ver ressalva final)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sintese-executiva">📋 Síntese executiva</h2>
+<p>O motor de aquisição deve assentar em <strong>consentimento</strong> (o widget de verificação gratuita) e em <strong>parcerias</strong> — é o único desenho que <em>elimina</em> o risco jurídico, em vez de o administrar. O contacto a frio aos dados do RNAL é, na melhor das hipóteses, risco gerido, nunca eliminado.</p>
+<p>Por canal, em síntese: <strong>email a pessoas singulares / ENI está vedado</strong> (exige opt-in prévio); o canal frio mais limpo é o email a endereços genéricos de pessoa coletiva (opt-out); a carta postal a singulares é defensável com uma avaliação de interesse legítimo (LIA) documentada, mas não isenta de risco.</p>
+<p><strong>Pressuposto crítico por confirmar:</strong> que o email do titular seja efetivamente um campo de publicação obrigatória por lei. Se não for, a estratégia de contacto a frio fica muito frágil e o texto do Anexo 1 contém uma afirmação falsa. Resolver isto é a primeira tarefa, antes de qualquer decisão.</p>
+<hr />
+<h2 id="o-pressuposto-critico-a-confirmar">⚠️ O pressuposto crítico a confirmar</h2>
+<p>O briefing afirma que o RNAL publica o email do titular por imposição do <strong>art. 10.º do DL 128/2014</strong>. Este pressuposto deve ser verificado juridicamente antes de tudo o resto — há razões sérias para duvidar dele.</p>
+<p>Pela leitura dos campos que o registo torna obrigatórios e públicos, o que aparece é nome/firma, NIF, morada do titular, nome e morada do estabelecimento e, como contacto, tipicamente o <strong>nome, morada e telefone da pessoa a contactar em caso de emergência</strong>. O email do titular não é, de forma evidente, um campo de publicação obrigatória.</p>
+<p>As consequências, consoante o cenário:</p>
+<ul>
+<li><strong>Se o email não for campo público imposto por lei</strong> — a base "público por imposição do art. 10.º", que consta literalmente do Anexo 1, é falsa. Uma nota de informação (art. 14.º RGPD) que invoca uma publicidade legal inexistente é, ela própria, uma violação da lealdade e transparência (art. 5.º/1/a).</li>
+<li><strong>Se o email vier do campo de contacto de emergência</strong> — está-se a usar um dado recolhido para emergências de hóspedes com finalidade de marketing: violação grosseira da limitação das finalidades.</li>
+<li><strong>Se vier de uma API que devolve mais do que o portal público</strong> — é preciso saber com que fundamento legal esse dado é disponibilizado.</li>
+</ul>
+<blockquote>
+<p><strong>Ação n.º 1:</strong> confirmar, campo a campo, o que a fonte disponibiliza e sob que base legal. Sem isto, a análise de reutilização é especulativa.</p>
+</blockquote>
+<hr />
+<h2 id="enquadramento-juridico">⚖️ Enquadramento jurídico</h2>
+<ul>
+<li><strong>RGPD (Reg. UE 2016/679):</strong> arts. 5.º/1/a e b (lealdade, limitação das finalidades), 6.º/1/f e 6.º/4 (interesse legítimo e teste de compatibilidade), 13.º/14.º (informação), 21.º (oposição, absoluta em marketing direto), 28.º (subcontratantes), 30.º (registo de atividades), 44.º e ss. (transferências internacionais), 83.º (coimas).</li>
+<li><strong>Lei 58/2019 (execução do RGPD):</strong> moldura nacional; a CNPD desaplicou normas suas por contrariedade ao Direito da UE (Deliberação 2019/494), pelo que o regime sancionatório se rege sobretudo pelo art. 83.º do RGPD.</li>
+<li><strong>Lei 41/2004 (Privacidade nas Comunicações Eletrónicas):</strong> art. 13.º-A (comunicações não solicitadas — <em>opt-in</em> para pessoas singulares; <em>opt-out</em> para pessoas coletivas) e art. 13.º-B (listas de consentimento/oposição).</li>
+<li><strong>Diretriz CNPD 2022/1 (marketing direto):</strong> na reutilização de dados para finalidade diferente da recolha inicial, o princípio da lealdade e as expectativas do titular no momento em que forneceu os dados são preponderantes — diretamente aplicável ao caso.</li>
+<li><strong>DL 128/2014 (regime do AL), na redação do DL 76/2024:</strong> regime volátil (reverteu medidas do "Mais Habitação"); relevante como risco de negócio e para a base de publicidade da fonte.</li>
+<li><strong>Lei 10/2024 (Atos de Advogados e Solicitadores):</strong> define consulta jurídica como aconselhamento que consiste na interpretação e aplicação de normas mediante solicitação de terceiro — relevante para a atividade reservada.</li>
+<li><strong>DL 446/85 (cláusulas contratuais gerais), Lei 24/96 e DL 84/2021:</strong> controlo de cláusulas abusivas em contratos de consumo — relevante para o limite de responsabilidade.</li>
+</ul>
+<hr />
+<h2 id="tabela-de-decisao-por-canal">🎯 Tabela de decisão por canal</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Canal de contacto</th>
+<th>Pode?</th>
+<th>Condição / ressalva essencial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Widget de verificação (consentimento)</strong></td>
+<td>✅ <strong>SIM</strong></td>
+<td>Consentimento válido (art. 4.º/11 e 7.º RGPD): checkbox não pré-preenchida e não condicionada ao relatório. Falta garantir identidade do responsável + link à política adjacentes, e registar prova do consentimento (timestamp, versão do texto). Idealmente separar "alertas do serviço" de "ofertas comerciais".</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Email frio a coletiva — endereço genérico</strong> (<code>geral@</code>)</td>
+<td>✅ <strong>SIM, com condições</strong></td>
+<td>Se o endereço não identifica pessoa singular, não é dado pessoal e o RGPD não se aplica ao contacto. Fica só a Lei 41/2004: identificação do remetente + opt-out em cada mensagem + honrar oposição + lista de supressão. Canal frio mais limpo.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Email frio a coletiva — pessoa identificada</strong> (<code>nome.apelido@</code>)</td>
+<td>🟡 <strong>COM CONDIÇÕES (risco moderado)</strong></td>
+<td>É dado pessoal → RGPD aplica-se. Defensável como B2B opt-out se: LIA robusta + nota art. 14.º na 1.ª mensagem + opt-out imediato + serviço relevante à atividade. Fragilidade real: expectativa razoável. Zona cinzenta — não é "limpo".</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Carta postal a pessoa singular / ENI</strong></td>
+<td>🟡 <strong>COM CONDIÇÕES</strong></td>
+<td>Fora da Lei 41/2004; só RGPD. Interesse legítimo (art. 6.º/1/f) com LIA documentada + nota art. 14.º + direito de oposição (art. 21.º/2, absoluto). Canal mais defensável para chegar a singulares. Não é 100% seguro.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Email frio a pessoa singular / ENI</strong></td>
+<td>🔴 <strong>NÃO</strong></td>
+<td>Lei 41/2004, art. 13.º-A, exige opt-in prévio. ENI = pessoa singular. É o principal motor de queixas à CNPD. Não fazer.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Arrancar amanhã:</strong> ligar já o canal 1 (widget) e, resolvido o pressuposto da fonte, o canal 2 (<code>geral@</code>, opt-out) como acelerador. A carta postal (4) fica para depois de existir LIA escrita e Anexo 1 corrigido. Email a singulares/ENI (5): nunca.</p>
+<hr />
+<h2 id="recomendacao-estrategica">💡 Recomendação estratégica</h2>
+<p><strong>Motor primário: consentimento + parcerias.</strong> É o caminho que permite "dormir descansado". Contabilistas, gestores de AL e associações do setor trazem clientes já introduzidos ou consentidos; o widget capta quem procura o serviço. Complementar com conteúdo/SEO/anúncios que drenam tráfego para o widget — zero reutilização de dados pessoais de terceiros. Isto elimina o risco na raiz.</p>
+<p><strong>Contacto a frio: exceção bem-documentada, não a espinha dorsal.</strong> A CNPD é explícita: na reutilização, a expectativa razoável do titular é decisiva, e quem publica um contacto num registo regulatório não espera marketing de terceiros. Isso enfraquece o interesse legítimo — não o mata, mas obriga a limitar os canais frios aos de menor exposição (<code>geral@</code> em opt-out; carta postal a singulares com LIA).</p>
+<hr />
+<h2 id="matriz-de-riscos">⚠️ Matriz de riscos</h2>
+<ul>
+<li>🔴 <strong>CRÍTICO (imediato).</strong> Email frio a pessoas singulares/ENI sem opt-in — violação do art. 13.º-A da Lei 41/2004; é o principal motor de queixas à CNPD. Moldura de coima: art. 83.º RGPD (até 20 M€ / 4% do volume de negócios no escalão grave).</li>
+<li>🔴 <strong>CRÍTICO (imediato).</strong> Invocar no Anexo 1 uma base de publicidade legal inexistente, ou usar dados do campo de emergência para marketing — violação de lealdade e de limitação das finalidades.</li>
+<li>🟡 <strong>MODERADO (6–24 meses).</strong> Email a pessoa identificada em endereço de pessoa coletiva e carta postal a singulares assentes em interesse legítimo com LIA fraca: expostos a queixa e a ordem de cessação; desfecho típico para PME cooperante em 1.ª infração é advertência/coima modesta, mas o risco é real.</li>
+<li>🟡 <strong>MODERADO.</strong> Ausência de contratos de subcontratação (art. 28.º) e de mecanismo de transferência internacional (art. 44.º e ss.) para fornecedores de email/IA fora do EEE.</li>
+<li>🟡 <strong>MODERADO (contínuo).</strong> Produto a emitir recomendações individualizadas pode resvalar para consulta jurídica reservada (Lei 10/2024).</li>
+<li>🟢 <strong>ATENÇÃO.</strong> Registo de atividades (art. 30.º) em falta; possível DPIA por larga escala; conservação de 12 meses no limite superior; cláusula de limitação de responsabilidade provavelmente abusiva; volatilidade regulatória do próprio setor do AL.</li>
+</ul>
+<hr />
+<h2 id="respostas-as-questoes-especificas">🔎 Respostas às questões específicas</h2>
+<h3 id="limitacao-das-finalidades-e-novo-responsavel-q2">Limitação das finalidades e novo responsável (Q2)</h3>
+<p>Sendo um responsável novo que obtém dados de fonte pública, o eixo é ter <strong>base própria no art. 6.º + lealdade + expectativa razoável + art. 14.º</strong>. O teste de compatibilidade do art. 6.º/4 foi desenhado sobretudo para o responsável original; não vos isenta, mas a obrigação central é a base legal própria e a lealdade. Não se agarrem à ideia de que "não somos o Turismo de Portugal, logo o art. 5.º/1/b não nos apanha" — apanha, por via da lealdade.</p>
+<h3 id="nota-de-informacao-anexo-1-q7">Nota de informação — Anexo 1 (Q7)</h3>
+<p>Perto, mas <strong>incompleto</strong>. Faltam: categorias de dados tratados; identificação do EPD (se existir); categorias de destinatários/subcontratantes; transferências internacionais (se aplicável). E, crítico, a frase "público por imposição do art. 10.º" tem de ser verdadeira, senão sai. O timing (informar na 1.ª comunicação) está correto. Nenhuma isenção do art. 14.º/5 vos serve: como contactam diretamente, têm de informar nesse contacto.</p>
+<h3 id="consentimento-do-funil-anexo-2-q8">Consentimento do funil — Anexo 2 (Q8)</h3>
+<p>Válido no essencial (não pré-preenchido, não condicionado ao relatório). Melhorar: separar "alertas do serviço" de "ofertas comerciais" (granularidade — a CNPD rejeita consentimentos globais para finalidades distintas); garantir identidade do responsável + link à política junto ao checkbox; guardar prova (log, versão do texto, nota informativa).</p>
+<h3 id="prazo-de-conservacao-q9">Prazo de conservação (Q9)</h3>
+<p>12 meses é defensável mas está no limite superior; para quem nunca interage, 6 meses é mais seguro. A <strong>lista de supressão</strong> de quem fez opt-out conserva-se separadamente e por mais tempo — é o que permite provar que a oposição é honrada.</p>
+<h3 id="postura-da-cnpd-e-risco-real-q10">Postura da CNPD e risco real (Q10)</h3>
+<p>As queixas por marketing não solicitado aumentaram muito, sobretudo de entidades com quem os titulares não têm relação; a CNPD emitiu diretriz para enquadrar como decidirá as contraordenações ao art. 13.º-A conjugado com o RGPD. Moldura: art. 83.º RGPD. Avaliação realista: atuação sobretudo por queixa; para PME cooperante em 1.ª infração, ordem de cessação + coima modesta é o desfecho típico — mas o canal email-a-singulares é o de maior exposição.</p>
+<h3 id="atividade-reservada-q11">Atividade reservada (Q11)</h3>
+<p>Risco real. A Lei 10/2024 reserva a consulta jurídica a advogados e solicitadores. "Isto afeta o teu AL, recomendamos que faças X" é fronteiriço: informação genérica e monitorização de estado ficam do lado seguro; conclusões jurídicas individualizadas sobre a situação concreta do cliente, não. Manter linguagem condicional e genérica, incluir disclaimers ("informação, não aconselhamento jurídico"), não redigir peças nem representar. Avaliação definitiva depende do exemplo de alerta (Anexo 3), ainda não fornecido.</p>
+<h3 id="limite-de-responsabilidade-a-49-q12">Limite de responsabilidade a 49 € (Q12)</h3>
+<p>A vossa leitura está certa. Num contrato de consumo, um teto de responsabilidade a 49 € é muito provavelmente <strong>abusivo</strong> (DL 446/85, arts. 18.º e 19.º; Lei 24/96; DL 84/2021) — não pode excluir dolo, negligência grave ou danos pessoais. A cláusula pode subsistir para a fatia validamente limitável (negligência leve, dano patrimonial, proporcional), mas a proteção real é o <strong>seguro de RC profissional</strong> + descrição honesta do serviço como ferramenta informativa, não garantia de conformidade.</p>
+<hr />
+<h2 id="plano-de-acao-proximas-4-semanas">🗓️ Plano de ação — próximas 4 semanas</h2>
+<ol>
+<li><strong>Semana 1</strong> — resolver o pressuposto da fonte (o que é público e sob que base). Corrigir o Anexo 1. Montar o registo de atividades de tratamento (art. 30.º). Decidir sobre EPD.</li>
+<li><strong>Semana 2</strong> — finalizar o widget com Anexos 1 e 2 corrigidos, política de privacidade e mecanismo de prova de consentimento. Ligar o motor de consentimento.</li>
+<li><strong>Semana 3</strong> — contratos de subcontratação (art. 28.º) com todos os processadores; resolver transferências internacionais (email/IA fora do EEE); iniciar parcerias.</li>
+<li><strong>Semana 4</strong> — só então, se quiserem cold como acelerador: escrever a LIA e ligar apenas <code>geral@</code> (opt-out) e/ou carta postal a singulares com nota art. 14.º. Email a singulares fica desligado.</li>
+</ol>
+<hr />
+<h2 id="cenarios-a-antecipar">🔮 Cenários a antecipar</h2>
+<ul>
+<li><strong>Queixa à CNPD sobre email frio:</strong> provável se o canal 5 for ligado. Preparar já a lista de supressão e a prova de opt-out/opt-in para demonstrar diligência.</li>
+<li><strong>Pedido de acesso/oposição (arts. 15.º/21.º):</strong> a oposição a marketing é absoluta — o processo de cessação imediata tem de estar operacional desde o dia 1.</li>
+<li><strong>Alteração do regime do AL:</strong> o setor mudou pelo DL 76/2024 e pode voltar a mudar; a fonte de dados e a proposta de valor do produto dependem de um quadro instável.</li>
+<li><strong>Fornecedor de IA/email fora do EEE:</strong> nunca enviar dados pessoais de prospects para uma API de IA sem mecanismo de transferência resolvido.</li>
+</ul>
+<hr />
+<h2 id="questoes-a-clarificar">❓ Questões a clarificar</h2>
+<ol>
+<li>Confirmação documental de que campos o RNAL publica e com que base legal (pressuposto crítico).</li>
+<li>Exemplo real de alerta enviado ao cliente (Anexo 3), para fechar a análise da atividade reservada.</li>
+<li>Que fornecedores de email e de IA serão usados e onde estão sediados (para transferências internacionais e contratos art. 28.º).</li>
+</ol>
+<hr />
+<h2 id="ressalva">📚 Ressalva</h2>
+<p><em>Este documento constitui informação e análise jurídica de decisão, não um parecer formal assinado por advogado inscrito na Ordem. Três pontos exigem validação de advogado/EPD antes de produção: (i) a base legal da fonte do email; (ii) o mecanismo de transferência internacional para os fornecedores de email/IA; (iii) a fronteira da atividade reservada, à luz do Anexo 3. A afirmação de publicidade legal no Anexo 1 não deve ser publicada sem confirmação documental.</em></p></section>
+<section class="sec" id="s4"><h2 class="sub">Briefing factual (histórico)</h2><h1 id="briefing-para-consulta-juridica-protecao-de-dados-rgpd-e-prospecao">Briefing para consulta jurídica — Proteção de dados (RGPD) e prospeção</h1>
+<h3 id="projeto-checkal-cosmic-oasis-lda">Projeto CheckAL · Cosmic Oasis, Lda.</h3>
+<blockquote>
+<p><strong>Documento histórico — prevalecem as minutas corrigidas (conservação 6 meses, Anexo 1 corrigido).</strong></p>
+<p><strong>Para:</strong> [Jurista/Advogado de proteção de dados]
+<strong>De:</strong> Diogo Mendes, Cosmic Oasis, Lda., NIPC [—]
+<strong>Objetivo:</strong> decisão <strong>go / no-go</strong> sobre uma estratégia de aquisição de clientes, antes de a executar. Não procuramos um parecer académico extenso — procuramos <strong>respostas objetivas, por canal, que nos digam o que podemos e não podemos fazer, e sob que condições.</strong>
+<strong>O que mais valorizamos:</strong> não queremos só que nos diga o que está mal — queremos que nos <strong>aponte a melhor alternativa e a decisão mais segura</strong> para atingirmos o objetivo (angariar clientes proprietários de AL) <strong>sem problemas jurídicos</strong>. Preferimos um "não faça X, faça Y assim" a um "X é arriscado". Se houver um caminho 100% seguro, mesmo que mais lento, é esse que queremos conhecer e adotar.
+<strong>Formato de resposta ideal:</strong> a <strong>recomendação</strong> da Secção D-bis + a <strong>tabela de decisão</strong> da Secção D. Se preencher esses dois, resolve o essencial.</p>
+</blockquote>
+<hr />
+<h2 id="a-contexto-factual-o-minimo-para-responder-com-precisao">A. Contexto factual (o mínimo para responder com precisão)</h2>
+<ol>
+<li>
+<p><strong>O que é o CheckAL.</strong> Um serviço de subscrição (49€/ano) que monitoriza, para cada proprietário de Alojamento Local (AL), o estado do seu registo, a validade do seguro obrigatório e os regulamentos municipais aplicáveis, e envia alertas quando algo o afeta. É um serviço privado, sem qualquer vínculo ao Estado.</p>
+</li>
+<li>
+<p><strong>A fonte dos dados.</strong> O Registo Nacional de Alojamento Local (RNAL), do Turismo de Portugal, é público e disponibiliza — por <strong>imposição do art. 10.º do DL n.º 128/2014</strong> — a identificação dos titulares de exploração e os seus contactos (nome, NIF, telefone e <strong>email</strong>). Existe uma <strong>API pública</strong> que devolve estes dados por concelho. A base tem &gt;120.000 registos ativos; cada registo indica se o titular é <strong>"pessoa coletiva"</strong> ou <strong>"pessoa singular (empresário em nome individual)"</strong>.</p>
+</li>
+<li>
+<p><strong>O uso que queremos dar-lhe.</strong> Usar esses contactos para <strong>prospeção comercial</strong> do CheckAL — ou seja, contactar os titulares (por email e/ou carta) a apresentar o serviço. É este o ponto que queremos validar antes de agir.</p>
+</li>
+<li>
+<p><strong>Distinção que nos parece relevante.</strong> Muitos registos de "pessoa coletiva" têm um <strong>email genérico</strong> (ex.: <code>geral@empresa.pt</code>, <code>info@...</code>, <code>reservas@...</code>), que não identifica nenhuma pessoa singular. Outros têm o email de uma pessoa identificada. Todos os "pessoa singular / ENI" são, por definição, dados de uma pessoa física.</p>
+</li>
+<li>
+<p><strong>Funil alternativo que já temos.</strong> Uma landing page com uma <strong>verificação gratuita</strong>: o proprietário insere o seu nº de registo, recebe um mini-relatório e <strong>dá consentimento</strong> para receber comunicações. Aqui é o próprio que nos procura e consente.</p>
+</li>
+</ol>
+<hr />
+<h2 id="b-a-nossa-leitura-para-confirmar-corrigir-ou-completar">B. A nossa leitura (para confirmar, corrigir ou completar)</h2>
+<p>Fizemos o trabalho de casa. Diga-nos onde estamos certos e onde estamos errados:</p>
+<ol>
+<li>
+<p><strong>"Público" não é "reutilizável para marketing".</strong> Sabemos que o facto de o dado ser público por lei (transparência do registo) <strong>não</strong> nos dá, por si só, base legal para o reutilizar para prospeção — é um novo tratamento, com nova finalidade, que exige fundamento próprio no art. 6.º do RGPD e respeito pelo princípio da limitação das finalidades (art. 5.º/1/b).</p>
+</li>
+<li>
+<p><strong>Base legal que pretendíamos invocar:</strong> interesse legítimo (art. 6.º/1/f), com uma avaliação de interesse legítimo (LIA) documentada. Temos dúvidas se resiste, dado o peso da <strong>expectativa razoável</strong> do titular (quem publica o email num registo regulatório não espera marketing de terceiros).</p>
+</li>
+<li>
+<p><strong>ePrivacy (Lei 41/2004, art. 13.º-A):</strong> a nossa leitura é que comunicações eletrónicas não solicitadas exigem <strong>opt-in prévio para pessoas singulares</strong> (incl. ENI) e admitem <strong>opt-out para pessoas coletivas</strong>. A carta postal fica fora desta lei (mas não do RGPD).</p>
+</li>
+<li>
+<p><strong>Divisão de canais que desenhámos</strong> (a validar):
+   - Coletiva com email genérico → email frio (opt-out);
+   - Coletiva com email de pessoa identificada → dúvida;
+   - Singular / ENI → sem email frio; eventualmente só carta postal.</p>
+</li>
+</ol>
+<hr />
+<h2 id="c-as-questoes-concretas-e-aqui-que-precisamos-de-si">C. As questões concretas (é aqui que precisamos de si)</h2>
+<p><strong>Bloco 1 — a questão que decide tudo:</strong></p>
+<ol>
+<li>
+<p><strong>Podemos, ou não, reutilizar os contactos do RNAL para prospeção comercial do CheckAL?</strong> Se a resposta for "depende", <strong>de que depende</strong> — em termos operacionais que possamos implementar?</p>
+</li>
+<li>
+<p>O <strong>princípio da limitação das finalidades (art. 5.º/1/b)</strong> e o teste de compatibilidade (art. 6.º/4) aplicam-se a nós, sendo nós um <strong>responsável de tratamento diferente</strong> daquele que recolheu/publicou os dados (o Turismo de Portugal)? Ou, para um novo responsável que obtém dados de fonte pública, a questão resume-se a ter base legal própria (art. 6.º) + lealdade?</p>
+</li>
+</ol>
+<p><strong>Bloco 2 — por canal:</strong></p>
+<ol start="3">
+<li>
+<p><strong>Email genérico de pessoa coletiva</strong> (<code>geral@empresa.pt</code>): é sequer <strong>dado pessoal</strong> na aceção do RGPD? Se não for, confirmamos que o RGPD não se aplica a esse contacto e que o único enquadramento é a Lei 41/2004 (opt-out, pessoa coletiva)?</p>
+</li>
+<li>
+<p><strong>Email de pessoa identificada em registo de pessoa coletiva</strong> (<code>nome.apelido@empresa.pt</code>): podemos fazer email frio B2B com opt-out, ou o facto de identificar uma pessoa singular puxa-o para o regime mais restritivo?</p>
+</li>
+<li>
+<p><strong>Carta postal a pessoa singular / ENI:</strong> estando fora da Lei 41/2004, o interesse legítimo (art. 6.º/1/f) é suficiente para prospeção postal, <strong>apesar</strong> da questão da reutilização/finalidade? Ou o problema do Bloco 1 contamina também a carta?</p>
+</li>
+<li>
+<p><strong>ENI (empresário em nome individual):</strong> confirmamos que, para a Lei 41/2004, é tratado como <strong>pessoa singular</strong> (opt-in para email), independentemente de ter atividade aberta e NIF?</p>
+</li>
+</ol>
+<p><strong>Bloco 3 — conformidade e risco:</strong></p>
+<ol start="7">
+<li>
+<p><strong>Dever de informação (art. 14.º)</strong> — dados não recolhidos junto do titular: o texto que redigimos (Anexo 1) cumpre? Timing correto (na 1.ª comunicação)? Há alguma isenção do art. 14.º/5 aplicável?</p>
+</li>
+<li>
+<p><strong>Consentimento do funil de verificação gratuita:</strong> o texto da checkbox (Anexo 2) é válido como consentimento livre, específico e informado para a sequência de emails comerciais que se segue? Alguma correção?</p>
+</li>
+<li>
+<p><strong>Prazo de conservação</strong> dos dados de prospects que não interagem: propomos <strong>12 meses</strong>. Razoável?</p>
+</li>
+<li>
+<p><strong>Postura da CNPD / risco real:</strong> há deliberações recentes da CNPD (ou casos conhecidos na UE) sobre <strong>reutilização de registos públicos para marketing</strong> que devamos conhecer? Numa avaliação realista, qual é a <strong>probabilidade de atuação</strong> perante uma queixa e a <strong>ordem de grandeza da coima</strong>?</p>
+</li>
+</ol>
+<p><strong>Bloco 4 — secundário (pode ser 2.ª consulta, não é bloqueante):</strong></p>
+<ol start="11">
+<li>
+<p><strong>Risco de atividade reservada:</strong> o nosso produto interpreta regulamentos para o caso concreto do cliente ("isto afeta o teu AL; recomendamos que faças X"). Há risco de isto ser considerado <strong>consulta jurídica reservada</strong> a advogados/solicitadores (Estatuto da Ordem dos Advogados)? Que linguagem/limites nos mantêm do lado da <em>informação</em> e não do <em>aconselhamento</em>?</p>
+</li>
+<li>
+<p><strong>Termos &amp; Condições / responsabilidade:</strong> confirmamos que uma cláusula que limita a nossa responsabilidade ao valor pago (~49€) pode ser tida como <strong>abusiva</strong> num contrato de consumo (DL 446/85), sendo o seguro de RC profissional a proteção real?</p>
+</li>
+</ol>
+<hr />
+<h2 id="d-tabela-de-decisao-o-formato-de-resposta-que-precisamos">D. Tabela de decisão (o formato de resposta que precisamos)</h2>
+<p>Se preencher isto, temos o go/no-go que nos falta. Para cada canal: <strong>pode / não pode / pode com condições</strong> + a condição essencial.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Canal de contacto</th>
+<th>Pode?</th>
+<th>Condição / ressalva essencial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Widget de verificação gratuita</strong> (o titular pede e consente)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Email frio a coletiva, email genérico</strong> (<code>geral@</code>)</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Email frio a coletiva, email de pessoa identificada</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Carta postal a pessoa singular / ENI</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Email frio a pessoa singular / ENI</strong> (assumimos que <strong>não</strong>)</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Pergunta-resumo:</strong> se tivéssemos de arrancar <strong>amanhã</strong> apenas com os canais claramente seguros, quais ligava sem hesitar, e que texto/salvaguarda exigia em cada um?</p>
+<hr />
+<h2 id="d-bis-a-recomendacao-a-pergunta-mais-importante-do-briefing">D-bis. A recomendação (a pergunta mais importante do briefing)</h2>
+<p>Acima de todas as respostas por canal, é isto que mais precisamos de si:</p>
+<ol>
+<li>
+<p><strong>Qual é a estratégia de aquisição mais segura que ainda nos permite atingir o objetivo?</strong> Assumindo que queremos angariar proprietários de AL de forma sustentável, <strong>desenhe-nos o caminho que elimina (ou reduz ao mínimo defensável) o risco jurídico</strong> — mesmo que seja mais lento ou mais caro. Preferimos o caminho certo ao caminho rápido.</p>
+</li>
+<li>
+<p><strong>Se o contacto a frio ao RNAL for problemático, qual é a alternativa que recomenda?</strong> Ex.: assentar tudo em consentimento (o nosso widget de verificação gratuita) e em parcerias com contabilistas/gestores que trazem clientes já consentidos — é este o desenho que nos aconselha? Vê outro melhor?</p>
+</li>
+<li>
+<p><strong>O que nos falta ver?</strong> Aponte qualquer risco, obrigação ou boa prática que <strong>não</strong> esteja neste briefing e que um profissional experiente sinalizaria (registo de tratamentos, DPO, encarregado de proteção de dados, transferências, subcontratantes de IA/email, etc.).</p>
+</li>
+<li>
+<p><strong>Dê-nos a decisão, não só as opções.</strong> Se estivesse no nosso lugar e quisesse dormir descansado, <strong>que faria exatamente</strong> nas próximas 4 semanas, por que ordem?</p>
+</li>
+</ol>
+<p>O resultado que procuramos desta consulta é uma frase que possamos executar: <em>"Podem fazer isto, desta forma, com estas salvaguardas — e devem evitar aquilo."</em></p>
+<hr />
+<h2 id="e-anexos-para-validacao">E. Anexos para validação</h2>
+<p><strong>Anexo 1 — Nota de informação RGPD (rodapé de carta/email que propomos):</strong></p>
+<blockquote>
+<p><em>Tratamento de dados: Este contacto é-lhe dirigido pela Cosmic Oasis, Lda. (NIPC [—], [morada]), responsável pelo tratamento, que opera o serviço CheckAL. Obtivemos o seu nome e contacto no Registo Nacional de Alojamento Local (RNAL), público por imposição do art. 10.º do DL n.º 128/2014, e tratamo-los com fundamento em interesse legítimo, exclusivamente para lhe apresentar um serviço relevante para a sua atividade de Alojamento Local. Pode aceder, retificar, apagar e opor-se a novos contactos, gratuitamente e a todo o tempo, em checkal.pt/remover ou privacidade@checkal.pt. Se não interagir, eliminamos os seus dados de prospeção em 12 meses. Política completa: checkal.pt/privacidade. Pode reclamar à CNPD (cnpd.pt).</em></p>
+</blockquote>
+<p><strong>Anexo 2 — Texto da checkbox de consentimento (funil de verificação gratuita):</strong></p>
+<blockquote>
+<p><em>"Aceito receber do CheckAL, por email, alertas sobre o meu Alojamento Local e o meu concelho, bem como informação sobre os serviços e ofertas do CheckAL. Posso retirar este consentimento a qualquer momento, em 1 clique, em qualquer email."</em> (não pré-preenchida; não obrigatória para receber o relatório)</p>
+</blockquote>
+<p><strong>Anexo 3 — Exemplo de alerta enviado ao cliente</strong> (para a questão 11): <em>[anexar 1 email de alerta real do produto, com a estrutura "Afeta o teu AL? Sim/Não · porquê · o que fazer · fonte"]</em></p>
+<hr />
+<p><em>Notas práticas: (a) o que nos trava neste momento é o </em><em>Bloco 1 + a Tabela D</em><em> — se só houver tempo para isso, chega para decidirmos; (b) se concluir que a estratégia de contacto a frio não é viável, já temos um plano alternativo assente 100% em consentimento (o widget) e parcerias — nesse caso, a pergunta passa a ser apenas "o funil de consentimento (Anexos 1 e 2) está impecável?"; (c) agradecemos indicação de honorários para (i) esta consulta de decisão e (ii) eventual redação da política de privacidade + T&amp;C.</em></p></section>
+<section class="sec" id="s5"><h2 class="sub">Exemplo real de alerta — o «Anexo 3» referido na nota de decisão</h2>
+<!-- ANEXO 3 — exemplo de alerta CheckAL renderizado (para o briefing do jurista).
+     Assunto: CheckAL: novo documento regulatório que pode afetar o teu AL em Braga -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">CheckAL: novo documento regulatório que pode afetar o teu AL em Braga</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0;padding:0;background:#F6F2E9;">
+  <tr>
+    <td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:600px;background:#ffffff;border-radius:14px;font-family:-apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, Arial, sans-serif;color:#0F172A;">
+
+        <tr>
+          <td style="padding:26px 30px 10px 30px;">
+            <span style="font-family:-apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, Arial, sans-serif;font-size:23px;font-weight:800;letter-spacing:-0.02em;color:#0F172A;">CheckAL</span><span aria-hidden="true" style="font-family:-apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, Arial, sans-serif;font-size:23px;font-weight:800;color:#12B76A;">&nbsp;✓</span>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:6px 30px 10px 30px;font-family:-apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, Arial, sans-serif;font-size:16px;line-height:1.62;color:#0F172A;">
+<h1 style="margin:0 0 4px 0;font-family:-apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, Arial, sans-serif;font-size:21px;font-weight:800;letter-spacing:-0.01em;color:#0F172A;">
+  O teu AL «Casa da Graça» — 1 ponto sem check
+</h1>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:12px 0;">
+  <tr>
+    <td style="padding:14px 16px;border-radius:10px;background:#F8FAFC;border-left:4px solid #F59E0B;font-family:-apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, Arial, sans-serif;">
+      <strong style="color:#F59E0B;font-size:16px;">🟡 Novo regulamento municipal de Alojamento Local — Braga</strong>
+    </td>
+  </tr>
+</table>
+<p style="margin:0 0 14px 0;">(a) A Câmara Municipal de Braga publicou o novo Regulamento Municipal de Alojamento Local, que cria uma área de contenção onde ficam suspensos novos registos.</p>
+<p style="margin:0 0 14px 0;">(b) Afeta o teu AL? Possivelmente. O teu alojamento «Casa da Graça», na freguesia de São Vítor (Braga), pode ficar abrangido pela área de contenção — convém confirmares se a tua morada está dentro do perímetro definido no regulamento.</p>
+<p style="margin:0 0 14px 0;">(c) Próximo passo: consulta o regulamento oficial e confirma a tua situação. Segundo o documento, os titulares abrangidos dispõem de um prazo de 30 dias, contado de 15/06/2026, para efetuar a comunicação ali prevista, e a exploração irregular fica sujeita à coima indicada no regulamento. Em caso de dúvida sobre a tua situação concreta, confirma com um advogado, solicitador ou o teu contabilista. Documento oficial: https://files.diariodarepublica.pt/gratuitos/2s/2026/06/2S118A0000S00.pdf</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:20px 0 8px 0;">
+  <tr>
+    <td style="border-radius:10px;background:#2563EB;">
+      <a href="https://files.diariodarepublica.pt/gratuitos/2s/2026/06/2S118A0000S00.pdf" style="display:inline-block;padding:13px 22px;font-family:-apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, Arial, sans-serif;font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;">Ler o regulamento no Diário da República</a>
+    </td>
+  </tr>
+</table>
+<p style="margin:18px 0 0 0;padding-top:12px;border-top:1px solid #E2E8F0;font-size:12px;line-height:1.55;color:#475569;">
+  Informação de monitorização a partir de dados públicos do RNAL; não constitui aconselhamento jurídico.
+</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:20px 30px 28px 30px;border-top:1px solid #E2E8F0;font-family:-apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, Roboto, Arial, sans-serif;font-size:12px;line-height:1.6;color:#475569;">
+            <p style="margin:0 0 8px 0;">CheckAL — serviço privado e independente de monitorização de Alojamento Local. Não somos, nem representamos, o Turismo de Portugal, o RNAL ou qualquer câmara municipal.</p>
+            <p style="margin:0 0 8px 0;">Cosmic Oasis, Lda. · [morada] · Portugal</p>
+            <p style="margin:0 0 8px 0;">
+              <a href="https://checkal.pt/privacidade" style="color:#475569;text-decoration:underline;">Privacidade</a>
+              &nbsp;·&nbsp;
+              <a href="https://checkal.pt/termos" style="color:#475569;text-decoration:underline;">Termos</a>
+              &nbsp;·&nbsp;
+              <a href="https://checkal.pt/remover?e=titular%40exemplo.pt&amp;t=" style="color:#475569;text-decoration:underline;">Remover num clique</a>
+            </p>
+            <p style="margin:0;">Para deixares de receber estes emails, um clique: https://checkal.pt/remover?e=titular%40exemplo.pt&amp;t=</p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</section>
+<section class="sec" id="s6"><h2 class="sub">Decisões implementadas no software</h2><h1 id="decisoes-pos-parecer-rgpd-checkal-ancora-de-execucao">Decisões pós-parecer RGPD — CheckAL (âncora de execução)</h1>
+<blockquote>
+<p>Traduz o <code>Parecer_jurista/Parecer_CheckAL_RGPD.md</code> (6/7/2026) em <strong>decisões executáveis</strong>.
+Regra de ouro: <strong>o motor é consentimento + parcerias; o cold é exceção documentada, e fica
+DESLIGADO até os pré-requisitos abaixo estarem cumpridos.</strong> Nada neste projeto envia a frio.</p>
+</blockquote>
+<h2 id="1-decisao-por-canal-do-parecer-tabela-d">1. Decisão por canal (do parecer, Tabela D)</h2>
+<table>
+<thead>
+<tr>
+<th>Canal</th>
+<th>Decisão</th>
+<th>Estado no código</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Widget consentimento</strong></td>
+<td>✅ SIM</td>
+<td>Ligado (WF1). Requisitos abaixo (§3).</td>
+</tr>
+<tr>
+<td><strong>Email frio coletiva <code>geral@</code> (opt-out)</strong></td>
+<td>✅ SIM, <strong>com condições</strong></td>
+<td><strong>DESLIGADO</strong> (<code>CHECKAL_PARECER_RGPD_OK=False</code>) até §4.</td>
+</tr>
+<tr>
+<td>Email frio coletiva pessoa identificada (<code>nome@</code>)</td>
+<td>🟡 risco moderado</td>
+<td><strong>Excluído por desenho</strong> (o núcleo só aceita genérico). Não ligar.</td>
+</tr>
+<tr>
+<td>Carta postal a singular/ENI</td>
+<td>🔴 <strong>provavelmente inviável na prática</strong></td>
+<td>O art. 10.º/5 publica o <strong>email</strong>, <strong>não a morada</strong> do titular; a morada pública no RNAL é a do <strong>estabelecimento</strong> (raramente a residência). Sem morada pessoal de fonte lícita, a carta a singular <strong>não tem endereço</strong> — marcar como <strong>provavelmente inviável operacionalmente</strong>, não apenas "para depois". (Se alguma vez se retomar: exige LIA escrita + Anexo 1 corrigido + fonte lícita da morada.)</td>
+</tr>
+<tr>
+<td><strong>Email frio a singular/ENI</strong></td>
+<td>🔴 <strong>NÃO, nunca</strong></td>
+<td><strong>Bloqueado por desenho</strong> (filtro NIF 5/6; opt-in exigido pela Lei 41/2004 art. 13.º-A).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-base-legal-da-fonte-do-email-desacoplada-do-canal-geral">2. Base legal da fonte do email — DESACOPLADA do canal <code>geral@</code></h2>
+<blockquote>
+<p><strong>CORREÇÃO (2.ª opinião, 9/7):</strong> o email frio a coletiva <strong>NÃO depende da fonte do
+endereço</strong>. A sua base é a <strong>Lei 41/2004, art. 13.º-A (opt-out coletivas) + art. 13.º-B
+(listas/DGC)</strong> + <strong>cruzamento DGC</strong> + <strong>identificação do remetente e <em>opt-out</em> em cada
+mensagem</strong>. A origem do endereço (portal, <code>list_RNAL</code>, art. 10.º) <strong>não</strong> é o que legitima
+o envio — deixa por isso de ser o "bloqueador crítico" do cold a <code>geral@</code>.</p>
+</blockquote>
+<p><strong>O ponto (i) — art. 10.º n.º 5 — está agora CONFIRMADO</strong> pelo consultor (7.ª versão do
+texto consolidado): o RNAL <strong>publica o "endereço eletrónico do titular da exploração"</strong> e a
+<strong>validade do seguro obrigatório</strong> (o contacto de emergência do art. 6.º é requisito de
+registo mas <strong>não</strong> consta como público). Só que isto <strong>serve outra coisa</strong>, não o cold a
+coletiva:
+- a <strong>redação da nota do art. 14.º</strong> (podemos indicar a origem dos dados);
+- os <strong>tratamentos que tocam pessoas singulares</strong> — onde o email/RNAL <strong>é dado pessoal</strong>.</p>
+<p><strong>Ao advogado pede-se CONTRA-verificação, não confirmação de raiz:</strong> que <strong>nada</strong> no
+consolidado pós-DL 76/2024 <strong>contradiga</strong> a redação do art. 10.º n.º 5, e que o <code>list_RNAL</code>
+não devolva mais do que o legalmente público.</p>
+<p><strong>Princípio que se mantém — publicação obrigatória ≠ licença de reutilização.</strong> Para
+<strong>pessoas singulares</strong>, a licitude de reutilizar o email/RNAL para prospeção continua a
+depender do <strong>teste de compatibilidade de finalidades</strong> (art. 6.º/4) — que <strong>não é
+favorável</strong> e mantém o <strong>cold a singulares BLOQUEADO por desenho</strong>. A publicidade legal não
+converte, por si, o dado num recurso livre para marketing.</p>
+<p><strong>Termos de licença/reutilização do webservice (autónomo do RGPD):</strong> verificar as
+<strong>condições de licença/reutilização do <code>list_RNAL</code></strong> — regime de <strong>dados abertos (Lei
+68/2021)</strong> + condições específicas do <strong>Turismo de Portugal</strong>. Uma violação destes termos é
+um <strong>problema contratual/administrativo autónomo</strong> do RGPD (pode existir mesmo com o RGPD
+cumprido, e vice-versa). Confirmar antes de usar o webservice em produção.</p>
+<p>→ <strong>Ação do Diogo/advogado:</strong> (a) CONTRA-verificar o art. 10.º n.º 5; (b) confirmar termos de
+licença do <code>list_RNAL</code>; (c) o cold a coletiva assenta na Lei 41/2004 art. 13.º-A (opt-out
+coletivas) + art. 13.º-B (listas/DGC) + §4, não na fonte do email.</p>
+<h2 id="3-requisitos-do-widget-de-consentimento-implementados-a-implementar">3. Requisitos do widget de consentimento (implementados / a implementar)</h2>
+<ul>
+<li>✅ Checkbox <strong>não pré-marcada</strong> e <strong>não condicionada</strong> ao relatório.</li>
+<li>✅ <strong>Prova de consentimento</strong>: timestamp + versão do texto + IP (model <code>Lead</code>).</li>
+<li>✅ Identidade do responsável + link à política <strong>junto</strong> ao checkbox.</li>
+<li>⚠️ <strong>GRANULARIDADE (novo, exigido pela CNPD):</strong> separar <strong>dois</strong> consentimentos — "alertas do serviço"
+  vs "ofertas/novidades comerciais". A CNPD rejeita consentimento global para finalidades distintas.
+  → <strong>Patch ao WF1:</strong> dois checkboxes independentes; o <code>Lead</code> regista cada um em separado.</li>
+</ul>
+<h2 id="4-pre-requisitos-para-alguma-vez-ligar-checkal_parecer_rgpd_oktrue-cold-geral">4. Pré-requisitos para alguma vez ligar <code>CHECKAL_PARECER_RGPD_OK=True</code> (cold <code>geral@</code>)</h2>
+<p>Todos, cumulativos:
+1. <strong>Regime de comunicações verificado</strong> — Lei 41/2004 <strong>art. 13.º-A (opt-out coletivas) + art. 13.º-B (listas/DGC)</strong> + cruzamento <strong>DGC</strong> + identificação/opt-out por mensagem. (A fonte do email <strong>deixou de ser</strong> o bloqueador — §2; falta só a CONTRA-verificação do art. 10.º n.º 5 e dos termos de licença do <code>list_RNAL</code>.)
+2. <strong>LIA escrita</strong> (avaliação de interesse legítimo) arquivada.
+3. <strong>Anexo 1 corrigido</strong> (§5) — sem afirmações falsas.
+4. <strong>Contratos art. 28.º</strong> com subcontratantes + <strong>mecanismo de transferência internacional</strong> resolvido (§6).
+5. <strong>Lista de supressão / oposição</strong> operacional e cruzamento <strong>DGC</strong> ativo (já no código, FDS6).
+6. Arranque <strong>semi-manual</strong> (o dono revê e dispara; nunca automático de início).
+Mesmo cumpridos, o email a <strong>pessoa identificada</strong> e a <strong>singular</strong> ficam sempre fora.</p>
+<h2 id="5-anexo-1-nota-de-informacao-correcao-obrigatoria">5. Anexo 1 (nota de informação) — CORREÇÃO obrigatória</h2>
+<p>A frase "público por imposição do art. 10.º" <strong>só pode ser usada se o §2 for confirmado</strong>. Até lá, a
+nota não afirma a base de publicidade. Faltam (a acrescentar): categorias de dados tratados;
+identificação do EPD (se existir); categorias de destinatários/subcontratantes; transferências
+internacionais (se aplicável). <strong>Conservação: 12 → 6 meses</strong> para quem nunca interage (mais seguro); a
+<strong>lista de supressão</strong> conserva-se à parte e por mais tempo (prova de que a oposição é honrada).</p>
+<h2 id="6-subcontratantes-art-28o-e-transferencias-art-44o-e-ss">6. Subcontratantes (art. 28.º) e transferências (art. 44.º e ss.)</h2>
+<p>Identificar e contratualizar cada processador; resolver transferência para os fora do EEE.</p>
+<blockquote>
+<p><strong>CORREÇÃO (2.ª opinião, 9/7) — cai a tese "a IA nunca recebe dados pessoais".</strong> É
+<strong>FALSA</strong> para clientes <strong>ENI / pessoa singular</strong>: os dados do estabelecimento que a IA
+processa (<strong>n.º RNAL, morada, validade do seguro</strong>) <strong>são dados pessoais</strong> — o <strong>n.º RNAL
+é um identificador único</strong> do titular, e tirar o nome é <strong>pseudonimização, não
+anonimização</strong> (o titular continua reidentificável). Logo, <strong>a Anthropic é HOJE
+subcontratante de DADOS PESSOAIS</strong> no serviço a clientes singulares/ENI —
+<strong>independentemente da estratégia de aquisição</strong> (cold ou consent-first). <strong>Conclusão
+executável:</strong> <strong>DPA (art. 28.º) + mecanismo de transferência com a Anthropic fecham-se
+JÁ</strong>, não "quando ligarmos o cold". A antiga regra de código (a IA vê dados do AL, não de
+prospects) continua a valer para <em>prospects</em>, mas <strong>não</strong> isenta de RGPD o tratamento dos
+dados dos <em>clientes</em> singulares.</p>
+</blockquote>
+<p><strong>Duas arquiteturas possíveis para a IA (decidir):</strong>
+- <strong>(A) Claude via Amazon Bedrock, região Frankfurt (<code>eu-central-1</code>)</strong> — mantém a
+  <strong>inferência na UE</strong> e <strong>elimina a questão do Cap. V</strong> (transferência internacional) para
+  a camada de IA. <strong>Preferida</strong> se quisermos fechar o risco na origem.
+- <strong>(B) API direta da Anthropic (EUA)</strong> — exige <strong>SCCs (Cláusulas-Tipo) + TIA (<em>Transfer
+  Impact Assessment</em>)</strong> e, se se invocar o <strong>DPF (Data Privacy Framework)</strong>, <strong>verificação
+  DATADA</strong> de que a entidade concreta consta da lista DPF ativa (a inscrição pode ser
+  suspensa; a verificação tem de ter data e ser refeita periodicamente).</p>
+<p><strong>Notas transversais (aplicam-se à tabela):</strong>
+- <strong>As SCCs de 2021 já incorporam o art. 28.º:</strong> para os prestadores US com <strong>DPA adequado</strong>,
+  <strong>não é preciso um contrato de subcontratação separado</strong> — o módulo aplicável das
+  Cláusulas-Tipo já contém as cláusulas do art. 28.º/3. Basta assinar o DPA/SCC do fornecedor
+  e verificar que cobre o módulo certo (responsável→subcontratante).
+- <strong>Stripe e IfThenPay têm DUPLA QUALIFICAÇÃO:</strong> <strong>subcontratantes</strong> no que tratam por nossa
+  conta <strong>E responsáveis autónomos</strong> nas suas obrigações próprias de <strong>AML/KYC</strong> (prevenção
+  de branqueamento, identificação). Nessa parte <strong>não</strong> agem sob as nossas instruções —
+  refletir na política e no registo art. 30.º; não os tratar como meros processadores.
+- <strong>Hetzner:</strong> <strong>fixar contratualmente a região UE</strong> <strong>e verificar a cadeia de
+  sub-subcontratantes</strong> (art. 28.º/2 e /4) — escolher a região não basta se um
+  sub-subcontratante estiver fora do EEE.</p>
+<table>
+<thead>
+<tr>
+<th>Fornecedor</th>
+<th>Função</th>
+<th>Sede</th>
+<th>Transferência?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Anthropic</strong> (Haiku/Sonnet)</td>
+<td>IA dos alertas/suporte</td>
+<td>EUA — ou <strong>UE via Bedrock Frankfurt</strong></td>
+<td>⚠️ <strong>Trata dados pessoais de clientes singulares/ENI HOJE</strong> → DPA + mecanismo <strong>já</strong>. Opção (A) Bedrock <code>eu-central-1</code> remove o Cap. V; opção (B) API EUA = SCCs + TIA (+ DPF só com verificação datada). Para <em>prospects</em>, manter: só dados do AL, nunca dados de prospects</td>
+</tr>
+<tr>
+<td><strong>Resend</strong></td>
+<td>email transacional</td>
+<td>EUA</td>
+<td>⚠️ mecanismo (SCCs; DPF só com verificação datada). SCC 2021 já cobre o art. 28.º</td>
+</tr>
+<tr>
+<td><strong>Stripe</strong></td>
+<td>pagamentos</td>
+<td>EUA/IE</td>
+<td>⚠️ mecanismo (SCCs/DPF) + <strong>dupla qualificação</strong> (subcontratante + responsável autónomo AML/KYC)</td>
+</tr>
+<tr>
+<td><strong>IfThenPay</strong></td>
+<td>pagamentos</td>
+<td>PT</td>
+<td>✅ EEE + <strong>dupla qualificação</strong> (subcontratante + responsável autónomo AML/KYC)</td>
+</tr>
+<tr>
+<td><strong>TOConline</strong> (Cloudware)</td>
+<td>faturação</td>
+<td>PT</td>
+<td>✅ EEE</td>
+</tr>
+<tr>
+<td><strong>Hetzner</strong></td>
+<td>alojamento</td>
+<td>DE</td>
+<td>✅ EEE — <strong>fixar região UE + verificar sub-subcontratantes</strong></td>
+</tr>
+<tr>
+<td>→ <strong>Regra de código (mantida para prospects):</strong> no fluxo de <em>prospeção</em>, a camada IA (FDS4)</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>recebe <strong>excerto do documento + dados do AL</strong>, não dados de prospects; manter assim. <strong>Mas</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>para <em>clientes</em> singulares/ENI os dados do AL enviados à IA <strong>são pessoais</strong> — daí o DPA +</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>mecanismo de transferência serem requisito <strong>já</strong>. Registar art. 30.º — ver</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>REGISTO-ATIVIDADES-ART30.md</code>.</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="7-atividade-reservada-lei-102024-guarda-no-produto">7. Atividade reservada (Lei 10/2024) — guarda no produto</h2>
+<p>Os alertas mantêm-se <strong>informação genérica + monitorização de estado</strong> (lado seguro); <strong>nunca</strong>
+conclusões jurídicas individualizadas. Linguagem <strong>condicional e genérica</strong> + disclaimer <strong>"informação,
+não aconselhamento jurídico"</strong> em cada alerta (já previsto na camada IA / templates). O <strong>Anexo 3</strong>
+(alerta de exemplo) <strong>já foi gerado e consta deste dossier</strong> (secção «Exemplo real de alerta») — fecha a
+análise da atividade reservada.</p>
+<h2 id="8-responsabilidade-tc">8. Responsabilidade / T&amp;C</h2>
+<p><strong>CORREÇÃO (2.ª opinião):</strong> um teto a <strong>49 €</strong> seria <strong>derrubado em tribunal</strong> — funciona como
+<strong>quase-exclusão</strong> face ao dano previsível (perda do registo AL = dezenas de milhares de €).
+<strong>Teto aplicado hoje:</strong> o <strong>total pago nos 24 meses</strong> anteriores ao facto, sem excluir
+<strong>dolo/negligência grave/danos a pessoas</strong> nem os direitos imperativos do consumo, e descrevendo
+o serviço como <strong>ferramenta informativa, não garantia de conformidade</strong>. <strong>Já aplicado em
+<code>termos.html §6</code>.</strong> <strong>Decisão fechada:</strong> enquanto <strong>não houver apólice E&amp;O contratada, não se
+promete seguro nos T&amp;C</strong>; quando a <strong>E&amp;O</strong> for contratada, acrescenta-se a <strong>perna do limite por
+sinistro da apólice</strong> (a proteção real). A <strong>checklist da apólice E&amp;O</strong> (exclusões de conteúdo IA;
+claims-made + data retroativa; sinistros em série; território PT; custos de defesa dentro/fora do
+limite) fica em <strong>comentário interno</strong> nesse template, para quando a apólice for cotada.</p>
+<h2 id="9-plano-de-4-semanas-do-parecer-quem-faz-o-que">9. Plano de 4 semanas (do parecer) — quem faz o quê</h2>
+<ul>
+<li><strong>S1:</strong> CONTRA-verificar a fonte + termos de licença do <code>list_RNAL</code> (§2) · corrigir Anexo 1 · montar registo art. 30.º · <strong>EPD: decisão = NÃO designar hoje</strong> (defensável por não ser "larga escala") — mas <strong>documentar a avaliação escrita + gatilhos de reavaliação</strong> e <strong>nomear responsável interno de privacidade</strong> (ver <code>REGISTO-ATIVIDADES-ART30.md §0</code>). <em>(eu: docs; tu/advogado: §2)</em></li>
+<li><strong>S2:</strong> widget com Anexos 1/2 corrigidos + política + prova de consentimento → <strong>ligar o motor de consentimento</strong>. <em>(eu)</em></li>
+<li><strong>S3:</strong> contratos art. 28.º + transferências · iniciar parcerias. <em>(tu; eu preparo minutas/checklist)</em></li>
+<li><strong>S4:</strong> só então, e só se §4 cumprido, escrever a LIA e ligar <code>geral@</code> (opt-out). Email a singulares: nunca.</li>
+</ul>
+<h2 id="fontes">Fontes</h2>
+<ul>
+<li>Parecer: <code>Parecer_jurista/Parecer_CheckAL_RGPD.md</code>.</li>
+<li>DL 128/2014 (consolidado) — <a href="https://www.pgdlisboa.pt/leis/lei_mostra_articulado.php?nid=3085&amp;tabela=leis&amp;ficha=1&amp;pagina=1">pgdlisboa</a> · <a href="https://diariodarepublica.pt/dr/detalhe/decreto-lei/128-2014-56384880">DRE</a> · portal público <a href="https://rnt.turismodeportugal.pt/RNT/Pesquisa_AL.aspx">RNT</a>.</li>
+</ul></section>
+<section class="sec" id="s7"><h2 class="sub">Minuta 1 — Política de Privacidade</h2>
+    
+<article class="secao">
+  <div class="secao__interior" style="max-width: 760px;">
+    <h1>Política de Privacidade</h1>
+    <p class="nota">Última atualização: [data]. Esta política explica, em linguagem clara, como
+      tratamos os teus dados pessoais ao abrigo do RGPD (Regulamento (UE) 2016/679). O
+      CheckAL é um serviço <strong>privado e independente</strong> — não somos, nem
+      representamos, o Turismo de Portugal, o RNAL ou qualquer câmara municipal.</p>
+
+    <h2>1. Quem é o responsável pelo tratamento</h2>
+    <p>O CheckAL é um serviço operado por <strong>Cosmic Oasis, Lda.</strong>,
+      NIPC <strong>[NIPC]</strong>, com sede em <strong>[morada]</strong>, Portugal. É a Cosmic
+      Oasis, Lda. o responsável pelo tratamento dos teus dados. Para qualquer questão sobre
+      proteção de dados ou para exercer os teus direitos, contacta-nos em
+      <a href="mailto:privacidade@checkal.pt">privacidade@checkal.pt</a> — o nosso ponto de
+      contacto de proteção de dados.</p>
+
+    <h2>2. Que dados tratamos, para quê e com que base legal</h2>
+    <p>Só tratamos dados para as finalidades abaixo, cada uma com a sua base legal no art. 6.º
+      do RGPD. Nunca fora disto.</p>
+
+    <h3>a) Verificação gratuita e comunicações que autorizas</h3>
+    <ul class="checklist">
+      <li><span class="marca-ok">·</span> <strong>Dados:</strong> o email que indicas e o
+        n.º de registo do teu AL (e os dados públicos a ele associados — estabelecimento,
+        concelho, estado), mais a prova do teu consentimento (data/hora, versão do texto, IP).</li>
+      <li><span class="marca-ok">·</span> <strong>Para quê:</strong> entregar-te o mini-relatório
+        que pedes e, <em>só se</em> marcares a caixa própria, enviar-te alertas do serviço
+        e/ou novidades comerciais — dois consentimentos <strong>separados e independentes</strong>.</li>
+      <li><span class="marca-ok">·</span> <strong>Base legal:</strong> diligências
+        pré-contratuais para o relatório (art. 6.º, n.º 1, al. b); <strong>consentimento</strong>
+        para as comunicações (art. 6.º, n.º 1, al. a), que podes retirar num clique, em qualquer
+        email.</li>
+    </ul>
+
+    <h3>b) Prestação do serviço a clientes e alertas</h3>
+    <ul class="checklist">
+      <li><span class="marca-ok">·</span> <strong>Dados:</strong> identificação e contacto,
+        n.º(s) de registo AL e os dados públicos que monitorizamos (estado do registo, validade
+        do seguro obrigatório, regulamentos do concelho), dados da conta e histórico de alertas.</li>
+      <li><span class="marca-ok">·</span> <strong>Para quê:</strong> prestar o serviço de
+        monitorização que subscreves e enviar-te alertas quando algo afeta o teu AL.</li>
+      <li><span class="marca-ok">·</span> <strong>Base legal:</strong> execução do contrato
+        (art. 6.º, n.º 1, al. b).</li>
+    </ul>
+
+    <h3>c) Faturação e obrigações legais</h3>
+    <ul class="checklist">
+      <li><span class="marca-ok">·</span> <strong>Dados:</strong> nome/firma, NIF/NIPC, morada
+        de faturação e dados da transação.</li>
+      <li><span class="marca-ok">·</span> <strong>Para quê:</strong> cobrar, emitir a
+        fatura-recibo e cumprir os deveres fiscais.</li>
+      <li><span class="marca-ok">·</span> <strong>Base legal:</strong> obrigação legal
+        (art. 6.º, n.º 1, al. c) e execução do contrato (al. b).</li>
+    </ul>
+
+    <h3>d) Suporte</h3>
+    <ul class="checklist">
+      <li><span class="marca-ok">·</span> <strong>Dados:</strong> a tua mensagem e os dados
+        de conta necessários para responder. <strong>Para quê:</strong> apoiar-te e resolver
+        pedidos. <strong>Base legal:</strong> execução do contrato (al. b) e interesse legítimo
+        na qualidade do suporte (art. 6.º, n.º 1, al. f).</li>
+    </ul>
+
+    <h3>e) Apresentação do serviço a titulares de AL (prospeção)</h3>
+    <ul class="checklist">
+      <li><span class="marca-ok">·</span> Quando te apresentamos o CheckAL sem teres
+        sido tu a procurar-nos, fazemo-lo com base no <strong>interesse legítimo</strong>
+        (art. 6.º, n.º 1, al. f), ponderado contra os teus direitos e a tua expectativa razoável,
+        e informamos-te da origem dos dados na <strong>primeira comunicação</strong> (art. 14.º
+        do RGPD). Podes <strong>opor-te de imediato</strong>. Nunca enviamos email não solicitado
+        a pessoas singulares.</li>
+    </ul>
+
+    <h2>3. De onde vêm os teus dados</h2>
+    <p>Quando não nos deste os dados diretamente, obtivemo-los do <strong>Registo Nacional de
+      Alojamento Local (RNAL)</strong>, do Turismo de Portugal. Ao abrigo do art. 14.º do RGPD,
+      informamos-te desta origem na primeira comunicação que te dirigimos, indicando também a
+      finalidade e a base legal.</p>
+
+    <h2>4. Durante quanto tempo guardamos</h2>
+    <ul class="checklist">
+      <li><span class="marca-ok">·</span> <strong>Contactos de prospeção</strong> de quem não
+        interage: até <strong>6 meses</strong>, ou até te opores — o que ocorrer primeiro.</li>
+      <li><span class="marca-ok">·</span> <strong>Dados de clientes</strong>: durante a vigência
+        do serviço e pelos prazos legais aplicáveis após o fim; os dados de faturação seguem o
+        prazo fiscal legal.</li>
+      <li><span class="marca-ok">·</span> <strong>Lista de supressão</strong>: quem se opõe entra
+        numa lista que conservamos <strong>em separado e por mais tempo</strong>, como prova de
+        que a tua oposição é honrada.</li>
+    </ul>
+
+    <h2>5. Com quem partilhamos e transferências internacionais</h2>
+    <p>Partilhamos apenas com <strong>subcontratantes</strong> que nos prestam serviços essenciais,
+      vinculados por contrato (art. 28.º do RGPD) e a tratar os dados só segundo as nossas
+      instruções: envio de email, pagamentos, faturação, apoio de IA na redação dos alertas e
+      alojamento técnico. <strong>Não vendemos os teus dados a ninguém.</strong></p>
+    <p>Alguns destes prestadores estão <strong>fora do Espaço Económico Europeu</strong> (por
+      exemplo, nos EUA). Nesses casos, asseguramos <strong>garantias adequadas</strong> — as
+      Cláusulas Contratuais-Tipo da Comissão Europeia ou mecanismo equivalente (art. 46.º do
+      RGPD). Na camada de IA que apoia a redação dos alertas, enviamos apenas o excerto do
+      documento regulatório e os dados do teu estabelecimento (n.º de registo, concelho, estado,
+      validade do seguro). Quando és pessoa singular ou empresário em nome individual, estes dados
+      são <strong>dados pessoais teus</strong> — por isso este prestador está vinculado por contrato
+      de subcontratação (art. 28.º) e pelas garantias de transferência internacional acima referidas.
+      Nunca enviamos à IA dados de quem não é nosso cliente.</p>
+    <p>Os prestadores de pagamentos tratam parte dos dados como <strong>responsáveis autónomos</strong>,
+      no cumprimento das suas próprias obrigações legais (p. ex., prevenção de branqueamento e
+      identificação) — nessa parte não atuam sob as nossas instruções.</p>
+
+    <h2>6. Os teus direitos</h2>
+    <p>Ao abrigo do RGPD, tens direito de <strong>acesso</strong>, <strong>retificação</strong>,
+      <strong>apagamento</strong>, <strong>limitação</strong>, <strong>portabilidade</strong> e
+      <strong>oposição</strong> ao tratamento — todos gratuitos e a todo o tempo. A
+      <strong>oposição ao marketing direto é absoluta</strong> (art. 21.º, n.º 2): basta pedires
+      e paramos de imediato. Podes ainda retirar a qualquer momento o consentimento que tenhas
+      dado, sem afetar a licitude do tratamento anterior. Exerce os teus direitos em
+      <a href="mailto:privacidade@checkal.pt">privacidade@checkal.pt</a> ou remove-te num
+      clique em <a href="/remover">/remover</a>.</p>
+
+    <h2>7. Reclamações</h2>
+    <p>Se entenderes que os teus dados não foram tratados corretamente, tens o direito de
+      apresentar reclamação à <strong>Comissão Nacional de Proteção de Dados (CNPD)</strong> —
+      <a href="https://www.cnpd.pt" rel="noopener">cnpd.pt</a>.</p>
+
+    <h2>8. Decisões automatizadas</h2>
+    <p>Não tomamos decisões exclusivamente automatizadas com efeitos jurídicos sobre ti. Os
+      alertas gerados com apoio de IA são <strong>informativos</strong> e sujeitos a verificações
+      automáticas e a amostragem humana periódica — são informação, não aconselhamento jurídico.</p>
+
+    <h2>9. Cookies</h2>
+    <p>Usamos apenas cookies técnicos necessários ao funcionamento do site (isentos de
+      consentimento). Quaisquer cookies de análise só são ativados com o teu consentimento
+      prévio.</p>
+
+    <p class="nota" style="margin-top: 2rem;">
+      Vê também os nossos <a href="/termos">Termos &amp; Condições</a>.
+    </p>
+  </div>
+</article>
+
+  </section>
+<section class="sec" id="s8"><h2 class="sub">Minuta 2 — Termos & Condições</h2>
+    
+<article class="secao">
+  <div class="secao__interior" style="max-width: 760px;">
+    <h1>Termos e Condições</h1>
+    <p class="nota">Última atualização: [data]. Ao subscrever ou usar o CheckAL,
+      aceitas estes termos. O CheckAL é um serviço privado e independente, sem
+      qualquer vínculo ao Turismo de Portugal, ao RNAL ou a câmaras municipais.</p>
+
+    <h2>1. Objeto</h2>
+    <p>Estes termos regulam a subscrição e o uso do CheckAL, um serviço prestado por
+      <strong>Cosmic Oasis, Lda.</strong> (NIPC <strong>[NIPC]</strong>, sede em
+      <strong>[morada]</strong>, Portugal). O serviço consiste em monitorizar fontes públicas
+      relativas ao teu Alojamento Local (registo RNAL, seguro obrigatório e regulamentos
+      municipais) e enviar-te alertas quando algo o afeta.</p>
+
+    <h2>2. Natureza do serviço — ferramenta informativa</h2>
+    <p>O CheckAL é uma <strong>ferramenta de informação e monitorização</strong> baseada
+      em fontes públicas (RNAL, Diário da República, regulamentos municipais). Os alertas,
+      incluindo os redigidos com apoio de IA, são <strong>auxiliares informativos</strong> de
+      caráter geral.</p>
+    <p class="estado estado--atencao" style="margin: .5rem 0;">
+      Isto é informação, não aconselhamento jurídico.
+    </p>
+    <p>O serviço <strong>não presta aconselhamento jurídico</strong>, não interpreta a lei para o
+      teu caso concreto e não substitui a consulta a advogado, solicitador ou contabilista.
+      Fornece informação genérica e monitorização de estado; qualquer decisão sobre a tua
+      situação é tua. Recomendamos que confirmes com o teu profissional antes de agir.</p>
+
+    <h2>3. Sem garantia de conformidade nem de resultado</h2>
+    <p>O CheckAL <strong>não garante</strong> a tua conformidade legal, a manutenção do
+      teu registo de AL nem a validade do teu seguro — essas obrigações são e permanecem
+      <strong>tuas</strong>, enquanto titular. O serviço ajuda-te a acompanhá-las, mas não as
+      cumpre por ti nem certifica que estás conforme.</p>
+
+    <h2>4. Dependência de fontes de terceiros</h2>
+    <p>A deteção depende da disponibilidade e exatidão das fontes públicas. A indisponibilidade
+      da API do Turismo de Portugal ou um erro nos dados de origem não constitui incumprimento
+      do CheckAL, que se obriga a diligenciar meios alternativos.</p>
+
+    <h2>5. Prazo de deteção (SLA)</h2>
+    <p>Alertamos-te <strong>até 7 dias</strong> após uma alteração se tornar detetável nas
+      fontes públicas que monitorizamos. Não prometemos tempo real nem alerta no próprio dia.</p>
+
+    <h2>6. Limitação de responsabilidade</h2>
+    <p>Respondemos pelos danos que causarmos por incumprimento culposo, nos termos gerais da lei.
+      Na medida — e <strong>apenas</strong> na medida — em que a lei o permite, a nossa
+      responsabilidade por <strong>negligência leve</strong> e <strong>danos patrimoniais</strong>
+      fica limitada ao <strong>total que nos pagaste nos 24 meses</strong> anteriores ao facto.
+      Dentro desse limite, excluem-se os lucros cessantes e os danos indiretos.</p>
+    <p>Esta limitação <strong>não exclui nem reduz</strong>, em caso algum, a nossa
+      responsabilidade por <strong>dolo</strong>, por <strong>negligência grave</strong>, por
+      <strong>danos a pessoas</strong> (vida, integridade física ou saúde), nem os direitos que a
+      lei do consumo te garante de forma imperativa (DL 446/85, Lei 24/96 e DL 84/2021). Se
+      alguma parte desta cláusula for tida por abusiva ou inválida, o restante mantém-se e aplica-se
+      o regime legal supletivo.</p>
+    
+
+    <h2>7. Preços e pagamento</h2>
+    <p>Os preços constam da página de <a href="/precos">Preços</a> e são
+      apresentados <strong>com IVA incluído</strong>. O pagamento é feito à cabeça pelo período
+      contratado (anual ou trienal).</p>
+
+    <h2>8. Renovação automática</h2>
+    <p>A subscrição renova automaticamente por igual período. Avisamos-te <strong>30 dias
+      antes</strong> de cada renovação, com o preço, a data e um link de cancelamento. Podes
+      cancelar gratuitamente, pelo mesmo meio da contratação, com efeito até ao dia da renovação.</p>
+
+    <h2>9. Livre resolução e garantia</h2>
+    <p>Tens <strong>14 dias</strong> de livre resolução, nos termos do DL 24/2014 (contratos à
+      distância). Como o serviço inicia de imediato a teu pedido, o reembolso é proporcional se
+      resolveres dentro desse prazo. Acresce a nossa <strong>garantia de 30 dias</strong>:
+      se não vires valor, devolvemos 100% — sem perguntas.</p>
+
+    <h2>10. Proteção de dados</h2>
+    <p>O tratamento dos teus dados pessoais rege-se pela nossa
+      <a href="/privacidade">Política de Privacidade</a>, que faz parte integrante
+      destes termos.</p>
+
+    <h2>11. Lei aplicável e resolução de litígios</h2>
+    <p>Aplica-se a lei portuguesa. Em caso de litígio de consumo, podes recorrer a uma entidade
+      de Resolução Alternativa de Litígios (RAL) e à plataforma europeia de resolução de litígios
+      em linha (ODR). Dispomos de <strong>Livro de Reclamações Eletrónico</strong> em
+      <a href="https://www.livroreclamacoes.pt" rel="noopener">livroreclamacoes.pt</a>.</p>
+
+    <h2>12. Suspensão do serviço</h2>
+    <p>Se não regularizares um pagamento em dívida, podemos <strong>suspender o serviço</strong> —
+      deixando de te enviar alertas — depois de te <strong>interpelarmos</strong> para regularizar
+      e de decorrer um prazo razoável sem pagamento. A suspensão mantém-se até à regularização;
+      retomamos o serviço logo que o pagamento seja regularizado.</p>
+
+    <h2>13. Alterações aos Termos</h2>
+    <p>Podemos alterar estes termos (por exemplo, por mudanças legais ou do próprio serviço).
+      Comunicamos-te qualquer alteração com <strong>pré-aviso de, no mínimo, 30 dias</strong> antes
+      de ela produzir efeitos. Se não concordares, podes <strong>cessar a subscrição sem qualquer
+      penalização</strong> até à data em que a alteração entra em vigor; se mantiveres o serviço
+      depois dessa data, entendemos que aceitaste os novos termos.</p>
+
+    <h2>14. Identificação e contacto</h2>
+    <p>O CheckAL é um serviço de <strong>Cosmic Oasis, Lda.</strong>, NIPC
+      <strong>[NIPC]</strong>, com sede em <strong>[morada]</strong>, Portugal. Contacto:
+      <a href="mailto:privacidade@checkal.pt">privacidade@checkal.pt</a>. Consulta a
+      <a href="/privacidade">Política de Privacidade</a> para saberes como
+      tratamos os teus dados.</p>
+  </div>
+</article>
+
+  </section>
+<section class="sec" id="s9"><h2 class="sub">Minuta 3 — Registo de atividades (art. 30.º)</h2><h1 id="registo-de-atividades-de-tratamento-art-30o-rgpd-checkal">Registo de Atividades de Tratamento (art. 30.º RGPD) — CheckAL</h1>
+<blockquote>
+<p><strong>MINUTA — a validar por advogado/EPD antes de publicar.</strong></p>
+<p>Registo das atividades de tratamento sob responsabilidade da <strong>Cosmic Oasis, Lda.</strong>
+(operadora do serviço CheckAL), nos termos do art. 30.º, n.º 1, do RGPD
+(Reg. UE 2016/679). Documento interno — não se publica; exibe-se à CNPD a pedido.
+Alinhado com o <code>Parecer_jurista/Parecer_CheckAL_RGPD.md</code> (6/7/2026) e com
+<code>LEGAL-PARECER-DECISOES.md</code>.</p>
+<p><strong>Estado:</strong> rascunho de execução. A atividade <strong>F (prospeção a frio)</strong> está
+<strong>NÃO ATIVA / bloqueada por desenho</strong> (<code>CHECKAL_PARECER_RGPD_OK=False</code>) e só entra
+em produção depois de cumpridos os pré-requisitos do parecer (LIA arquivada, base
+legal da fonte confirmada, contratos art. 28.º e transferências resolvidas).</p>
+</blockquote>
+<hr />
+<h2 id="0-identificacao-do-responsavel-e-contactos">0. Identificação do responsável e contactos</h2>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Responsável pelo tratamento</strong> (art. 4.º/7)</td>
+<td>Cosmic Oasis, Lda.</td>
+</tr>
+<tr>
+<td><strong>NIPC</strong></td>
+<td><code>[NIPC]</code></td>
+</tr>
+<tr>
+<td><strong>Sede / morada</strong></td>
+<td><code>[morada]</code>, Portugal</td>
+</tr>
+<tr>
+<td><strong>Serviço operado</strong></td>
+<td>CheckAL — monitorização de Alojamento Local</td>
+</tr>
+<tr>
+<td><strong>Contacto de proteção de dados</strong></td>
+<td>privacidade@checkal.pt</td>
+</tr>
+<tr>
+<td><strong>Encarregado de Proteção de Dados (EPD/DPO)</strong></td>
+<td><strong>Não designado por defeito</strong> — designação <strong>não obrigatória</strong> hoje (não há tratamento em larga escala de categorias especiais nem monitorização sistemática em larga escala como atividade principal na aceção do art. 37.º/1/b e /c). Avaliação escrita e gatilhos de reavaliação <strong>no bloco abaixo</strong>. Ponto de contacto: privacidade@checkal.pt</td>
+</tr>
+<tr>
+<td><strong>Responsável interno de privacidade</strong></td>
+<td><code>Diogo Mendes</code> (pessoa concreta na Cosmic Oasis, Lda.), contactável em privacidade@checkal.pt — assegura o cumprimento, mantém este registo e reavalia os gatilhos de EPD</td>
+</tr>
+<tr>
+<td><strong>Autoridade de controlo</strong></td>
+<td>Comissão Nacional de Proteção de Dados (CNPD) — cnpd.pt</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Nota sobre a fonte RNAL.</strong> Onde uma atividade obtém dados do Registo Nacional de
+Alojamento Local (RNAL) do Turismo de Portugal: o <strong>art. 10.º n.º 5 do DL 128/2014</strong>
+(publica o <em>"endereço eletrónico do titular da exploração"</em> e a validade do seguro
+obrigatório) está <strong>CONFIRMADO</strong> pelo consultor — falta apenas <strong>CONTRA-verificação</strong> de
+que nada no consolidado pós-DL 76/2024 o contradiz (ver <code>LEGAL-PARECER-DECISOES.md</code> §2).
+<strong>Princípio que se mantém: publicação obrigatória ≠ licença de reutilização</strong> — para
+<strong>pessoas singulares</strong>, reutilizar o email/RNAL para prospeção depende do teste de
+<strong>compatibilidade de finalidades</strong> (art. 6.º/4), que <strong>não</strong> é favorável. <strong>Termos de
+licença do webservice <code>list_RNAL</code></strong> (dados abertos — <strong>Lei 68/2021</strong> + condições do
+Turismo de Portugal) a verificar; a sua violação é problema <strong>contratual/administrativo
+autónomo</strong> do RGPD.</p>
+<p><strong>Avaliação escrita da designação de EPD (art. 37.º) e gatilhos de reavaliação.</strong>
+<strong>Decisão hoje: NÃO designar EPD formal</strong> — defensável por o tratamento <strong>não</strong> ser de
+"larga escala" (nem categorias especiais em larga escala — art. 9.º/37.º/1/c — nem
+monitorização sistemática em larga escala como atividade principal — art. 37.º/1/b). Fica
+um <strong>responsável interno de privacidade</strong> nomeado (ver tabela §0). <strong>Gatilhos que obrigam a
+reavaliar (e provavelmente a designar EPD):</strong> (1) <strong>ingestão da base RNAL completa</strong>
+(varrimento nacional persistido, não só consultas pontuais); (2) ultrapassar <strong>5.000
+titulares monitorizados</strong> de forma contínua; (3) <strong>novas categorias de dados</strong>
+ou nova finalidade (ex.: perfis, enriquecimento, categorias especiais); (4) ativação da
+<strong>prospeção a frio em larga escala</strong>. Cada gatilho, quando ocorrer, fica registado com
+<strong>data e decisão</strong> neste documento.</p>
+</blockquote>
+<hr />
+<h2 id="indice-de-atividades">Índice de atividades</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Atividade</th>
+<th>Base legal principal</th>
+<th>Estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A</strong></td>
+<td>Verificação gratuita e captação de <em>leads</em> (consent-first)</td>
+<td>Consentimento (6.º/1/a) + pré-contratual (6.º/1/b)</td>
+<td>Ativa (WF1)</td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td>Gestão de clientes e subscrições</td>
+<td>Execução do contrato (6.º/1/b)</td>
+<td>Ativa</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td>Alertas de estado e regulatórios</td>
+<td>Execução do contrato (6.º/1/b)</td>
+<td>Ativa</td>
+</tr>
+<tr>
+<td><strong>D</strong></td>
+<td>Faturação e obrigações fiscais</td>
+<td>Obrigação legal (6.º/1/c)</td>
+<td>Ativa</td>
+</tr>
+<tr>
+<td><strong>E</strong></td>
+<td>Suporte a clientes (com apoio de IA)</td>
+<td>Execução do contrato (6.º/1/b) + interesse legítimo (6.º/1/f)</td>
+<td>Ativa</td>
+</tr>
+<tr>
+<td><strong>F</strong></td>
+<td>Prospeção comercial a frio (<code>geral@</code> de pessoa coletiva)</td>
+<td>Interesse legítimo (6.º/1/f) + Lei 41/2004</td>
+<td><strong>NÃO ATIVA / bloqueada</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="atividade-a-verificacao-gratuita-e-captacao-de-leads-consent-first">Atividade A — Verificação gratuita e captação de <em>leads</em> (consent-first)</h2>
+<table>
+<thead>
+<tr>
+<th>Campo (art. 30.º/1)</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Finalidade</strong></td>
+<td>Executar a verificação gratuita pedida pelo próprio titular (introduz o n.º de registo, recebe mini-relatório) e, <strong>se e só se</strong> o autorizar por consentimento granular, enviar-lhe alertas do serviço e/ou novidades comerciais do CheckAL.</td>
+</tr>
+<tr>
+<td><strong>Base legal (art. 6.º)</strong></td>
+<td>(i) <strong>Diligências pré-contratuais</strong> — 6.º/1/b — para produzir e entregar o mini-relatório pedido; (ii) <strong>Consentimento</strong> — 6.º/1/a — para as comunicações posteriores, com dois consentimentos <strong>separados e independentes</strong> (alertas do serviço vs. ofertas/novidades comerciais), nenhum pré-marcado nem condicionado ao relatório. Lei 41/2004, art. 13.º-A, para o email de marketing.</td>
+</tr>
+<tr>
+<td><strong>Categorias de titulares</strong></td>
+<td>Proprietários/titulares de exploração de AL (pessoas singulares, ENI e representantes de pessoas coletivas) que usam o widget por iniciativa própria.</td>
+</tr>
+<tr>
+<td><strong>Categorias de dados</strong></td>
+<td>Email; n.º de registo AL (e dados públicos do AL a ele associados — nome do estabelecimento, concelho, estado do registo); prova de consentimento (data/hora, versão do texto consentido, endereço IP, canal); registo de cada consentimento granular em separado.</td>
+</tr>
+<tr>
+<td><strong>Destinatários / subcontratantes</strong></td>
+<td>Resend (envio de email transacional/relatório); Hetzner (alojamento aplicacional e base de dados). API pública do RNAL/Turismo de Portugal como <strong>fonte de consulta</strong> (não é destinatário). Nenhuma venda ou cedência a terceiros.</td>
+</tr>
+<tr>
+<td><strong>Transferências internacionais</strong></td>
+<td><strong>Resend (EUA)</strong> — carece de mecanismo (Data Privacy Framework ou Cláusulas-Tipo/SCC) — ver §Transferências. Hetzner (Alemanha, EEE) — sem transferência (preferir região UE).</td>
+</tr>
+<tr>
+<td><strong>Prazo de conservação</strong></td>
+<td><em>Leads</em> que <strong>consentiram</strong>: enquanto o consentimento se mantiver / a relação estiver ativa; retirada do consentimento → cessação e eliminação. <em>Leads</em> que <strong>não interagem</strong>: eliminação em <strong>6 meses</strong>. Prova de consentimento conservada enquanto necessária para demonstrar licitude (accountability), e após retirada, o registo mínimo da retirada.</td>
+</tr>
+<tr>
+<td><strong>Medidas de segurança</strong></td>
+<td>HTTPS/TLS em trânsito; base de dados de acesso restrito com credenciais próprias; princípio do mínimo (só o email e o n.º de registo); <em>logs</em> de consentimento imutáveis; autenticação forte nas consolas de fornecedores; cópias de segurança; segregação de ambientes.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="atividade-b-gestao-de-clientes-e-subscricoes">Atividade B — Gestão de clientes e subscrições</h2>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Finalidade</strong></td>
+<td>Criar e gerir a conta do cliente, prestar o serviço de monitorização subscrito, gerir a renovação/cancelamento e a garantia.</td>
+</tr>
+<tr>
+<td><strong>Base legal (art. 6.º)</strong></td>
+<td><strong>Execução do contrato</strong> — 6.º/1/b. Acessoriamente, interesse legítimo (6.º/1/f) para segurança da conta e prevenção de fraude.</td>
+</tr>
+<tr>
+<td><strong>Categorias de titulares</strong></td>
+<td>Clientes/subscritores do CheckAL (singulares, ENI, representantes de coletivas) e os AL sob monitorização.</td>
+</tr>
+<tr>
+<td><strong>Categorias de dados</strong></td>
+<td>Identificação e contacto (nome, email, telefone se fornecido); n.º(s) de registo AL e respetivos dados públicos monitorizados (estado do registo, validade do seguro obrigatório, concelho/regulamentos aplicáveis); dados da conta (autenticação, preferências); histórico de subscrição.</td>
+</tr>
+<tr>
+<td><strong>Destinatários / subcontratantes</strong></td>
+<td>Hetzner (alojamento); Resend (emails de conta/serviço); Stripe e/ou IfThenPay (pagamentos — ver Atividade D).</td>
+</tr>
+<tr>
+<td><strong>Transferências internacionais</strong></td>
+<td>Stripe (EUA/IE) — mecanismo (DPF/SCC); Resend (EUA) — mecanismo. Hetzner (DE) e IfThenPay (PT) — EEE, sem transferência.</td>
+</tr>
+<tr>
+<td><strong>Prazo de conservação</strong></td>
+<td>Durante a vigência da subscrição e, após cessação, pelos prazos de prescrição/defesa de direitos e obrigações legais aplicáveis. Dados de faturação seguem o prazo fiscal (Atividade D).</td>
+</tr>
+<tr>
+<td><strong>Medidas de segurança</strong></td>
+<td>Controlo de acessos por perfil; TLS; palavras-passe cifradas/<em>hashing</em>; princípio do mínimo; registo de acessos; cópias de segurança e plano de recuperação.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="atividade-c-alertas-de-estado-e-regulatorios">Atividade C — Alertas de estado e regulatórios</h2>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Finalidade</strong></td>
+<td>Monitorizar fontes públicas (RNAL, Diário da República, regulamentos municipais) e alertar cada cliente quando uma alteração afeta o seu AL (estado do registo, seguro obrigatório, regulamento do concelho).</td>
+</tr>
+<tr>
+<td><strong>Base legal (art. 6.º)</strong></td>
+<td><strong>Execução do contrato</strong> — 6.º/1/b (é o núcleo do serviço subscrito).</td>
+</tr>
+<tr>
+<td><strong>Categorias de titulares</strong></td>
+<td>Clientes/subscritores e os AL monitorizados.</td>
+</tr>
+<tr>
+<td><strong>Categorias de dados</strong></td>
+<td>N.º de registo AL e dados públicos associados; estado detetado nas fontes; email de destino do alerta; histórico de alertas enviados; excertos regulatórios usados na redação. <strong>Nota (2.ª opinião):</strong> para clientes <strong>ENI / pessoa singular</strong>, os <strong>dados do AL</strong> usados na redação (n.º RNAL, morada, validade do seguro) <strong>SÃO dados pessoais</strong> — o n.º RNAL é <strong>identificador único</strong> e retirar o nome é <strong>pseudonimização, não anonimização</strong>. Não se tratam dados pessoais de <strong>terceiros/prospects</strong> neste fluxo.</td>
+</tr>
+<tr>
+<td><strong>Destinatários / subcontratantes</strong></td>
+<td>Resend (envio); Anthropic (camada de IA que redige o alerta — recebe excerto do documento + dados do AL; para clientes singulares/ENI esses dados são pessoais, ver acima; nunca dados de prospects); Hetzner (alojamento/BD).</td>
+</tr>
+<tr>
+<td><strong>Transferências internacionais</strong></td>
+<td>Anthropic (EUA — <strong>ou UE via Amazon Bedrock Frankfurt <code>eu-central-1</code></strong>) e Resend (EUA) — mecanismo (<strong>SCCs + TIA</strong>; DPF só com verificação <strong>datada</strong>). <strong>A IA trata dados pessoais de clientes singulares/ENI</strong> (os dados do AL) → <strong>DPA (art. 28.º) + mecanismo de transferência fecham-se já</strong>; a opção <strong>Bedrock UE elimina o Cap. V</strong> para a IA. Para <em>prospects</em>, mantém-se a regra: só excerto regulatório + dados do AL, nunca dados de prospects (ver <code>LEGAL-PARECER-DECISOES.md</code> §6).</td>
+</tr>
+<tr>
+<td><strong>Prazo de conservação</strong></td>
+<td>Enquanto durar a subscrição; o histórico de alertas conserva-se para prova do serviço prestado e cumprimento do SLA, pelo prazo de defesa de direitos.</td>
+</tr>
+<tr>
+<td><strong>Medidas de segurança</strong></td>
+<td>TLS; minimização dos dados enviados à IA; <em>prompts</em> sem dados pessoais de terceiros; disclaimer "informação, não aconselhamento jurídico" em cada alerta (guarda de atividade reservada — Lei 10/2024); registo de envios.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="atividade-d-faturacao-e-obrigacoes-fiscais">Atividade D — Faturação e obrigações fiscais</h2>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Finalidade</strong></td>
+<td>Emitir fatura-recibo, processar pagamentos e cumprir as obrigações fiscais e contabilísticas legais.</td>
+</tr>
+<tr>
+<td><strong>Base legal (art. 6.º)</strong></td>
+<td><strong>Obrigação legal</strong> — 6.º/1/c (deveres fiscais/faturação); <strong>execução do contrato</strong> — 6.º/1/b (cobrança do preço).</td>
+</tr>
+<tr>
+<td><strong>Categorias de titulares</strong></td>
+<td>Clientes/subscritores (e, quando aplicável, o adquirente que não coincide com o utilizador).</td>
+</tr>
+<tr>
+<td><strong>Categorias de dados</strong></td>
+<td>Nome/firma, NIF/NIPC, morada de faturação, descritivo do serviço, montante, meio e data de pagamento, referências da transação.</td>
+</tr>
+<tr>
+<td><strong>Destinatários / subcontratantes</strong></td>
+<td>Software/serviço de faturação (<strong>TOConline — Cloudware</strong>); processadores de pagamento (<strong>Stripe</strong> e/ou <strong>IfThenPay</strong>) — <strong>DUPLA QUALIFICAÇÃO</strong>: são <strong>subcontratantes</strong> no que tratam por nossa conta <strong>e responsáveis autónomos</strong> nas obrigações próprias de <strong>AML/KYC</strong> (prevenção de branqueamento, identificação), parte em que <strong>não</strong> agem sob as nossas instruções; Administração Tributária (comunicação legal de faturas); contabilista certificado.</td>
+</tr>
+<tr>
+<td><strong>Transferências internacionais</strong></td>
+<td>TOConline (PT) e IfThenPay (PT) — EEE. Stripe (EUA/IE) — mecanismo (<strong>SCCs/DPF</strong>; as SCCs de 2021 já incorporam o art. 28.º, dispensando contrato de subcontratação separado).</td>
+</tr>
+<tr>
+<td><strong>Prazo de conservação</strong></td>
+<td>Documentos de faturação/contabilísticos conservados pelo <strong>prazo legal fiscal</strong> aplicável (regra geral, 10 anos) — independente do fim da relação comercial.</td>
+</tr>
+<tr>
+<td><strong>Medidas de segurança</strong></td>
+<td>Acesso restrito à área de faturação; TLS; segregação de funções; os dados de cartão <strong>não</strong> são tratados/armazenados pela Cosmic Oasis (ficam no processador de pagamento certificado PCI-DSS).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="atividade-e-suporte-a-clientes-com-apoio-de-ia">Atividade E — Suporte a clientes (com apoio de IA)</h2>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Finalidade</strong></td>
+<td>Responder a pedidos de suporte, dúvidas e exercício de direitos, com apoio de ferramentas de IA na triagem/redação de respostas.</td>
+</tr>
+<tr>
+<td><strong>Base legal (art. 6.º)</strong></td>
+<td><strong>Execução do contrato</strong> — 6.º/1/b (suporte ao serviço); <strong>interesse legítimo</strong> — 6.º/1/f (qualidade e eficiência do suporte; segurança). O exercício de direitos RGPD assenta na <strong>obrigação legal</strong> de responder (arts. 15.º–22.º).</td>
+</tr>
+<tr>
+<td><strong>Categorias de titulares</strong></td>
+<td>Clientes e <em>leads</em> que contactam o suporte; qualquer titular que exerça direitos.</td>
+</tr>
+<tr>
+<td><strong>Categorias de dados</strong></td>
+<td>Identificação e contacto; conteúdo da mensagem/ticket; histórico de interações; dados da conta relevantes para resolver o pedido.</td>
+</tr>
+<tr>
+<td><strong>Destinatários / subcontratantes</strong></td>
+<td>Resend (email); Hetzner (alojamento); Anthropic (<strong>apoio de IA à redação/triagem — a instruir para não receber mais dados pessoais do que o necessário e nunca categorias especiais</strong>).</td>
+</tr>
+<tr>
+<td><strong>Transferências internacionais</strong></td>
+<td>Anthropic (EUA — <strong>ou UE via Amazon Bedrock Frankfurt <code>eu-central-1</code></strong>) e Resend (EUA) — mecanismo (<strong>SCCs + TIA</strong>; DPF só com verificação <strong>datada</strong>). No suporte a IA <strong>trata dados pessoais do cliente</strong> (identificação, conteúdo do ticket) → <strong>DPA + mecanismo já</strong>; Bedrock UE elimina o Cap. V. Minimização dos dados enviados à IA; nunca categorias especiais.</td>
+</tr>
+<tr>
+<td><strong>Prazo de conservação</strong></td>
+<td>Histórico de suporte conservado pelo tempo necessário à gestão da relação e prova do exercício de direitos; pedidos de exercício de direitos conservados como prova de cumprimento pelo prazo de defesa.</td>
+</tr>
+<tr>
+<td><strong>Medidas de segurança</strong></td>
+<td>Minimização dos dados enviados à IA; acesso restrito ao suporte; TLS; registo do tratamento dos pedidos de direitos; verificação de identidade antes de dar acesso/apagar.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="atividade-f-prospecao-comercial-a-frio-geral-de-pessoa-coletiva-nao-ativa-bloqueada">Atividade F — Prospeção comercial a frio (<code>geral@</code> de pessoa coletiva) — <strong>NÃO ATIVA / BLOQUEADA</strong></h2>
+<blockquote>
+<p><strong>Estado: NÃO ATIVA.</strong> Bloqueada por desenho (<code>CHECKAL_PARECER_RGPD_OK=False</code>). Só
+pode ser ativada quando <strong>todos</strong> os pré-requisitos do parecer estiverem cumpridos
+(ver <code>LEGAL-PARECER-DECISOES.md</code> §4 e <code>LIA-COLD-GERAL.md</code>). Registada aqui por
+transparência e para estar pronta caso venha a ser ligada. <strong>Sempre</strong> limitada a
+endereços <strong>genéricos</strong> de pessoa coletiva; <strong>nunca</strong> a pessoas singulares/ENI nem a
+endereços que identifiquem uma pessoa singular.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Finalidade</strong></td>
+<td>Apresentar o serviço CheckAL a titulares de AL que sejam <strong>pessoas coletivas</strong>, contactando o seu <strong>endereço genérico</strong> (<code>geral@</code>, <code>info@</code>, <code>reservas@</code>…), com opt-out imediato.</td>
+</tr>
+<tr>
+<td><strong>Base legal (art. 6.º)</strong></td>
+<td><strong>Interesse legítimo</strong> — 6.º/1/f — com <strong>LIA documentada</strong> (<code>LIA-COLD-GERAL.md</code>). Regime de comunicações: <strong>Lei 41/2004, art. 13.º-A</strong> — <em>opt-out</em> admissível para pessoa coletiva. <strong>Ressalva:</strong> um endereço genérico que não identifica pessoa singular <strong>não é dado pessoal</strong> — nesse caso o RGPD não se aplica ao contacto e resta a Lei 41/2004; a base 6.º/1/f só releva na medida em que haja dado pessoal associado.</td>
+</tr>
+<tr>
+<td><strong>Categorias de titulares</strong></td>
+<td>Apenas <strong>pessoas coletivas</strong> titulares de AL, contactadas em endereço genérico. Pessoas singulares e ENI <strong>excluídas por desenho</strong> (filtro por natureza jurídica / NIF).</td>
+</tr>
+<tr>
+<td><strong>Categorias de dados</strong></td>
+<td>Endereço de email <strong>genérico</strong> da pessoa coletiva; firma/NIPC; dados públicos do AL (estabelecimento, concelho, estado). <strong>Sem</strong> dados de pessoas singulares. Lista de supressão/oposição (ver conservação).</td>
+</tr>
+<tr>
+<td><strong>Destinatários / subcontratantes</strong></td>
+<td>Resend (envio, se ativado); Hetzner (alojamento). Cruzamento com a <strong>DGC</strong> (Lista de Oposição / Direção-Geral do Consumidor) e com a lista de supressão antes de qualquer envio.</td>
+</tr>
+<tr>
+<td><strong>Transferências internacionais</strong></td>
+<td>Resend (EUA) — mecanismo (DPF/SCC) resolvido <strong>antes</strong> de ativar. <strong>Nunca</strong> enviar dados de prospects para a API de IA.</td>
+</tr>
+<tr>
+<td><strong>Prazo de conservação</strong></td>
+<td>Prospects que <strong>não interagem</strong>: eliminação em <strong>6 meses</strong>. <strong>Lista de supressão / oposição</strong>: conservada <strong>em separado e por mais tempo</strong>, como prova de que a oposição é honrada (não se elimina o registo de quem pediu para não ser contactado).</td>
+</tr>
+<tr>
+<td><strong>Medidas de segurança</strong></td>
+<td>Filtro de exclusão de singulares/ENI e de endereços nominais; identificação do remetente e <strong>opt-out de 1 clique</strong> em cada mensagem; nota de informação do art. 14.º na 1.ª comunicação (<code>ANEXO1-nota-informacao-corrigida.md</code>); arranque <strong>semi-manual</strong> (o dono revê e dispara); cruzamento DGC + supressão; TLS; registo de envios e de oposições.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="subcontratantes-art-28o-e-transferencias-internacionais-art-44o-e-ss">Subcontratantes (art. 28.º) e transferências internacionais (art. 44.º e ss.)</h2>
+<p>Tabela canónica (de <code>LEGAL-PARECER-DECISOES.md</code> §6). Cada subcontratante carece de
+enquadramento do <strong>art. 28.º/3</strong> antes de tratar dados em produção — <strong>DPA</strong> próprio ou, para
+os prestadores US com Cláusulas-Tipo, o próprio módulo das <strong>SCCs de 2021 (que já incorporam o
+art. 28.º)</strong>, dispensando contrato separado. Os que estão fora do EEE carecem de <strong>mecanismo
+de transferência</strong> válido (Cap. V).</p>
+<blockquote>
+<p><strong>CORREÇÃO (2.ª opinião).</strong> A IA <strong>trata dados pessoais HOJE</strong> para clientes ENI/singulares
+(n.º RNAL = identificador único; <strong>pseudonimização, não anonimização</strong>) → <strong>DPA + mecanismo
+com a Anthropic fecham-se já</strong>, não "quando ligar o cold". <strong>Stripe e IfThenPay</strong> têm <strong>dupla
+qualificação</strong> (subcontratante + responsável autónomo AML/KYC). <strong>Hetzner:</strong> fixar região UE
++ verificar sub-subcontratantes.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Fornecedor</th>
+<th>Função</th>
+<th>Sede</th>
+<th>Transferência internacional</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Anthropic</strong> (Haiku/Sonnet)</td>
+<td>IA da redação dos alertas/suporte</td>
+<td>EUA — ou <strong>UE via Bedrock Frankfurt</strong></td>
+<td>⚠️ <strong>Trata dados pessoais de clientes singulares/ENI</strong> → DPA + mecanismo já. Bedrock <code>eu-central-1</code> remove o Cap. V; API EUA = SCCs + TIA (+ DPF só com verificação datada). Para <em>prospects</em>: só dados do AL, nunca dados de prospects</td>
+</tr>
+<tr>
+<td><strong>Resend</strong></td>
+<td>Email transacional / comunicações</td>
+<td>EUA</td>
+<td>⚠️ Mecanismo (SCCs; DPF só com verificação datada). SCC 2021 já cobre o art. 28.º</td>
+</tr>
+<tr>
+<td><strong>Stripe</strong></td>
+<td>Pagamentos</td>
+<td>EUA / IE</td>
+<td>⚠️ Mecanismo (SCCs/DPF) + <strong>dupla qualificação</strong> (subcontratante + responsável autónomo AML/KYC)</td>
+</tr>
+<tr>
+<td><strong>IfThenPay</strong></td>
+<td>Pagamentos</td>
+<td>PT</td>
+<td>✅ EEE + <strong>dupla qualificação</strong> (subcontratante + responsável autónomo AML/KYC)</td>
+</tr>
+<tr>
+<td><strong>TOConline</strong> (Cloudware)</td>
+<td>Faturação</td>
+<td>PT</td>
+<td>✅ EEE</td>
+</tr>
+<tr>
+<td><strong>Hetzner</strong></td>
+<td>Alojamento aplicacional e BD</td>
+<td>DE</td>
+<td>✅ EEE — <strong>fixar região UE + verificar sub-subcontratantes</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Regra de desenho (código).</strong> No fluxo de <em>prospeção</em>, a camada de IA (FDS4) recebe
+<strong>excerto do documento + dados do AL</strong> (públicos), <strong>não</strong> dados pessoais de prospects —
+manter esta fronteira. Para <em>clientes</em> singulares/ENI, note-se que os dados do AL enviados à
+IA <strong>são pessoais</strong> (daí o DPA + mecanismo serem requisito <strong>já</strong>).</p>
+</blockquote>
+<hr />
+<h2 id="notas-de-accountability">Notas de accountability</h2>
+<ul>
+<li>Este registo deve ser <strong>revisto</strong> sempre que uma atividade, base legal, subcontratante
+  ou fluxo de dados mude — em especial <strong>antes</strong> de ativar a Atividade F.</li>
+<li><strong>DPIA (art. 35.º):</strong> avaliar a necessidade de uma Avaliação de Impacto sobre a
+  Proteção de Dados se a prospeção/monitorização atingir larga escala. Por defeito, o
+  desenho consent-first e a minimização reduzem o risco; reavaliar a cada mudança de
+  escala.</li>
+<li><strong>EPD (art. 37.º):</strong> decisão atual = <strong>não designar</strong> (avaliação escrita e <strong>gatilhos de
+  reavaliação</strong> em §0); há <strong>responsável interno de privacidade</strong> nomeado. Rever a cada
+  gatilho (ingestão da base RNAL completa; 5.000 titulares monitorizados; novas categorias de dados;
+  cold em larga escala).</li>
+<li><strong>IA = subcontratante de dados pessoais HOJE</strong> para clientes ENI/singulares (não só
+  "quando ligar o cold") → DPA + mecanismo de transferência (ou Bedrock UE) fecham-se já.</li>
+<li><strong>Stripe/IfThenPay = dupla qualificação</strong> (subcontratante + responsável autónomo AML/KYC):
+  não os tratar como meros processadores nos contratos e informações.</li>
+<li><strong>Prova de consentimento</strong> (Atividade A) e <strong>lista de supressão</strong> (Atividades A/F)
+  são os dois artefactos de prova mais importantes perante a CNPD — manter operacionais
+  desde o dia 1.</li>
+<li>Ver também: <code>Parecer_jurista/Parecer_CheckAL_RGPD.md</code>, <code>LEGAL-PARECER-DECISOES.md</code>,
+  <code>LIA-COLD-GERAL.md</code>, <code>ANEXO1-nota-informacao-corrigida.md</code>.</li>
+</ul></section>
+<section class="sec" id="s10"><h2 class="sub">Minuta 4 — Avaliação de Interesse Legítimo (LIA)</h2><h1 id="avaliacao-de-interesse-legitimo-lia-prospecao-a-frio-a-geral-de-pessoa-coletiva">Avaliação de Interesse Legítimo (LIA) — prospeção a frio a <code>geral@</code> de pessoa coletiva</h1>
+<blockquote>
+<p><strong>MINUTA — a validar por advogado/EPD antes de publicar.</strong></p>
+<p>Avaliação de Interesse Legítimo (<em>Legitimate Interest Assessment</em>) para o tratamento
+de dados com fundamento no <strong>art. 6.º, n.º 1, al. f), do RGPD</strong>, no âmbito do contacto
+comercial a frio dirigido a <strong>endereços genéricos de pessoas coletivas</strong> titulares de
+Alojamento Local. Documento interno de accountability (art. 5.º/2).</p>
+<p><strong>Estado: DRAFT / CONDICIONAL.</strong> O canal está <strong>DESLIGADO</strong>
+(<code>CHECKAL_PARECER_RGPD_OK=False</code>). Esta LIA <strong>não</strong> é, por si só, autorização para
+arrancar: depende dos pré-requisitos do parecer (<code>LEGAL-PARECER-DECISOES.md</code> §4),
+em especial a confirmação da base legal da fonte do email (§2) e a resolução das
+transferências internacionais (§6). Alinhada com
+<code>Parecer_jurista/Parecer_CheckAL_RGPD.md</code> (6/7/2026).</p>
+</blockquote>
+<hr />
+<h2 id="0-enquadramento-e-ambito">0. Enquadramento e âmbito</h2>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Responsável</strong></td>
+<td>Cosmic Oasis, Lda., NIPC <code>[NIPC]</code>, <code>[morada]</code> (operadora do CheckAL)</td>
+</tr>
+<tr>
+<td><strong>Tratamento avaliado</strong></td>
+<td>Contacto comercial a frio, por email, a <strong>endereços genéricos</strong> (<code>geral@</code>, <code>info@</code>, <code>reservas@</code>…) de titulares de AL que sejam <strong>pessoas coletivas</strong>, para apresentar o serviço CheckAL, com opt-out imediato.</td>
+</tr>
+<tr>
+<td><strong>Fonte dos dados</strong></td>
+<td>Registo Nacional de Alojamento Local (RNAL) / webservice do Turismo de Portugal.</td>
+</tr>
+<tr>
+<td><strong>Base legal invocada</strong></td>
+<td>Interesse legítimo — art. 6.º/1/f RGPD (quando haja dado pessoal); regime de comunicações — Lei 41/2004, art. 13.º-A (opt-out para pessoa coletiva).</td>
+</tr>
+<tr>
+<td><strong>Fora de âmbito (excluído por desenho)</strong></td>
+<td>Pessoas singulares e ENI (qualquer canal a frio); endereços que <strong>identifiquem</strong> uma pessoa singular (<code>nome.apelido@…</code>); email a singular/ENI (proibido — opt-in prévio, art. 13.º-A).</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Nota preliminar sobre a natureza do dado.</strong> Um endereço <strong>genuinamente genérico</strong>
+(<code>geral@empresa.pt</code>) que não identifica nenhuma pessoa singular <strong>não é dado pessoal</strong>
+na aceção do art. 4.º/1 — nesse caso o RGPD não se aplica ao contacto e o único
+enquadramento é a Lei 41/2004 (opt-out, pessoa coletiva). Esta LIA cobre a hipótese
+conservadora em que exista <strong>algum</strong> elemento pessoal associado (p. ex., o registo
+ligar o endereço a uma pessoa identificável), assegurando fundamento também nesse
+cenário. <strong>Endereços nominais são excluídos por desenho.</strong></p>
+</blockquote>
+<hr />
+<h2 id="1-teste-de-finalidade-ha-um-interesse-legitimo">1. Teste de finalidade — <em>há um interesse legítimo?</em></h2>
+<p><strong>Interesse prosseguido.</strong> Dar a conhecer, a titulares de AL que são pessoas coletivas,
+um serviço (CheckAL) <strong>diretamente relevante para a atividade regulada que exercem</strong> —
+a monitorização do registo RNAL, do seguro obrigatório e dos regulamentos municipais,
+cujo incumprimento os expõe a coimas e ao cancelamento do registo.</p>
+<ul>
+<li><strong>Legítimo?</strong> Sim. A promoção de produtos/serviços é reconhecida como interesse
+  legítimo (considerando 47 do RGPD refere expressamente o marketing direto como um
+  interesse que <em>pode</em> ser legítimo). O interesse é <strong>real e atual</strong> (o CheckAL existe e
+  está operacional), <strong>específico</strong> (um serviço concreto para um público concreto) e
+  <strong>lícito</strong> (não visa fim ilícito).</li>
+<li><strong>Interesse de terceiros / do próprio titular.</strong> Há também um interesse do próprio
+  destinatário em conhecer uma ferramenta que o ajuda a manter-se conforme e a evitar
+  sanções — o que aproxima (sem substituir) a expetativa razoável.</li>
+</ul>
+<p><strong>Conclusão do teste de finalidade:</strong> existe interesse legítimo identificado e lícito.
+✅ (com a ressalva de que "legítimo" não basta — ver testes 2 e 3).</p>
+<hr />
+<h2 id="2-teste-de-necessidade-o-tratamento-e-necessario-para-esse-interesse">2. Teste de necessidade — <em>o tratamento é necessário para esse interesse?</em></h2>
+<ul>
+<li><strong>O contacto é necessário para o fim?</strong> Sim, na medida em que apresentar o serviço a
+  quem pode beneficiar dele exige, por natureza, comunicar com essa entidade.</li>
+<li><strong>Há via menos intrusiva que atinja o mesmo?</strong> Em larga medida, <strong>sim</strong> — e isso é
+  determinante. O motor primário do CheckAL é <strong>consentimento (widget) + parcerias</strong>,
+  que atingem o objetivo (angariar clientes) <strong>sem reutilizar dados de terceiros</strong>. O
+  contacto a frio é, portanto, um <strong>acelerador marginal</strong>, não a única via. Isto
+  <strong>enfraquece</strong> o argumento de necessidade: se o fim se alcança sem o tratamento, a
+  necessidade é fraca.</li>
+<li><strong>Minimização.</strong> Quando usado, o tratamento limita-se ao <strong>estritamente necessário</strong>:
+  só endereços <strong>genéricos</strong>, só o dado de contacto e os dados públicos do AL, sem
+  criação de perfis nem enriquecimento de dados.</li>
+<li><strong>Escala reduzida.</strong> O universo-alvo do Passo 0 é de apenas <strong>~1.914 empresas</strong>
+  (coletivas com email genérico distinto) — uma pequena fração do universo nacional de AL.
+  A escala reduzida <strong>REFORÇA o teste de proporcionalidade</strong>: o tratamento é limitado e não
+  massivo, o que atenua o impacto sobre os titulares.</li>
+</ul>
+<p><strong>Conclusão do teste de necessidade:</strong> o contacto é <em>apto</em> ao fim, mas <strong>não
+estritamente necessário</strong> — existem alternativas menos intrusivas (consentimento,
+parcerias). A necessidade é <strong>fraca</strong>, o que sobrecarrega o teste de equilíbrio.
+🟡</p>
+<hr />
+<h2 id="3-teste-de-equilibrio-o-interesse-prevalece-sobre-os-direitos-e-a-expectativa-razoavel-do-titular">3. Teste de equilíbrio — <em>o interesse prevalece sobre os direitos e a expectativa razoável do titular?</em></h2>
+<p>Este é o teste decisivo, e é onde a CNPD dá <strong>peso preponderante à expectativa
+razoável</strong> do titular no momento em que os dados foram disponibilizados
+(Diretriz CNPD 2022/1; princípio da lealdade, art. 5.º/1/a).</p>
+<p><strong>Fatores a favor do responsável:</strong>
+- O serviço é <strong>relevante para a atividade</strong> do destinatário (não é oferta aleatória).
+- O contacto é a um <strong>endereço genérico</strong> de pessoa coletiva, de <strong>baixa intrusão</strong> na
+  esfera pessoal (não há, em regra, uma pessoa singular diretamente visada).
+- <strong>Opt-out de 1 clique</strong> e cessação imediata reduzem o impacto e devolvem o controlo.
+- Comunicação B2B, num contexto profissional, alinhada com a Lei 41/2004 (opt-out para
+  pessoa coletiva).</p>
+<p><strong>Fatores contra (a favor do titular):</strong>
+- <strong>Expectativa razoável.</strong> Quem publica um contacto num <strong>registo regulatório</strong> (o RNAL
+  é um registo de cumprimento legal, não uma montra comercial) <strong>não espera</strong> receber
+  marketing de terceiros com base nesse dado. O parecer é explícito: esta expectativa é
+  <strong>decisiva</strong> e <strong>enfraquece</strong> o interesse legítimo.
+- <strong>Reutilização de finalidade.</strong> O dado foi disponibilizado para transparência do
+  registo, não para prospeção — há tensão com a limitação das finalidades (art. 5.º/1/b),
+  atenuada, mas não eliminada, por se tratar de pessoa coletiva e endereço genérico.
+- <strong>Novo responsável.</strong> A Cosmic Oasis não tem relação prévia com o titular; a ausência
+  de relação é, segundo a própria CNPD, o fator que mais pesa nas queixas.</p>
+<p><strong>Salvaguardas que reequilibram (ver §4):</strong> limitação a genéricos, opt-out 1 clique,
+nota art. 14.º na 1.ª mensagem, cruzamento DGC + supressão, exclusão absoluta de
+singulares, arranque semi-manual.</p>
+<p><strong>Conclusão do teste de equilíbrio:</strong> o equilíbrio é <strong>apertado</strong>. Para pessoa coletiva
+em endereço genérico, com todas as salvaguardas, é <strong>defensável</strong> — mas <strong>não isento de
+risco</strong>, sobretudo pela expectativa razoável. Sem as salvaguardas, o interesse legítimo
+<strong>não</strong> prevalece. 🟡</p>
+<hr />
+<h2 id="4-salvaguardas-exigidas-cumulativas-condicao-de-licitude">4. Salvaguardas exigidas (cumulativas, condição de licitude)</h2>
+<p>Nenhum envio ocorre sem <strong>todas</strong> estas salvaguardas ativas:</p>
+<ol>
+<li><strong>Só endereços genéricos</strong> de pessoa coletiva. Filtro que exclui, por desenho,
+   pessoas singulares/ENI e endereços nominais (<code>nome.apelido@</code>).</li>
+<li><strong>Opt-out de 1 clique</strong> em cada mensagem, com cessação <strong>imediata</strong> e honrada.</li>
+<li><strong>Nota de informação do art. 14.º</strong> na primeira comunicação
+   (<code>ANEXO1-nota-informacao-corrigida.md</code>) — sem afirmações não confirmadas sobre a
+   base de publicidade do email.</li>
+<li><strong>Cruzamento prévio</strong> com a <strong>DGC</strong> (Lista de Oposição) e com a <strong>lista de supressão</strong>
+   interna antes de cada envio.</li>
+<li><strong>Lista de supressão</strong> conservada em separado e por mais tempo (prova de que a
+   oposição é honrada); prospects que não interagem eliminados em <strong>6 meses</strong>.</li>
+<li><strong>Sem perfis, sem enriquecimento, sem venda</strong> de dados; minimização.</li>
+<li><strong>Arranque semi-manual</strong> — o dono revê e dispara; nunca automático de início.</li>
+<li><strong>Transferências internacionais resolvidas</strong> (Resend/EUA com DPF ou SCC) antes de
+   ativar; <strong>nunca</strong> enviar dados de prospects à API de IA.</li>
+<li><strong>Cadência limitada:</strong> no máximo <strong>1 apresentação + 1 follow-up</strong> por destinatário;
+   depois, <strong>supressão automática</strong> (sem novos contactos).</li>
+</ol>
+<hr />
+<h2 id="5-conclusao-condicional-honesta">5. Conclusão condicional (honesta)</h2>
+<p><strong>Resultado da LIA:</strong> para o <strong>único</strong> subconjunto avaliado — <strong>pessoa coletiva,
+endereço genérico, com todas as salvaguardas do §4</strong> — o interesse legítimo é
+<strong>defensável</strong>, mas o desfecho é de <strong>risco gerido, não eliminado</strong>: o ponto frágil é a
+<strong>expectativa razoável</strong> do titular perante a reutilização de um registo regulatório, à
+qual a CNPD dá peso preponderante.</p>
+<p>Por isso, e em coerência com o parecer:</p>
+<ul>
+<li>O contacto a frio é <strong>exceção documentada, não a espinha dorsal</strong> da aquisição. O
+  motor é <strong>consentimento + parcerias</strong> (risco eliminado na raiz).</li>
+<li>Esta LIA <strong>só</strong> autoriza o arranque quando <strong>todos</strong> os pré-requisitos do parecer
+  estiverem cumpridos (<code>LEGAL-PARECER-DECISOES.md</code> §4), com destaque para:
+  1. <strong>Base legal da fonte do email confirmada</strong> documentalmente e validada por advogado
+     (<code>LEGAL-PARECER-DECISOES.md</code> §2 / parecer §2) — enquanto não confirmada, <strong>cold OFF</strong>;
+  2. <strong>Transferências internacionais</strong> resolvidas (parecer §6);
+  3. <strong>Contratos de subcontratação (art. 28.º)</strong> celebrados.</li>
+<li><strong>Fora de âmbito, sempre:</strong> email a pessoa identificada em pessoa coletiva
+  (<code>nome@</code>, risco moderado — excluído por desenho) e <strong>qualquer</strong> contacto a frio a
+  pessoa singular/ENI (proibido — art. 13.º-A da Lei 41/2004).</li>
+</ul>
+<blockquote>
+<p><strong>Revisão.</strong> Reavaliar esta LIA se mudar a base legal da fonte, o volume/escala, as
+salvaguardas ou a postura da CNPD. Registar a decisão final (go/no-go) e a data.</p>
+</blockquote>
+<hr />
+<h2 id="6-referencias">6. Referências</h2>
+<ul>
+<li><code>Parecer_jurista/Parecer_CheckAL_RGPD.md</code> (6/7/2026) — Tabela de decisão por canal
+  (canal 2), matriz de riscos, questões Q9/Q10.</li>
+<li><code>LEGAL-PARECER-DECISOES.md</code> §2 (base legal da fonte), §4 (pré-requisitos), §6
+  (subcontratantes/transferências).</li>
+<li><code>REGISTO-ATIVIDADES-ART30.md</code> — Atividade F (NÃO ATIVA).</li>
+<li><code>ANEXO1-nota-informacao-corrigida.md</code> — nota de informação (art. 14.º).</li>
+<li>RGPD art. 6.º/1/f, considerando 47; art. 5.º/1/a e b; art. 21.º/2 (oposição absoluta).</li>
+<li>Lei 41/2004, art. 13.º-A; Diretriz CNPD 2022/1 (marketing direto).</li>
+</ul></section>
+<section class="sec" id="s11"><h2 class="sub">Minuta 5 — Nota de informação (art. 14.º)</h2><h1 id="nota-de-informacao-do-art-14o-rgpd-versao-corrigida-do-anexo-1-do-briefing">Nota de informação do art. 14.º RGPD (versão corrigida do «Anexo 1» do briefing)</h1>
+<blockquote>
+<p><strong>MINUTA — a validar por advogado/EPD antes de publicar.</strong></p>
+<p>Nota de informação a titulares cujos dados <strong>não foram recolhidos junto deles</strong>
+(art. 14.º RGPD), a incluir na <strong>primeira comunicação</strong> de prospeção. Substitui o
+Anexo 1 do <code>BRIEFING-JURISTA-RGPD.md</code>, corrigindo-o à luz do
+<code>Parecer_jurista/Parecer_CheckAL_RGPD.md</code> (resposta Q7).</p>
+<p><strong>Uso condicional:</strong> só se aplica se/quando a prospeção a frio for ativada
+(<code>CHECKAL_PARECER_RGPD_OK=True</code>) e <strong>apenas</strong> a endereços genéricos de pessoa coletiva
+(<code>geral@</code>) — ver <code>LIA-COLD-GERAL.md</code> e <code>LEGAL-PARECER-DECISOES.md</code> §4.</p>
+<p><strong>Nota:</strong> Versão carta arquivada internamente — canal <strong>provavelmente inviável</strong> (a morada
+do titular não é pública). Mantém-se apenas a <strong>Versão A (email)</strong>.</p>
+</blockquote>
+<hr />
+<h2 id="o-que-mudou-face-ao-anexo-1-do-briefing-e-porque">O que mudou face ao Anexo 1 do briefing (e porquê)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Correção</th>
+<th>Fundamento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Removida</strong> a frase <em>"público por imposição do art. 10.º do DL 128/2014"</em></td>
+<td>A base de publicidade legal do <strong>email</strong> está por confirmar (parecer §2). Uma nota que invoca publicidade legal inexistente violaria a lealdade e transparência (art. 5.º/1/a). Só regressa <strong>se e quando</strong> confirmada documentalmente e validada por advogado.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Acrescentadas</strong> as <strong>categorias de dados</strong> tratados</td>
+<td>Falta apontada na Q7 do parecer.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Acrescentadas</strong> as <strong>categorias de destinatários/subcontratantes</strong></td>
+<td>Falta apontada na Q7.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Acrescentada</strong> referência às <strong>transferências internacionais</strong> (quando aplicável)</td>
+<td>Falta apontada na Q7.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Acrescentada</strong> a menção ao <strong>EPD</strong> (se/quando designado)</td>
+<td>Falta apontada na Q7. Por defeito não há EPD obrigatório — ponto de contacto: privacidade@checkal.pt.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Conservação 12 → 6 meses</strong> para quem não interage</td>
+<td>Parecer Q9: 12 meses está no limite; 6 meses é mais seguro. Lista de supressão à parte.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Fonte descrita como <strong>"RNAL, do Turismo de Portugal"</strong> sem afirmar base de publicidade</td>
+<td>Descreve a origem (dever do art. 14.º/2/f) sem alegação jurídica não confirmada.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Enquanto o §2 (base legal da fonte) não estiver confirmado, a nota <strong>não afirma</strong> que
+qualquer campo é público por imposição legal — limita-se a identificar a <strong>origem</strong>
+dos dados. Se a confirmação chegar, poderá acrescentar-se a base legal exata da fonte.</p>
+</blockquote>
+<hr />
+<h2 id="versao-a-rodape-para-email-frio-a-geral-de-pessoa-coletiva">Versão A — Rodapé para <strong>email frio</strong> (a <code>geral@</code> de pessoa coletiva)</h2>
+<blockquote>
+<p><strong>Tratamento de dados (RGPD).</strong> Este contacto é-lhe dirigido pela <strong>Cosmic Oasis, Lda.</strong>
+(NIPC [NIPC], [morada]), responsável pelo tratamento, que opera o serviço <strong>CheckAL</strong>.
+Obtivemos o endereço de contacto da sua entidade no <strong>Registo Nacional de Alojamento
+Local (RNAL)</strong>, do Turismo de Portugal, e tratamo-lo com fundamento no <strong>interesse
+legítimo</strong> (art. 6.º/1/f do RGPD) — exclusivamente para lhe apresentar um serviço
+relevante para a atividade de Alojamento Local.
+<strong>Dados tratados:</strong> endereço de email de contacto e dados públicos do estabelecimento
+de AL (n.º de registo, concelho, estado).
+<strong>Destinatários:</strong> prestadores que atuam por nossa conta (envio de email e alojamento
+técnico), vinculados por contrato; alguns podem estar fora do Espaço Económico Europeu,
+caso em que asseguramos garantias adequadas (Cláusulas-Tipo da UE ou mecanismo
+equivalente). Não vendemos os seus dados.
+<strong>Os seus direitos:</strong> pode aceder, retificar, apagar, limitar e <strong>opor-se</strong> a novos
+contactos, gratuitamente e a todo o tempo — a oposição ao marketing é <strong>absoluta</strong>
+(art. 21.º/2). Basta clicar em <strong>cancelar</strong> neste email, ou escrever para
+<strong>privacidade@checkal.pt</strong> (ponto de contacto de proteção de dados). Se não interagir,
+eliminamos os seus dados de prospeção em <strong>6 meses</strong>.
+<strong>Mais informação:</strong> política completa em <strong>checkal.pt/privacidade</strong>. Pode reclamar à
+<strong>CNPD</strong> (cnpd.pt).</p>
+</blockquote>
+<p><em>(Cada email inclui, além desta nota, a identificação clara do remetente e o link de
+opt-out de 1 clique — Lei 41/2004, art. 13.º-A.)</em></p>
+<hr />
+<h2 id="elementos-do-art-14o-cobertos-checklist">Elementos do art. 14.º cobertos (checklist)</h2>
+<table>
+<thead>
+<tr>
+<th>Art. 14.º</th>
+<th>Elemento</th>
+<th>Onde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>14.º/1/a</td>
+<td>Identidade e contactos do responsável</td>
+<td>Cosmic Oasis, Lda., NIPC [NIPC], [morada]</td>
+</tr>
+<tr>
+<td>14.º/1/b</td>
+<td>Contactos do EPD (se houver)</td>
+<td>privacidade@checkal.pt (ponto de contacto; EPD [a decidir])</td>
+</tr>
+<tr>
+<td>14.º/1/c</td>
+<td>Finalidades e base jurídica</td>
+<td>Prospeção do CheckAL; interesse legítimo (6.º/1/f)</td>
+</tr>
+<tr>
+<td>14.º/2/b</td>
+<td>Interesses legítimos prosseguidos</td>
+<td>Apresentar serviço relevante à atividade de AL</td>
+</tr>
+<tr>
+<td>14.º/1/e</td>
+<td>Destinatários / categorias</td>
+<td>Subcontratantes de email, alojamento, expedição</td>
+</tr>
+<tr>
+<td>14.º/1/f</td>
+<td>Transferências internacionais e garantias</td>
+<td>Fora do EEE → SCC/mecanismo equivalente</td>
+</tr>
+<tr>
+<td>14.º/2/a</td>
+<td>Prazo de conservação</td>
+<td>6 meses sem interação; supressão à parte</td>
+</tr>
+<tr>
+<td>14.º/2/c</td>
+<td>Direitos do titular (acesso, retificação, apagamento, limitação, oposição)</td>
+<td>Sim, com oposição absoluta (21.º/2)</td>
+</tr>
+<tr>
+<td>14.º/2/e</td>
+<td>Direito de reclamação à autoridade</td>
+<td>CNPD (cnpd.pt)</td>
+</tr>
+<tr>
+<td>14.º/2/f</td>
+<td>Origem dos dados</td>
+<td>RNAL / Turismo de Portugal</td>
+</tr>
+<tr>
+<td>14.º/3/a</td>
+<td>Timing (na 1.ª comunicação)</td>
+<td>Sim — esta nota vai na primeira mensagem (email)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Não afirmado (por confirmar):</strong> que qualquer campo do RNAL — em especial o email — é
+de <strong>publicação obrigatória por lei</strong>. Só se acrescenta após confirmação documental e
+validação por advogado (parecer §2). Nenhuma isenção do art. 14.º/5 se aplica: como
+contactamos diretamente, informamos nesse contacto.</p>
+</blockquote></section>
+</body></html>

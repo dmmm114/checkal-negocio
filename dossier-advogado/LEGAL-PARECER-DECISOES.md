@@ -15,8 +15,8 @@
 
 ## 2. Base legal da fonte do email — DESACOPLADA do canal `geral@`
 > **CORREÇÃO (2.ª opinião, 9/7):** o email frio a coletiva **NÃO depende da fonte do
-> endereço**. A sua base é a **Lei 41/2004, art. 13.º-B** (regime de *opt-out* para pessoa
-> coletiva) + **cruzamento DGC** + **identificação do remetente e *opt-out* em cada
+> endereço**. A sua base é a **Lei 41/2004, art. 13.º-A (opt-out coletivas) + art. 13.º-B
+> (listas/DGC)** + **cruzamento DGC** + **identificação do remetente e *opt-out* em cada
 > mensagem**. A origem do endereço (portal, `list_RNAL`, art. 10.º) **não** é o que legitima
 > o envio — deixa por isso de ser o "bloqueador crítico" do cold a `geral@`.
 
@@ -45,8 +45,8 @@ um **problema contratual/administrativo autónomo** do RGPD (pode existir mesmo 
 cumprido, e vice-versa). Confirmar antes de usar o webservice em produção.
 
 → **Ação do Diogo/advogado:** (a) CONTRA-verificar o art. 10.º n.º 5; (b) confirmar termos de
-licença do `list_RNAL`; (c) o cold a coletiva assenta na Lei 41/2004 art. 13.º-B + §4, não na
-fonte do email.
+licença do `list_RNAL`; (c) o cold a coletiva assenta na Lei 41/2004 art. 13.º-A (opt-out
+coletivas) + art. 13.º-B (listas/DGC) + §4, não na fonte do email.
 
 ## 3. Requisitos do widget de consentimento (implementados / a implementar)
 - ✅ Checkbox **não pré-marcada** e **não condicionada** ao relatório.
@@ -58,7 +58,7 @@ fonte do email.
 
 ## 4. Pré-requisitos para alguma vez ligar `CHECKAL_PARECER_RGPD_OK=True` (cold `geral@`)
 Todos, cumulativos:
-1. **Regime de comunicações verificado** — Lei 41/2004 **art. 13.º-B** (*opt-out* coletiva) + cruzamento **DGC** + identificação/opt-out por mensagem. (A fonte do email **deixou de ser** o bloqueador — §2; falta só a CONTRA-verificação do art. 10.º n.º 5 e dos termos de licença do `list_RNAL`.)
+1. **Regime de comunicações verificado** — Lei 41/2004 **art. 13.º-A (opt-out coletivas) + art. 13.º-B (listas/DGC)** + cruzamento **DGC** + identificação/opt-out por mensagem. (A fonte do email **deixou de ser** o bloqueador — §2; falta só a CONTRA-verificação do art. 10.º n.º 5 e dos termos de licença do `list_RNAL`.)
 2. **LIA escrita** (avaliação de interesse legítimo) arquivada.
 3. **Anexo 1 corrigido** (§5) — sem afirmações falsas.
 4. **Contratos art. 28.º** com subcontratantes + **mecanismo de transferência internacional** resolvido (§6).
@@ -127,19 +127,21 @@ mecanismo de transferência serem requisito **já**. Registar art. 30.º — ver
 ## 7. Atividade reservada (Lei 10/2024) — guarda no produto
 Os alertas mantêm-se **informação genérica + monitorização de estado** (lado seguro); **nunca**
 conclusões jurídicas individualizadas. Linguagem **condicional e genérica** + disclaimer **"informação,
-não aconselhamento jurídico"** em cada alerta (já previsto na camada IA / templates). Gerar **Anexo 3**
-(alerta de exemplo) para o advogado fechar esta análise.
+não aconselhamento jurídico"** em cada alerta (já previsto na camada IA / templates). O **Anexo 3**
+(alerta de exemplo) **já foi gerado e consta deste dossier** (secção «Exemplo real de alerta») — fecha a
+análise da atividade reservada.
 
 ## 8. Responsabilidade / T&C
 **CORREÇÃO (2.ª opinião):** um teto a **49 €** seria **derrubado em tribunal** — funciona como
 **quase-exclusão** face ao dano previsível (perda do registo AL = dezenas de milhares de €).
-**Subir o teto a um MÚLTIPLO:** o **maior** de (a) **12–24 meses de mensalidades** ou (b) o
-**limite por sinistro da apólice E&O**, sem excluir **dolo/negligência grave/danos a pessoas**
-nem os direitos imperativos do consumo. A proteção real é o **seguro RC profissional (E&O)** +
-descrever o serviço como **ferramenta informativa, não garantia de conformidade**. Já aplicado
-em `termos.html §6`; a **checklist da apólice E&O** (exclusões de conteúdo IA; claims-made +
-data retroativa; sinistros em série; território PT; custos de defesa dentro/fora do limite) fica
-em comentário interno nesse template.
+**Teto aplicado hoje:** o **total pago nos 24 meses** anteriores ao facto, sem excluir
+**dolo/negligência grave/danos a pessoas** nem os direitos imperativos do consumo, e descrevendo
+o serviço como **ferramenta informativa, não garantia de conformidade**. **Já aplicado em
+`termos.html §6`.** **Decisão fechada:** enquanto **não houver apólice E&O contratada, não se
+promete seguro nos T&C**; quando a **E&O** for contratada, acrescenta-se a **perna do limite por
+sinistro da apólice** (a proteção real). A **checklist da apólice E&O** (exclusões de conteúdo IA;
+claims-made + data retroativa; sinistros em série; território PT; custos de defesa dentro/fora do
+limite) fica em **comentário interno** nesse template, para quando a apólice for cotada.
 
 ## 9. Plano de 4 semanas (do parecer) — quem faz o quê
 - **S1:** CONTRA-verificar a fonte + termos de licença do `list_RNAL` (§2) · corrigir Anexo 1 · montar registo art. 30.º · **EPD: decisão = NÃO designar hoje** (defensável por não ser "larga escala") — mas **documentar a avaliação escrita + gatilhos de reavaliação** e **nomear responsável interno de privacidade** (ver `REGISTO-ATIVIDADES-ART30.md §0`). *(eu: docs; tu/advogado: §2)*

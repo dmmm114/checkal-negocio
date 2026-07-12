@@ -1,4 +1,4 @@
-# Anexo 1 (corrigido) — Nota de informação do art. 14.º RGPD
+# Nota de informação do art. 14.º RGPD (versão corrigida do «Anexo 1» do briefing)
 
 > **MINUTA — a validar por advogado/EPD antes de publicar.**
 >
@@ -10,6 +10,9 @@
 > **Uso condicional:** só se aplica se/quando a prospeção a frio for ativada
 > (`CHECKAL_PARECER_RGPD_OK=True`) e **apenas** a endereços genéricos de pessoa coletiva
 > (`geral@`) — ver `LIA-COLD-GERAL.md` e `LEGAL-PARECER-DECISOES.md` §4.
+>
+> **Nota:** Versão carta arquivada internamente — canal **provavelmente inviável** (a morada
+> do titular não é pública). Mantém-se apenas a **Versão A (email)**.
 
 ---
 
@@ -58,34 +61,6 @@ opt-out de 1 clique — Lei 41/2004, art. 13.º-A.)*
 
 ---
 
-## Versão B — Parágrafo para **carta postal** (a pessoa singular / ENI)
-
-> **Nota importante sobre os seus dados (RGPD).** Esta carta é-lhe enviada pela
-> **Cosmic Oasis, Lda.** (NIPC [NIPC], [morada]), responsável pelo tratamento e operadora
-> do serviço **CheckAL**. Obtivemos o seu nome e morada no **Registo Nacional de
-> Alojamento Local (RNAL)**, do Turismo de Portugal, e tratamo-los com fundamento no
-> **interesse legítimo** (art. 6.º/1/f do RGPD), unicamente para lhe apresentar um serviço
-> relevante para a sua atividade de Alojamento Local.
-> **Dados tratados:** o seu nome, a morada para onde enviamos esta carta e os dados
-> públicos do seu estabelecimento de AL (n.º de registo, concelho, estado). **Não** lhe
-> enviamos email a frio.
-> **Destinatários:** prestadores que atuam por nossa conta (impressão/expedição e
-> alojamento técnico), vinculados por contrato; quando algum esteja fora do Espaço
-> Económico Europeu, asseguramos garantias adequadas (Cláusulas-Tipo da UE ou mecanismo
-> equivalente). Não vendemos os seus dados.
-> **Os seus direitos:** pode **opor-se** a receber novos contactos e ainda aceder,
-> retificar, apagar e limitar os seus dados, gratuitamente e a todo o tempo — a oposição
-> ao marketing é **absoluta** (art. 21.º/2). Faça-o em **checkal.pt/remover** ou escrevendo
-> para **privacidade@checkal.pt** (ponto de contacto de proteção de dados). Se não
-> interagir, eliminamos os seus dados de prospeção em **6 meses**.
-> **Mais informação:** política completa em **checkal.pt/privacidade**. Pode reclamar à
-> **CNPD** (cnpd.pt).
-
-*(A carta postal a singular/ENI só avança com esta LIA arquivada e Anexo 1 corrigido —
-`LEGAL-PARECER-DECISOES.md` §1. Fica fora da Lei 41/2004, mas dentro do RGPD.)*
-
----
-
 ## Elementos do art. 14.º cobertos (checklist)
 
 | Art. 14.º | Elemento | Onde |
@@ -100,7 +75,7 @@ opt-out de 1 clique — Lei 41/2004, art. 13.º-A.)*
 | 14.º/2/c | Direitos do titular (acesso, retificação, apagamento, limitação, oposição) | Sim, com oposição absoluta (21.º/2) |
 | 14.º/2/e | Direito de reclamação à autoridade | CNPD (cnpd.pt) |
 | 14.º/2/f | Origem dos dados | RNAL / Turismo de Portugal |
-| 14.º/3/a | Timing (na 1.ª comunicação) | Sim — esta nota vai na primeira mensagem/carta |
+| 14.º/3/a | Timing (na 1.ª comunicação) | Sim — esta nota vai na primeira mensagem (email) |
 
 > **Não afirmado (por confirmar):** que qualquer campo do RNAL — em especial o email — é
 > de **publicação obrigatória por lei**. Só se acrescenta após confirmação documental e

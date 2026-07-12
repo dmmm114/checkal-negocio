@@ -21,8 +21,8 @@
   publica o **"endereço eletrónico do titular da exploração"** e a **validade do seguro
   obrigatório**.
 - **DESACOPLAR do canal `geral@`:** o email frio a **pessoa coletiva** assenta na **Lei
-  41/2004, art. 13.º-B** (*opt-out*) + cruzamento **DGC** + identificação/opt-out por
-  mensagem — **NÃO na fonte do endereço**. O ponto (i) serve a **redação da nota do art.
+  41/2004, art. 13.º-A (opt-out coletivas) + art. 13.º-B (listas/DGC)** + cruzamento **DGC** +
+  identificação/opt-out por mensagem — **NÃO na fonte do endereço**. O ponto (i) serve a **redação da nota do art.
   14.º** e os **tratamentos que tocam pessoas singulares** (onde o email É dado pessoal), não
   a legitimação do cold a coletiva.
 - **Pedido (CONTRA-verificação, não confirmação de raiz):** que **nada** no consolidado
@@ -68,9 +68,9 @@
 | Documento | Ficheiro | O que validar |
 |---|---|---|
 | Política de privacidade | `checkal/app/web/templates/privacidade.html` | finalidades por canal, bases legais, direitos (oposição absoluta art. 21.º), conservação 6 m, transferências, CNPD |
-| Termos & Condições | `checkal/app/web/templates/termos.html` | serviço = ferramenta informativa (não garantia/aconselhamento); **teto de responsabilidade = múltiplo (o maior de 12–24 meses de mensalidades OU o limite por sinistro da apólice E&O)**, não excluir dolo/negligência grave/danos a pessoas; **checklist E&O** em comentário interno (exclusões de conteúdo IA; claims-made + data retroativa; sinistros em série; território PT; custos de defesa dentro/fora do limite) |
+| Termos & Condições | `checkal/app/web/templates/termos.html` | serviço = ferramenta informativa (não garantia/aconselhamento); **teto = total pago nos 24 meses anteriores** (NÃO se promete a apólice ainda inexistente; a perna do limite por sinistro acrescenta-se quando a E&O for contratada); não excluir dolo/negligência grave/danos a pessoas; **checklist E&O** em comentário interno (exclusões de conteúdo IA; claims-made + data retroativa; sinistros em série; território PT; custos de defesa) |
 | Registo de atividades (art. 30.º) | `REGISTO-ATIVIDADES-ART30.md` | completude das entradas por atividade; cold marcado NÃO ATIVO |
-| LIA (interesse legítimo) — cold `geral@` | `LIA-COLD-GERAL.md` | o teste de equilíbrio aguenta? salvaguardas suficientes? |
+| LIA (interesse legítimo) — cold `geral@` | `LIA-COLD-GERAL.md` | **validar para PRESERVAR A OPÇÃO (ativação não iminente):** o teste de equilíbrio aguenta? salvaguardas (universo ~1.914 empresas; cadência 1 + 1 follow-up; DGC) suficientes? |
 | Nota de informação (art. 14.º) | `ANEXO1-nota-informacao-corrigida.md` | versão **email** (art. 10.º n.º 5 já CONFIRMADO — falta só CONTRA-verificar); a **carta a singular é provavelmente inviável na prática** — o art. 10.º/5 publica o **email, não a morada** do titular, e a morada pública é a do **estabelecimento**, raramente a residência |
 
 ---
@@ -78,15 +78,16 @@
 ## 3. Decisões/aconselhamento que pedimos
 - Necessidade (ou não) de **EPD/DPO** designado. **A nossa decisão:** não designar hoje
   (defensável por não ser "larga escala"), mas **documentámos a avaliação escrita + gatilhos de
-  reavaliação** (ingestão da base RNAL completa; X mil subscritores; novas categorias de dados) e
+  reavaliação** (ingestão da base RNAL completa; **5.000 subscritores**; novas categorias de dados) e
   **nomeámos responsável interno de privacidade** — ver `REGISTO-ATIVIDADES-ART30.md §0`. Confirmam?
 - **Prazo de conservação** de prospects: propomos **6 meses** (supressão à parte) — confirmam?
-- A **cláusula de limitação de responsabilidade** — agora um **múltiplo** (o maior de 12–24 meses
-  de mensalidades OU o limite por sinistro da apólice E&O), não um teto a 49 € (seria abusivo) — +
-  o **seguro RC profissional (E&O)** como proteção real. Ver a **checklist da apólice E&O** em
-  comentário interno de `termos.html §6`.
-- A **recomendação estratégica**: assentar em **consentimento (widget) + parcerias** (é o nosso plano) —
-  confirmam que é o caminho, e o cold só como acelerador limitado a `geral@`/opt-out?
+- A **cláusula de limitação de responsabilidade** — teto = **total pago nos 24 meses anteriores**
+  (não um teto a 49 €, que seria abusivo). **Decidimos NÃO prometer nos T&C um seguro que ainda não
+  temos** — a perna do limite por sinistro e a menção à E&O acrescentam-se quando a apólice for
+  contratada. Ver a **checklist da apólice E&O** em comentário interno de `termos.html §6`.
+- A **recomendação estratégica**: assentar em **consentimento (widget) + parcerias** (é o motor).
+  O cold `geral@` fica como **opção a preservar** (campanha única e curada, semi-manual, ativação não
+  iminente) — pedimos que valide a LIA para **preservar a opção**, não para ativar já. Confirmam o caminho?
 
 ---
 

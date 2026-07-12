@@ -1,4 +1,4 @@
-# Anexo 1 (corrigido) — Nota de informação do art. 14.º RGPD
+# Nota de informação do art. 14.º RGPD (versão corrigida do «Anexo 1» do briefing)
 
 > **MINUTA — a validar por advogado/EPD antes de publicar.**
 >

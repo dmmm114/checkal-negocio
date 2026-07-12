@@ -4,7 +4,7 @@
 > **Documento histórico — prevalecem as minutas corrigidas (conservação 6 meses, Anexo 1 corrigido).**
 
 > **Para:** [Jurista/Advogado de proteção de dados]
-> **De:** [Diogo Mendes], Cosmic Oasis, Lda., NIPC [—]
+> **De:** Diogo Mendes, Cosmic Oasis, Lda., NIPC [—]
 > **Objetivo:** decisão **go / no-go** sobre uma estratégia de aquisição de clientes, antes de a executar. Não procuramos um parecer académico extenso — procuramos **respostas objetivas, por canal, que nos digam o que podemos e não podemos fazer, e sob que condições.**
 > **O que mais valorizamos:** não queremos só que nos diga o que está mal — queremos que nos **aponte a melhor alternativa e a decisão mais segura** para atingirmos o objetivo (angariar clientes proprietários de AL) **sem problemas jurídicos**. Preferimos um "não faça X, faça Y assim" a um "X é arriscado". Se houver um caminho 100% seguro, mesmo que mais lento, é esse que queremos conhecer e adotar.
 > **Formato de resposta ideal:** a **recomendação** da Secção D-bis + a **tabela de decisão** da Secção D. Se preencher esses dois, resolve o essencial.

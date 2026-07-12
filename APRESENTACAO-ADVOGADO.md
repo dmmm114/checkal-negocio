@@ -2,8 +2,8 @@
 **Cosmic Oasis, Lda.** · NIPC [NIPC] · [morada] · privacidade@checkal.pt
 
 **Para:** [Dr.(a). / nome — ver nota sobre o destinatário no fim]
-**De:** [Diogo Mendes], em representação da Cosmic Oasis, Lda.
-**Data:** [data]
+**De:** Diogo Mendes, em representação da Cosmic Oasis, Lda.
+**Data:** 10 de julho de 2026
 **Assunto:** Validação formal de 3 pontos + revisão de 5 minutas — RGPD e aquisição de clientes (serviço CheckAL)
 
 ---
@@ -79,8 +79,10 @@ Como os alertas são **gerados por IA**, um template correto não basta. Impleme
 
 ---
 
-## 5. Anexos (o dossier)
-1. Nota de decisão jurídica recebida · 2. Briefing factual · 3. Documento de decisões implementadas · 4. As 5 minutas da secção 3 · 5. **Anexo 3 — alerta real** (para 2(iii)).
+## 5. Documentos deste dossier
+Além desta carta, o dossier reproduz: a **nota de decisão jurídica recebida**, o **briefing factual (histórico)**, o **exemplo real de alerta** (para 2(iii)), o **documento de decisões implementadas** e as **5 minutas** da secção 3.
+
+**Nota de leitura (numeração de anexos):** os documentos reproduzidos referem-se aos seus **próprios anexos internos** — «**Anexo 1**» designa a **Nota de informação do art. 14.º** (que aqui é a **Minuta 5**); «**Anexo 2**», o **texto de consentimento do funil** (reproduzido dentro do briefing); «**Anexo 3**», o **exemplo de alerta**. Esse **Anexo 3 consta deste dossier** (a nota de decisão, redigida antes, dava-o por não fornecido) — é o documento a que se refere a análise da atividade reservada em 2(iii).
 
 ## 6. O que só a Cosmic Oasis fornece
 **NIPC** e **morada** da sociedade (`[NIPC]`/`[morada]` nas minutas).
@@ -89,6 +91,6 @@ Como os alertas são **gerados por IA**, um template correto não basta. Impleme
 Pretendemos: confirmação/correção de 2(i)–(iii); as 5 minutas validadas; aconselhamento nas decisões da secção 4, sob a forma de **recomendação clara**. **Nota sobre o destinatário:** o ponto (ii) exige conforto em **proteção de dados/transferências**; o ponto (iii) exige conforto em **deontologia da Ordem** — pode justificar dois pareceres. Agradecemos indicação de honorários para (i) esta validação e (ii) a eventual finalização/assinatura.
 
 Com os melhores cumprimentos,
-[Diogo Mendes] — Cosmic Oasis, Lda.
+Diogo Mendes — Cosmic Oasis, Lda.
 
 > *Redações legais verificadas na versão consolidada (PGDL) à data; para citação externa, confirmar no DRE.*

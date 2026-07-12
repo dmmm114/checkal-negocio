@@ -25,7 +25,7 @@
 | **Serviço operado** | CheckAL — monitorização de Alojamento Local |
 | **Contacto de proteção de dados** | privacidade@checkal.pt |
 | **Encarregado de Proteção de Dados (EPD/DPO)** | **Não designado por defeito** — designação **não obrigatória** hoje (não há tratamento em larga escala de categorias especiais nem monitorização sistemática em larga escala como atividade principal na aceção do art. 37.º/1/b e /c). Avaliação escrita e gatilhos de reavaliação **no bloco abaixo**. Ponto de contacto: privacidade@checkal.pt |
-| **Responsável interno de privacidade** | `[Diogo Mendes]` (pessoa concreta na Cosmic Oasis, Lda.), contactável em privacidade@checkal.pt — assegura o cumprimento, mantém este registo e reavalia os gatilhos de EPD |
+| **Responsável interno de privacidade** | `Diogo Mendes` (pessoa concreta na Cosmic Oasis, Lda.), contactável em privacidade@checkal.pt — assegura o cumprimento, mantém este registo e reavalia os gatilhos de EPD |
 | **Autoridade de controlo** | Comissão Nacional de Proteção de Dados (CNPD) — cnpd.pt |
 
 > **Nota sobre a fonte RNAL.** Onde uma atividade obtém dados do Registo Nacional de

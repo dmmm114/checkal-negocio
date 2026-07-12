@@ -9,7 +9,7 @@
 
 Exmo.(a) Senhor(a) Dr.(a) [nome],
 
-O meu nome é [Diogo Mendes], da **Cosmic Oasis, Lda.** (NIPC [NIPC], [morada — com acentos, ex.: Avenida São Tomé, …]). Estamos a preparar o lançamento do **CheckAL** — um serviço privado de subscrição que monitoriza, para cada Alojamento Local, o estado do registo no RNAL, a validade do seguro obrigatório e os regulamentos municipais, enviando alertas ao proprietário.
+O meu nome é Diogo Mendes, da **Cosmic Oasis, Lda.** (NIPC [NIPC], [morada — com acentos, ex.: Avenida São Tomé, …]). Estamos a preparar o lançamento do **CheckAL** — um serviço privado de subscrição que monitoriza, para cada Alojamento Local, o estado do registo no RNAL, a validade do seguro obrigatório e os regulamentos municipais, enviando alertas ao proprietário.
 
 Já temos uma **nota de decisão jurídica** sobre a estratégia de aquisição de clientes, mas precisamos de **validação formal por advogado inscrito** antes de ir para produção. Fizemos o trabalho de casa — preparámos toda a documentação e a nossa própria leitura — para tornar a consulta objetiva e poupar tempo (e honorários).
 
@@ -27,5 +27,5 @@ Uma nota que pode ser útil: o ponto das transferências pede competência em **
 Agradecia que me indicasse **disponibilidade para uma reunião** e uma **estimativa de honorários** para (i) esta validação e (ii) a eventual finalização/assinatura da documentação.
 
 Com os melhores cumprimentos,
-[Diogo Mendes]
+Diogo Mendes
 Cosmic Oasis, Lda. · [telefone] · [email]

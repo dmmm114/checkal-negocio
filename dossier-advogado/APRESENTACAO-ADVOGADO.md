@@ -2,8 +2,8 @@
 **Cosmic Oasis, Lda.** · NIPC [NIPC] · [morada] · privacidade@checkal.pt
 
 **Para:** [Dr.(a). / nome — ver nota sobre o destinatário no fim]
-**De:** [Diogo Mendes], em representação da Cosmic Oasis, Lda.
-**Data:** [data]
+**De:** Diogo Mendes, em representação da Cosmic Oasis, Lda.
+**Data:** 10 de julho de 2026
 **Assunto:** Validação formal de 3 pontos + revisão de 5 minutas — RGPD e aquisição de clientes (serviço CheckAL)
 
 ---
@@ -30,7 +30,7 @@ Verificámos o texto consolidado (PGDL, versão vigente): o **art. 10.º, n.º 5
 - **contra-verificação** dessa redação e que o webservice `list_RNAL` não exponha mais do que o site público ("nomeadamente" é enumeração exemplificativa);
 - verificação dos **termos de licença/reutilização** do webservice (regime de dados abertos, **Lei 68/2021**, + condições do TdP) — uma violação aí é problema contratual/administrativo autónomo do RGPD.
 
-**Importante (desacoplamento):** este ponto **não é o portão do canal `geral@`**. A licitude do email frio a pessoa coletiva assenta na **Lei 41/2004, art. 13.º-B (opt-out)** + consulta à lista da DGC + identificação do remetente e opt-out em cada mensagem — não na fonte do endereço. O ponto (i) releva sobretudo para a **redação da nota do art. 14.º** e para qualquer tratamento que toque dados de **singulares**. E mantemos presente: **publicação obrigatória ≠ licença de reutilização** — a análise de compatibilidade de finalidades (arts. 5.º/1/b e 6.º/4) mantém-se para singulares/ENI (o próprio art. 10.º/3 remete para a Lei 58/2019).
+**Importante (desacoplamento):** este ponto **não é o portão do canal `geral@`**. A licitude do email frio a pessoa coletiva assenta na **Lei 41/2004, art. 13.º-A (opt-out coletivas) + art. 13.º-B (listas/DGC)** + consulta à lista da DGC + identificação do remetente e opt-out em cada mensagem — não na fonte do endereço. O ponto (i) releva sobretudo para a **redação da nota do art. 14.º** e para qualquer tratamento que toque dados de **singulares**. E mantemos presente: **publicação obrigatória ≠ licença de reutilização** — a análise de compatibilidade de finalidades (arts. 5.º/1/b e 6.º/4) mantém-se para singulares/ENI (o próprio art. 10.º/3 remete para a Lei 58/2019).
 
 ### (ii) Transferências internacionais e subcontratação (arts. 28.º e 44.º e ss.)
 Subcontratantes fora do EEE: **Resend** (email, EUA), **Anthropic** (IA dos alertas, EUA), **Stripe** (pagamentos, EUA/IE — via Stripe Payments Europe, IE). No EEE: TOConline (PT), IfThenPay (PT), Hetzner (DE).
@@ -47,7 +47,7 @@ A Lei 10/2024 (que revogou a Lei 49/2004) reserva a **consulta jurídica** — "
 - **sinalização genérica, não aplicação individualizada;**
 - **encaminhamento, não prescrição** (só remetemos para a fonte oficial ou para um profissional).
 
-Como os alertas são **gerados por IA**, um template correto não basta: implementámos **guardrails técnicos** — um filtro automático que **reprova e substitui por um formato factual de recurso** qualquer alerta com linguagem prescritiva/individualizada — mais **versionamento dos templates** como prova. O dossier de defesa fica: templates versionados + guardrails + disclaimers ("informação, não aconselhamento jurídico") + o vosso enquadramento. Anexamos um **alerta real** (Anexo 3) para validar a linguagem concreta.
+Como os alertas são **gerados por IA**, um template correto não basta. Implementámos uma **defesa em camadas** (e não afirmamos um filtro perfeito — a defesa é a soma delas): **(1)** um **template restritivo** que instrui o modelo a citar a fonte e a não concluir juridicamente; **(2)** um **filtro automático** que deteta os padrões prescritivos/individualizados **mais comuns** — deveres, prazos e valores dirigidos ao cliente ("tens de…", "para efetuares…", "tens N dias para…") — e os **substitui por um formato factual de recurso**, atribuindo os factos à fonte ("segundo o regulamento, os titulares dispõem de…"); **(3)** **amostragem humana periódica**; **(4)** **versionamento dos templates** como prova. Anexamos um **alerta real** (Anexo 3) para validar a linguagem concreta.
 
 ---
 
@@ -55,9 +55,9 @@ Como os alertas são **gerados por IA**, um template correto não basta: impleme
 | # | Documento | O que validar |
 |---|---|---|
 | 1 | Política de Privacidade | finalidades/bases por canal, direitos (oposição absoluta art. 21.º/2), conservação 6 m, transferências, CNPD |
-| 2 | Termos & Condições | serviço = ferramenta informativa (não garantia/aconselhamento); **cap de responsabilidade elevado a um múltiplo de anuidades** alinhado com a apólice; sem excluir dolo/negligência grave/danos a pessoas |
+| 2 | Termos & Condições | serviço = ferramenta informativa (não garantia/aconselhamento); **teto de responsabilidade = total pago nos 24 meses anteriores** (a perna do limite da apólice acrescenta-se quando a E&O for contratada); sem excluir dolo/negligência grave/danos a pessoas; cláusulas de **alterações** e de **suspensão por falta de pagamento** |
 | 3 | Registo de Atividades (art. 30.º) | entradas por atividade; dupla qualificação Stripe/IfThenPay; IA como tratamento de dados pessoais de clientes ENI |
-| 4 | LIA — cold `geral@` | o teste de equilíbrio aguenta? salvaguardas suficientes? |
+| 4 | LIA — cold `geral@` | **validar para preservar a opção (ativação não iminente):** o teste de equilíbrio aguenta? as salvaguardas — universo ~1.914 empresas, cadência 1 apresentação + 1 follow-up, cruzamento DGC — são suficientes? |
 | 5 | Nota de Informação (art. 14.º) | conteúdo mínimo; base do art. 10.º só após (i) |
 
 ---
@@ -65,8 +65,8 @@ Como os alertas são **gerados por IA**, um template correto não basta: impleme
 ## 4. Decisões em que pedimos aconselhamento
 - **EPD/DPO:** propomos **não designar formalmente** (defensável por não ser "grande escala": ~centenas/poucos milhares de subscritores), nomeando responsável interno + apoio externo, e **documentando a avaliação + gatilhos de reavaliação** (ingestão da base RNAL completa; N mil subscritores; novas categorias). Confirma esta posição?
 - **Conservação:** **6 meses** para prospects sem interação; lista de supressão à parte, minimizada, sem prazo (art. 21.º). Confirma?
-- **Limitação de responsabilidade + E&O:** aceitamos que um cap de 49 € seria derrubado; propomos um **múltiplo (12–24 meses de mensalidades, no mínimo)** alinhado com o **limite por sinistro da apólice**. Pedimos ainda leitura da apólice E&O quanto a: **exclusões de conteúdo gerado por IA**, regime *claims-made* + data retroativa, **sinistros em série**, território Portugal, e custos de defesa dentro/fora do limite.
-- **Estratégia:** confirmamos **consentimento + parcerias** como motor; `geral@` (opt-out) apenas como acelerador limitado, se o Passo 0 e (i) o justificarem.
+- **Limitação de responsabilidade + E&O:** aceitamos que um cap de 49 € seria derrubado; o teto fica no **total pago nos 24 meses anteriores** e **não prometemos, para já, um seguro que ainda não temos**. Ao contratar a **E&O**, acrescentaremos a perna do limite por sinistro — e pedimos desde já orientação sobre a apólice: **exclusões de conteúdo gerado por IA** (decisivo), *claims-made* + data retroativa, **sinistros em série**, território Portugal, custos de defesa dentro/fora do limite.
+- **Estratégia:** confirmamos **consentimento + parcerias** como motor. O `geral@` (opt-out) fica como **opção a preservar** — uma eventual **campanha única e curada** às ~1.914 empresas, semi-manual e depois desligada; **ativação não iminente**. Pedimos que valide a LIA para **preservar essa opção**, não para a ativar já.
 
 **A nossa leitura por canal (para confirmar/corrigir):**
 | Canal | Leitura |
@@ -79,8 +79,10 @@ Como os alertas são **gerados por IA**, um template correto não basta: impleme
 
 ---
 
-## 5. Anexos (o dossier)
-1. Nota de decisão jurídica recebida · 2. Briefing factual · 3. Documento de decisões implementadas · 4. As 5 minutas da secção 3 · 5. **Anexo 3 — alerta real** (para 2(iii)).
+## 5. Documentos deste dossier
+Além desta carta, o dossier reproduz: a **nota de decisão jurídica recebida**, o **briefing factual (histórico)**, o **exemplo real de alerta** (para 2(iii)), o **documento de decisões implementadas** e as **5 minutas** da secção 3.
+
+**Nota de leitura (numeração de anexos):** os documentos reproduzidos referem-se aos seus **próprios anexos internos** — «**Anexo 1**» designa a **Nota de informação do art. 14.º** (que aqui é a **Minuta 5**); «**Anexo 2**», o **texto de consentimento do funil** (reproduzido dentro do briefing); «**Anexo 3**», o **exemplo de alerta**. Esse **Anexo 3 consta deste dossier** (a nota de decisão, redigida antes, dava-o por não fornecido) — é o documento a que se refere a análise da atividade reservada em 2(iii).
 
 ## 6. O que só a Cosmic Oasis fornece
 **NIPC** e **morada** da sociedade (`[NIPC]`/`[morada]` nas minutas).
@@ -89,6 +91,6 @@ Como os alertas são **gerados por IA**, um template correto não basta: impleme
 Pretendemos: confirmação/correção de 2(i)–(iii); as 5 minutas validadas; aconselhamento nas decisões da secção 4, sob a forma de **recomendação clara**. **Nota sobre o destinatário:** o ponto (ii) exige conforto em **proteção de dados/transferências**; o ponto (iii) exige conforto em **deontologia da Ordem** — pode justificar dois pareceres. Agradecemos indicação de honorários para (i) esta validação e (ii) a eventual finalização/assinatura.
 
 Com os melhores cumprimentos,
-[Diogo Mendes] — Cosmic Oasis, Lda.
+Diogo Mendes — Cosmic Oasis, Lda.
 
 > *Redações legais verificadas na versão consolidada (PGDL) à data; para citação externa, confirmar no DRE.*

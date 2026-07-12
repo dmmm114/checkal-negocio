@@ -1,7 +1,8 @@
 # CheckAL — Estado do projeto (fonte de verdade)
 
-> Atualizado 09/07/2026. Software **100% construído e testado**, tudo **LIVE-GATED** (nada
-> envia/cobra/liga sem as chaves do dono). **1202 testes verdes, 0 skips.** ~16k linhas de app.
+> Atualizado 12/07/2026. Software **100% construído e testado**, tudo **LIVE-GATED** (nada
+> envia/cobra/liga sem as chaves do dono). **1344 testes verdes, 0 skips.** ~16k linhas de app.
+> **Dossier do advogado v2 fechado** (`dossier-advogado/DOSSIER-CheckAL.html`) — ver secções no fim.
 
 ## O que está construído
 
@@ -29,6 +30,31 @@ granular, conservação 6 meses, oposição absoluta, serviço = ferramenta info
 `REGISTO-ATIVIDADES-ART30.md`, `LIA-COLD-GERAL.md`, `ANEXO1-nota-informacao-corrigida.md`,
 `ANEXO3-alerta-exemplo.html`. **Bloqueador do cold quase fechado:** forte indício de que o art. 10.º
 n.º 5 torna o email público — falta confirmação documental do advogado.
+
+## Dossier do advogado (v2 — fechado 12/07/2026)
+Artefacto final: **`dossier-advogado/DOSSIER-CheckAL.html`** (HTML único print-ready → Imprimir→PDF) +
+`EMAIL-ADVOGADO.md` (email de acompanhamento). Pede ao advogado: validar **3 pontos** (fonte do email/
+art. 10.º n.º 5; transferências internacionais; atividade reservada via alerta) + **5 minutas** + **4
+decisões**. Fechado em 2 rondas do consultor + verificação adversária (workflow 3 lentes + 1 leitura):
+- **Numeração de anexos:** NENHUMA secção usa "Anexo N" (colidia com a numeração interna dos docs
+  reproduzidos). Nota-ponte na carta §5 mapeia «Anexo 1»=nota de informação (=Minuta 5), «Anexo 2»=
+  consentimento, «Anexo 3»=alerta. **O alerta é o Anexo 3 canónico.**
+- **Responsabilidade/seguro:** teto = **total pago nos 24 meses (fixo)**; **ZERO promessa de seguro E&O**
+  em todo o dossier; parágrafo E&O condicional removido de `termos.html §6`; §8 de
+  `LEGAL-PARECER-DECISOES.md` reescrito para bater certo (era "12–24 meses / apólice E&O já aplicada").
+- Placeholders `[NIPC]`/`[morada]`/`[telefone]` + nome do advogado = só o dono preenche. `[data]` das
+  minutas fica de propósito (guarda de publicação = sinaliza rascunho pendente).
+- **Reprodução:** `scratchpad/montar_dossier.py` (renderiza as minutas via TestClient + junta os .md;
+  precisa de `pip install markdown`).
+
+## Canal cold — confirmado construído e desligado (12/07/2026)
+O FDS 6 já implementa TODA a verificação; **NADA a construir**. Triplo gate em `pode_enviar_frio()`:
+(1) `pode_enviar_frio_global()` (parecer + modo-teste OFF + SMTP cold), (2) núcleo compliance (coletiva
+5/6 + genérico + descarte de singular), (3) oposição DGC/opt-out. Copy já com disclaimer + rodapé RGPD
+(fonte, base legal, conservação 12m, direitos, CNPD) + opt-out 1-clique, sobre **getcheckal.com** (nunca
+Resend). **196 testes do canal verdes; gate fechado por omissão.** O prefixo `geral@` NÃO é o filtro — o
+filtro é o NIF (5/6); o portão é o advogado (reutilização do RNAL). Para disparar falta EXTERNO:
+advogado→`CHECKAL_PARECER_RGPD_OK=true`, E&O, credenciais `COLD_SMTP_*`, feed DGC real.
 
 ## Descobertas empíricas (esta sessão)
 - **Fatia endereçável cold:** 7.779 registos / ~1.914 empresas (10,7%) — nicho, complementar.

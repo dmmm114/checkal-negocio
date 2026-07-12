@@ -37,26 +37,46 @@ Subscrição (49€/ano) que vigia o registo RNAL, o seguro obrigatório e os re
 - Página individual `rnt.turismodeportugal.pt/rnt/rnal.aspx?nr=X` é server-rendered (GET simples chega; tem bloco do seguro RC)
 - Mercado: 120k+ registos, ~70k titulares; 56% singular/44% coletiva; multi-AL detêm 56% dos registos; Açores fora do RNAL (fase 2)
 
-## Estado da construção (a 09/07/2026)
+## Estado da construção (a 12/07/2026)
 
 **Software 100% construído** — ver `ESTADO-DO-PROJETO.md` (fonte de verdade). Núcleo de compliance
 + FDS 1–6 + swap TOConline + Fase 1 (website consent-first, emails, dashboard admin) + deploy
-(docker/caddy/systemd) + runbook. **1202 testes verdes, 0 skips.** Tudo LIVE-GATED (nada envia/cobra
+(docker/caddy/systemd) + runbook. **1344 testes verdes, 0 skips.** Tudo LIVE-GATED (nada envia/cobra
 sem chaves). Marca final aplicada (✓AL badge). Parecer RGPD recebido e traduzido em decisões
 (`LEGAL-PARECER-DECISOES.md`): cold DESLIGADO por código; motor = consent-first + parcerias.
 
 - ✅ [feito] Parecer jurista RGPD · amostra 200 páginas seguro (`ANALISE-SEGURO.md`: 64,5% em
   falta/caducado) · construção dos 6 sprints · marca · G4 resolvido empiricamente (breaker entrega
   cancelamentos reais) · lista nacional de 289 concelhos.
+- ✅ [feito 12/07] **Dossier do advogado v2 fechado** (`dossier-advogado/DOSSIER-CheckAL.html`,
+  HTML print-ready → Imprimir→PDF; + `EMAIL-ADVOGADO.md`). 2 rondas do consultor + verificação
+  adversária (workflow 3 lentes) resolvidas: colisão de "Anexo N" eliminada (rótulos de secção sem
+  número; nota-ponte mapeia a numeração interna dos docs reproduzidos; **alerta = Anexo 3 canónico**),
+  §8 de `LEGAL-PARECER-DECISOES.md` reescrito (teto = total pago em 24 meses **fixo**, SEM promessa de
+  seguro E&O), parágrafo E&O removido de `termos.html §6`, nome/data preenchidos. Falta ao dono:
+  `[NIPC]`/`[morada]`/`[telefone]` + nome do advogado. Reprodução: `scratchpad/montar_dossier.py`.
+- ✅ [confirmado 12/07] **Canal cold já 100% construído e HARD-GATED** (FDS 6): filtro NIF 5/6 +
+  genérico + descarte de singulares + opt-out DGC + triplo gate (`pode_enviar_frio_global()=False`
+  por omissão) + domínio separado getcheckal.com. **196 testes do canal verdes.** NADA a construir;
+  o que falta para disparar é EXTERNO (advogado, E&O, chaves SMTP getcheckal.com, feed DGC). O sistema
+  **não materializa lista de envio nem faz scraping** (RATIONALE: "só filtro + prova"). A fatia do
+  prefixo `geral@` não é o filtro — o filtro é o NIF; o portão continua a ser o advogado (reutilização).
 
 ## Próximos passos (o que falta — depende do dono)
 
-0. 🚦 [BLOQUEANTE cold] Advogado VALIDA as minutas (`REGISTO-ATIVIDADES-ART30.md`, `LIA-COLD-GERAL.md`,
-   `ANEXO1-*`, privacidade/T&C) + os 3 pontos do parecer (base legal do email/art.10.º n.º 5 —
-   forte indício de que É público; transferências internacionais; atividade reservada via `ANEXO3`)
+0. 🚦 [BLOQUEANTE cold] Advogado VALIDA o **dossier v2 (PRONTO** — `dossier-advogado/DOSSIER-CheckAL.html`
+   + `EMAIL-ADVOGADO.md`): as 5 minutas + os 3 pontos do parecer (base legal do email/art.10.º n.º 5 —
+   forte indício de que É público; transferências internacionais; atividade reservada via alerta) + 4
+   decisões. Falta ao dono: preencher `[NIPC]`/`[morada]`/`[telefone]` + nome do advogado, escolher, enviar.
 1. Contas/chaves (RUNBOOK-GO-LIVE §0): TOConline (série→sequence_id), Stripe, Anthropic, Resend+DNS;
    registar chekal.pt/checal.pt/getcheckal.com; cotar seguro E&O; angariar 3–5 contabilistas-piloto
 2. Submeter marca INPI (nominativa CHECKAL 35/42/45 + mista com o logo)
 3. Deploy (RUNBOOK-GO-LIVE) → ensaio test→live (pagar-me a mim próprio + fatura AT) → ligar consent-first
 4. Lançamento M1: gatilhos Porto (1.413 cancelamentos) e Funchal (regulamento) como conteúdo→widget
 5. [pós-validação e §4 do parecer] só então ligar o cold `geral@` (opt-out, semi-manual). Singulares: nunca.
+
+> **Próximo BUILD (não depende do advogado):** motor de aquisição **consent-first** — páginas-gatilho
+> Porto/Funchal + pilares SEO + página de parceiros + one-pager PDF (spec pronta e parqueada em
+> `checkal/app/SPEC-FASE1-AQUISICAO.md`). **Decisão do dono pendente (12/07):** (A) ligar o cold ao
+> admin como botão-único *gated* vs (B) construir já o consent-first — **recomendação: B** (traz receita
+> sem esperar pelo advogado; o cold está tão pronto quanto pode estar sem ele).

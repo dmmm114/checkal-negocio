@@ -70,6 +70,10 @@ cujo incumprimento os expõe a coimas e ao cancelamento do registo.
 - **Minimização.** Quando usado, o tratamento limita-se ao **estritamente necessário**:
   só endereços **genéricos**, só o dado de contacto e os dados públicos do AL, sem
   criação de perfis nem enriquecimento de dados.
+- **Escala reduzida.** O universo-alvo do Passo 0 é de apenas **~1.914 empresas**
+  (coletivas com email genérico distinto) — uma pequena fração do universo nacional de AL.
+  A escala reduzida **REFORÇA o teste de proporcionalidade**: o tratamento é limitado e não
+  massivo, o que atenua o impacto sobre os titulares.
 
 **Conclusão do teste de necessidade:** o contacto é *apto* ao fim, mas **não
 estritamente necessário** — existem alternativas menos intrusivas (consentimento,
@@ -132,6 +136,8 @@ Nenhum envio ocorre sem **todas** estas salvaguardas ativas:
 7. **Arranque semi-manual** — o dono revê e dispara; nunca automático de início.
 8. **Transferências internacionais resolvidas** (Resend/EUA com DPF ou SCC) antes de
    ativar; **nunca** enviar dados de prospects à API de IA.
+9. **Cadência limitada:** no máximo **1 apresentação + 1 follow-up** por destinatário;
+   depois, **supressão automática** (sem novos contactos).
 
 ---
 

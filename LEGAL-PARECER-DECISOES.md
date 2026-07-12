@@ -127,19 +127,21 @@ mecanismo de transferência serem requisito **já**. Registar art. 30.º — ver
 ## 7. Atividade reservada (Lei 10/2024) — guarda no produto
 Os alertas mantêm-se **informação genérica + monitorização de estado** (lado seguro); **nunca**
 conclusões jurídicas individualizadas. Linguagem **condicional e genérica** + disclaimer **"informação,
-não aconselhamento jurídico"** em cada alerta (já previsto na camada IA / templates). Gerar **Anexo 3**
-(alerta de exemplo) para o advogado fechar esta análise.
+não aconselhamento jurídico"** em cada alerta (já previsto na camada IA / templates). O **Anexo 3**
+(alerta de exemplo) **já foi gerado e consta deste dossier** (secção «Exemplo real de alerta») — fecha a
+análise da atividade reservada.
 
 ## 8. Responsabilidade / T&C
 **CORREÇÃO (2.ª opinião):** um teto a **49 €** seria **derrubado em tribunal** — funciona como
 **quase-exclusão** face ao dano previsível (perda do registo AL = dezenas de milhares de €).
-**Subir o teto a um MÚLTIPLO:** o **maior** de (a) **12–24 meses de mensalidades** ou (b) o
-**limite por sinistro da apólice E&O**, sem excluir **dolo/negligência grave/danos a pessoas**
-nem os direitos imperativos do consumo. A proteção real é o **seguro RC profissional (E&O)** +
-descrever o serviço como **ferramenta informativa, não garantia de conformidade**. Já aplicado
-em `termos.html §6`; a **checklist da apólice E&O** (exclusões de conteúdo IA; claims-made +
-data retroativa; sinistros em série; território PT; custos de defesa dentro/fora do limite) fica
-em comentário interno nesse template.
+**Teto aplicado hoje:** o **total pago nos 24 meses** anteriores ao facto, sem excluir
+**dolo/negligência grave/danos a pessoas** nem os direitos imperativos do consumo, e descrevendo
+o serviço como **ferramenta informativa, não garantia de conformidade**. **Já aplicado em
+`termos.html §6`.** **Decisão fechada:** enquanto **não houver apólice E&O contratada, não se
+promete seguro nos T&C**; quando a **E&O** for contratada, acrescenta-se a **perna do limite por
+sinistro da apólice** (a proteção real). A **checklist da apólice E&O** (exclusões de conteúdo IA;
+claims-made + data retroativa; sinistros em série; território PT; custos de defesa dentro/fora do
+limite) fica em **comentário interno** nesse template, para quando a apólice for cotada.
 
 ## 9. Plano de 4 semanas (do parecer) — quem faz o quê
 - **S1:** CONTRA-verificar a fonte + termos de licença do `list_RNAL` (§2) · corrigir Anexo 1 · montar registo art. 30.º · **EPD: decisão = NÃO designar hoje** (defensável por não ser "larga escala") — mas **documentar a avaliação escrita + gatilhos de reavaliação** e **nomear responsável interno de privacidade** (ver `REGISTO-ATIVIDADES-ART30.md §0`). *(eu: docs; tu/advogado: §2)*
