@@ -1,0 +1,10 @@
+[Unit]
+Description=CheckAL agente maestro-digest
+[Timer]
+OnCalendar=*-*-* 07:50
+RandomizedDelaySec=180
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@maestro-digest.service
+[Install]
+WantedBy=timers.target

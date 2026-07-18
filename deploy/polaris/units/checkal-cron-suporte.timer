@@ -1,0 +1,9 @@
+[Unit]
+Description=CheckAL cron suporte
+[Timer]
+OnCalendar=*-*-* *:0/15
+RandomizedDelaySec=120
+Persistent=true
+Unit=checkal-cron@suporte.service
+[Install]
+WantedBy=timers.target

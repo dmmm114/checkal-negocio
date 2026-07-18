@@ -1,0 +1,10 @@
+[Unit]
+Description=CheckAL agente gestor-suporte
+[Timer]
+OnCalendar=*-*-* *:0/15
+RandomizedDelaySec=180
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@gestor-suporte.service
+[Install]
+WantedBy=timers.target

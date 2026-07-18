@@ -9,6 +9,10 @@ venv/
 # Segredos e ambiente — NUNCA versionar
 .env
 checkal/.env
+deploy/polaris/agente.env
+
+# Runtime local dos agentes (locks, PAUSA_LLM, saídas efémeras)
+deploy/polaris/run/
 
 # Dados locais / snapshots RNAL (podem conter dados pessoais — fora do git)
 checkal/data/*

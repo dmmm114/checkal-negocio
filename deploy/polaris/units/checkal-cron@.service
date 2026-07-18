@@ -1,0 +1,25 @@
+# CRONS DETERMINISTAS do backbone (varrimento|dre|dunning|suporte|backup|token)
+# — variante POLARIS nativa (sem docker), tudo isolado no projeto. LIVE-GATED:
+# sem credenciais no agente.env, nada envia/liga (seams devolvem None).
+[Unit]
+Description=CheckAL cron %i (backbone determinista)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=diogo
+Group=diogo
+WorkingDirectory=/home/diogo/checkal-polaris/checkal
+EnvironmentFile=/home/diogo/checkal-polaris/deploy/polaris/agente.env
+MemoryMax=1024M
+MemoryHigh=768M
+CPUQuota=60%
+TasksMax=64
+OOMScoreAdjust=600
+OOMPolicy=kill
+TimeoutStartSec=7200
+ExecStart=/home/diogo/checkal-polaris/checkal/.venv/bin/python manage.py %i
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true

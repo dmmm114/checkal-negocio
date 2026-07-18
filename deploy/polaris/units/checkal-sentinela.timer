@@ -1,0 +1,10 @@
+[Unit]
+Description=CheckAL agente sentinela
+[Timer]
+OnCalendar=*-*-* 06,12,18,23:40
+RandomizedDelaySec=180
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@sentinela.service
+[Install]
+WantedBy=timers.target

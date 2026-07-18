@@ -86,6 +86,10 @@ fi
 
 cd "${BASE}" || { hc_ping fail "BASE ${BASE} inexistente"; exit 1; }
 
+# O agente corre `python manage.py …` (allowlist): garante que `python` resolve
+# para o venv do projeto (deps + nome `python` disponível sob systemd).
+export PATH="${BASE}/.venv/bin:${PATH}"
+
 # 6) Passo DETERMINISTA por instância (antes do LLM; o LLM nunca faz spawn).
 PROMPT_FILE=""
 ARG_LLM=""

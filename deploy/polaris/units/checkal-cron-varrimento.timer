@@ -1,0 +1,9 @@
+[Unit]
+Description=CheckAL cron varrimento
+[Timer]
+OnCalendar=Mon,Thu 03:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=checkal-cron@varrimento.service
+[Install]
+WantedBy=timers.target

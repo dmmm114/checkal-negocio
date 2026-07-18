@@ -1,0 +1,9 @@
+[Unit]
+Description=CheckAL cron dunning
+[Timer]
+OnCalendar=*-*-* 09:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=checkal-cron@dunning.service
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,33 @@
+# AGENTES do enxame CheckAL — variante POLARIS, tudo isolado no projeto.
+# Instância (%i): maestro-digest | maestro-governanca | angariador | gestor |
+#                 gestor-suporte | sentinela
+# Cgroups NATIVOS: o claude -p corre como filho direto DENTRO desta unit.
+[Unit]
+Description=CheckAL agente %i (single-shot, headless)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/home/diogo/checkal-polaris/deploy/polaris/run/%i.lock
+
+[Service]
+Type=oneshot
+User=diogo
+Group=diogo
+WorkingDirectory=/home/diogo/checkal-polaris/checkal
+EnvironmentFile=/home/diogo/checkal-polaris/deploy/polaris/agente.env
+# --- TETOS DE RAM/CPU (o que resolve o OOM do Polaris) ---
+MemoryMax=1200M
+MemoryHigh=900M
+CPUQuota=60%
+TasksMax=64
+OOMScoreAdjust=800
+OOMPolicy=kill
+# --- TEMPO ---
+RuntimeMaxSec=900
+TimeoutStartSec=960
+ExecStartPre=/usr/bin/install -d /home/diogo/checkal-polaris/deploy/polaris/run
+ExecStart=/home/diogo/checkal-polaris/deploy/bin/correr-agente.sh %i
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+NoNewPrivileges=true
+PrivateTmp=true

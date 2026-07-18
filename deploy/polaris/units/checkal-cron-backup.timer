@@ -1,0 +1,9 @@
+[Unit]
+Description=CheckAL cron backup
+[Timer]
+OnCalendar=*-*-* 02:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=checkal-cron@backup.service
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=CheckAL cron dre
+[Timer]
+OnCalendar=*-*-* 07:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=checkal-cron@dre.service
+[Install]
+WantedBy=timers.target

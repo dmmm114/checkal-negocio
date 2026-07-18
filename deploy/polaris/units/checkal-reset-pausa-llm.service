@@ -1,0 +1,6 @@
+[Unit]
+Description=CheckAL — reset da flag PAUSA_LLM (teto diário de custo)
+[Service]
+Type=oneshot
+User=diogo
+ExecStart=/usr/bin/rm -f /home/diogo/checkal-polaris/deploy/polaris/run/PAUSA_LLM

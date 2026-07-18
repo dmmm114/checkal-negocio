@@ -1,0 +1,9 @@
+[Unit]
+Description=CheckAL cron token
+[Timer]
+OnCalendar=*-*-* 00/3:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=checkal-cron@token.service
+[Install]
+WantedBy=timers.target

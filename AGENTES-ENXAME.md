@@ -127,6 +127,17 @@ de getcheckal.com; (5) feed DGC (`CHECKAL_LISTA_DGC_PATH`); (6) seguro E&O antes
 - **`RuntimeMaxSec` + `Type=oneshot`:** o systemd ignora `RuntimeMaxSec` em oneshot; o campo
   mantém-se por paridade com a spec, e o limite EFETIVO é `TimeoutStartSec=960` + o `timeout 840`
   do wrapper (dupla guarda).
+- **Cartas a singulares (decisão do dono, 18/07/2026):** email/SMS a singulares continua a
+  exigir opt-in (nunca a frio), mas o canal POSTAL é admissível — e os dados necessários
+  (nome do titular + morada) **já ficam retidos internamente no espelho `registos`** (o
+  mirror lícito do RNAL). Nada se perde por o canal estar parqueado: quando o dono o ativar,
+  o backbone regenera o lote de cartas (`ProspetoCarta`) a partir do espelho, sem scraping e
+  sem esses campos passarem alguma vez pelo contexto dos agentes LLM (minimização mantida).
+- **Instalação isolada no Polaris:** tudo (código, venv, BD, prompts, segredos, locks,
+  PAUSA_LLM) vive dentro da pasta do projeto; o symlink `/home/diogo/checkal-polaris` dá às
+  units um caminho sem espaços, e `deploy/polaris/` traz as units nativas + `agente.env`
+  (não versionado) + `instalar.sh`. Só os ficheiros de unit (ponteiros, sem segredos) são
+  copiados para `/etc/systemd/system`.
 
 ## 9. Instalação e validação de cgroups
 
