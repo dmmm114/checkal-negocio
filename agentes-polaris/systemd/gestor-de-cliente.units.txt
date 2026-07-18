@@ -1,0 +1,82 @@
+# =========================================================================
+# /etc/systemd/system/checkal-gestor.service
+# Agente GESTOR-DE-CLIENTE — invocacao single-shot, headless, do Claude CLI.
+# =========================================================================
+[Unit]
+Description=CheckAL — agente Gestor-de-Cliente (retencao/LTV, single-shot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=checkal
+Group=checkal
+WorkingDirectory=/home/diogo/projetos/checkal
+# Segredos MINIMOS: sem chaves de envio/Stripe/IMAP; o agente so le a BD e escreve a fila.
+Environment=CHECKAL_MODO_TESTE=true
+Environment=GESTOR_CAP_RELATORIOS_POR_PASSAGEM=200
+EnvironmentFile=/etc/checkal/gestor.env        # DB_URL (sqlite read-mostly), ANTHROPIC_API_KEY
+# --- Restricao dura de RAM (ja houve OOM kill): este agente e sacrificavel ---
+MemoryMax=2G
+MemoryHigh=1536M
+CPUQuota=80%
+OOMScoreAdjust=700
+TasksMax=64
+TimeoutStartSec=900
+# --- Endurecimento: sem shell livre, FS quase todo read-only ---
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/diogo/projetos/checkal/data /var/lib/checkal/scratch
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+# ExecStart: o wrapper corre `claude -p` com allowlist restrito e o prompt do agente.
+# O wrapper (scripts/gestor_run.sh) fixa: --allowedTools "Bash(python manage.py gestor *)"
+#   --permission-mode default  (NUNCA --dangerously-skip-permissions)
+#   --append-system-prompt @/etc/checkal/gestor.prompt.md
+ExecStart=/home/diogo/projetos/checkal/scripts/gestor_run.sh
+# Recuperacao: uma re-tentativa em caso de saida != 0.
+OnFailure=checkal-gestor-retry.service
+
+[Install]
+WantedBy=multi-user.target
+
+# =========================================================================
+# /etc/systemd/system/checkal-gestor.timer
+# =========================================================================
+[Unit]
+Description=CheckAL — dispara o Gestor-de-Cliente diariamente (08:30, antes do dunning das 09:00)
+
+[Timer]
+OnCalendar=*-*-* 08:30:00
+RandomizedDelaySec=300
+Persistent=true
+AccuracySec=1min
+Unit=checkal-gestor.service
+
+[Install]
+WantedBy=timers.target
+
+# =========================================================================
+# scripts/gestor_run.sh  (o unico ExecStart; e o que impoe o allowlist)
+# =========================================================================
+# #!/usr/bin/env bash
+# set -euo pipefail
+# cd /home/diogo/projetos/checkal
+# exec claude -p \
+#   --model claude-sonnet-5 \
+#   --allowedTools 'Bash(python manage.py gestor snapshot*)' \
+#                  'Bash(python manage.py gestor compor-relatorio*)' \
+#                  'Bash(python manage.py gestor listar-fila*)' \
+#                  'Bash(python manage.py gestor enqueue*)' \
+#   --permission-mode default \
+#   --append-system-prompt "$(cat /etc/checkal/gestor.prompt.md)" \
+#   'Corre a passagem diaria do Gestor-de-Cliente conforme o teu system prompt.'
+#
+# NOTA: o subcomando `manage.py gestor` e o unico ponto de escrita e recusa
+# qualquer alvo que nao seja a tabela fila_revisao; o linter (app.linter.vet_texto)
+# corre dentro do `enqueue`. A tabela fila_revisao e o modulo app.linter sao
+# dependencias a construir como parte deste agente (ver outputs/tools_permissions).

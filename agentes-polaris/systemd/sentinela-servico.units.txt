@@ -1,0 +1,59 @@
+# /etc/systemd/system/checkal-sentinela.service
+[Unit]
+Description=CheckAL SENTINELA-SERVICO (watchdog de entrega do servico, single-shot)
+After=network-online.target
+Wants=network-online.target
+# Descorrelacionado: NAO depende do maestro nem dos crons de dominio.
+
+[Service]
+Type=oneshot
+User=checkal
+Group=checkal
+WorkingDirectory=/opt/checkal/checkal
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/opt/checkal/env/sentinela.env   # ANTHROPIC_API_KEY, SQLITE ro path, TELEGRAM_* (read), HEALTHCHECKS_* (read); SEM chaves SMTP/Stripe/TOConline
+# Entrypoint: coletores deterministas (SQLite read-only) -> facts-bundle -> claude -p single-shot que adjudica e escreve a fila.
+ExecStart=/opt/checkal/checkal/.venv/bin/python manage.py sentinela
+# (manage.py sentinela: (1) app.sentinela.coletar() -> $SENTINELA_FACTS no scratchpad; (2) invoca
+#  `claude -p --model sonnet --allowedTools "" --add-dir /opt/checkal/scratchpad --input-file <prompt+facts>`
+#  com a ligacao SQLite read-only e o unico seam de escrita app.sentinela.registar_achado; (3) corre o linter
+#  sobre os achados a escalar. Sob CHECKAL_MODO_TESTE nada de rede externa alem da API Anthropic.)
+
+# --- Contencao dura de RAM/CPU (Polaris ja sofreu OOM kill; nenhum processo persistente) ---
+MemoryMax=1500M
+MemoryHigh=1200M
+CPUQuota=60%
+OOMScoreAdjust=800
+TimeoutStartSec=300
+Nice=10
+
+# --- Hardening: read-mostly, sem rede a hosts arbitrarios ---
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/checkal/scratchpad /opt/checkal/checkal/checkal.db
+ReadOnlyPaths=/opt/checkal/checkal
+RestrictAddressFamilies=AF_INET AF_INET6
+# (SQLite aberto em mode=ro pela app; o unico write logico e o INSERT em sentinela_achados.)
+
+[Install]
+WantedBy=multi-user.target
+
+# /etc/systemd/system/checkal-sentinela.timer
+[Unit]
+Description=Dispara o SENTINELA-SERVICO 4x/dia, desfasado dos crons de dominio e do Maestro
+
+[Timer]
+OnCalendar=*-*-* 06,12,18,23:30:00
+RandomizedDelaySec=180
+Persistent=true
+AccuracySec=1min
+Unit=checkal-sentinela.service
+
+[Install]
+WantedBy=timers.target
+
+# NOTA: registar o job "sentinela" em manage.py (_JOBS) apontando para app.crons.cron_sentinela
+# (coletores deterministas sob com_healthcheck slug "sentinela" + wrapper claude -p). Criar a tabela
+# sentinela_achados na migracao (append-only; UNIQUE(ciclo,categoria,alvo_tipo,alvo_id) p/ idempotencia).

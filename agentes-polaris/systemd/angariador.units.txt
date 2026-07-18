@@ -1,0 +1,73 @@
+### /etc/systemd/system/checkal-angariador.service
+[Unit]
+Description=CheckAL ANGARIADOR — motor de aquisicao (single-shot, headless)
+After=network-online.target
+Wants=network-online.target
+After=checkal-varrimento.service
+
+[Service]
+Type=oneshot
+User=checkal
+Group=checkal
+WorkingDirectory=/opt/checkal/checkal
+Environment=CHECKAL_DB_URL=sqlite:////opt/checkal/var/checkal.db
+# Gates herdados do ambiente — NUNCA setados aqui a True pelo agente:
+Environment=CHECKAL_MODO_TESTE=true
+Environment=CHECKAL_PARECER_RGPD_OK=false
+LoadCredential=anthropic_key:/etc/checkal/anthropic_key
+Environment=ANTHROPIC_API_KEY=%d/anthropic_key
+# Recursos — restricao dura de RAM do Polaris (ja houve OOM kill):
+MemoryMax=1G
+MemoryHigh=768M
+CPUQuota=60%
+OOMScoreAdjust=800
+TimeoutStartSec=360
+Nice=10
+# Superficie minima: sem shell livre, allow-list de tools, sem escrita fora da fila
+ExecStart=/usr/local/bin/claude -p "$(cat /opt/checkal/prompts/angariador.txt)" \
+  --model claude-sonnet-4-5 \
+  --allowedTools "Bash(python manage.py angariador detetar),Bash(python manage.py angariador estado),Bash(python manage.py angariador lint --stdin),Bash(python manage.py angariador enfileirar:*),Read" \
+  --max-turns 40
+# Retry limitado a falhas transitorias
+Restart=on-failure
+RestartSec=30
+StartLimitIntervalSec=600
+StartLimitBurst=3
+# Endurecimento
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/checkal/var
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
+
+### /etc/systemd/system/checkal-angariador.timer
+[Unit]
+Description=Dispara o ANGARIADOR (event-driven: pos-varrimento + diaria de conteudo)
+
+[Timer]
+# seg/qui 03:30 (~30 min apos o varrimento nacional 2x/sem) + diaria 12:00 (eventos regulatorios + conteudo)
+OnCalendar=Mon,Thu 03:30
+OnCalendar=*-*-* 12:00
+Persistent=true
+RandomizedDelaySec=300
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target
+
+### ALTERNATIVA por fila/evento (em vez do calendario acima):
+### /etc/systemd/system/checkal-angariador.path
+# [Path]
+# PathModified=/opt/checkal/var/angariador.trigger   # tocado pelo cron_varrimento no fim
+# Unit=checkal-angariador.service
+# [Install]
+# WantedBy=multi-user.target
+
+### NOTA DE BUILD: adicionar "angariador" a _JOBS em checkal/manage.py com os
+### subcomandos {detetar,lint,enfileirar,estado} (deterministas, transacao do
+### chamador, impoem estado='pendente_revisao' + linter_ok); criar a tabela
+### `fila_revisao` em app/models.py e o modulo `app/linter.py` (linter determinista
+### de texto outward-facing), hoje inexistentes no repo.

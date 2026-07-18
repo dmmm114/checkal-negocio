@@ -1,0 +1,62 @@
+### /etc/systemd/system/checkal-maestro@.service (templado; instância = governanca|digest)
+[Unit]
+Description=CheckAL MAESTRO (%i)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=checkal
+WorkingDirectory=/opt/checkal/deploy
+# Restrição dura de RAM (Polaris já teve OOM kill por sessoes persistentes):
+MemoryMax=1G
+MemoryHigh=768M
+CPUQuota=80%
+OOMScoreAdjust=400
+TimeoutStartSec=300
+# O runner determinista encadeia os executores (retry/backoff, sequencial) e SÓ DEPOIS
+# invoca o claude -p do Maestro com toolset restrito. Nao ha shell livre nem spawn pelo LLM.
+ExecStart=/usr/bin/docker compose exec -T app python manage.py maestro-run --modo %i
+# (maestro-run: (1) corre angariador/gestor/sentinela single-shot em sequencia com retry,
+#  regista em agente_execucoes, pinga Healthchecks; (2) chama:
+#   claude -p --model claude-sonnet-5 \
+#     --allowedTools "Read Bash(python manage.py maestro-metricas) Bash(python manage.py maestro-saude) \
+#        Bash(python manage.py maestro-fila) Bash(python manage.py maestro-escalacoes) \
+#        Bash(python manage.py maestro-digest:*) Bash(python manage.py maestro-escalar:*) \
+#        Bash(python manage.py maestro-retry:*) Bash(python manage.py maestro-gate-token:*)" \
+#     --disallowedTools "Write Edit WebFetch WebSearch Bash(rm:*) Bash(curl:*) Bash(systemctl:*)" \
+#     --append-system-prompt "$(cat /opt/checkal/prompts/maestro.txt)" \
+#     "modo=%i")
+
+### /etc/systemd/system/checkal-maestro.timer  (4 passagens/dia; a das 07:50 e a de DIGEST)
+[Unit]
+Description=CheckAL MAESTRO — 4 passagens/dia (governanca + digest 07:50)
+
+[Timer]
+# 07:50 -> digest ; 11:50/15:50/19:50 -> governanca. Dois OnCalendar + dois timers ligados
+# a instancias distintas mantem a separacao limpa:
+OnCalendar=*-*-* 07:50
+Persistent=true
+Unit=checkal-maestro@digest.service
+
+[Install]
+WantedBy=timers.target
+
+### /etc/systemd/system/checkal-maestro-gov.timer  (as tres passagens de governanca)
+[Unit]
+Description=CheckAL MAESTRO — passagens de governanca
+
+[Timer]
+OnCalendar=*-*-* 11,15,19:50
+Persistent=true
+Unit=checkal-maestro@governanca.service
+
+[Install]
+WantedBy=timers.target
+
+# Instalacao: sudo cp checkal-maestro@.service checkal-maestro.timer checkal-maestro-gov.timer \
+#   /etc/systemd/system/ && sudo systemctl daemon-reload && \
+#   sudo systemctl enable --now checkal-maestro.timer checkal-maestro-gov.timer
+# Nota: o prompt operacional vive em /opt/checkal/prompts/maestro.txt (montado read-only no
+# container). As tabelas NOVAS a criar pelo build: digests, escalacoes, agente_execucoes,
+# fila_revisao (com token_aprovacao) e aprovacoes — aditivas, portateis SQLite/Postgres.
