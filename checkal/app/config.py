@@ -267,6 +267,46 @@ CAMPANHA_JANELA_H = int(_env("CHECKAL_CAMPANHA_JANELA_H", "72"))
 CAMPANHA_CAP_DIARIO = int(_env("CHECKAL_CAMPANHA_CAP_DIARIO", "20"))
 
 
+# ==========================================================================
+#  ENXAME DE AGENTES (Fase C do prompt-mestre) — gates e tetos novos
+# ==========================================================================
+# 🚦 RT-DPA — o Claude CLI (motor IA dos agentes no Polaris) envia prompts para a
+# API da Anthropic (inferência nos EUA); NÃO mantém dados na UE. Enquanto o DPA
+# comercial da Anthropic não estiver assinado, NENHUM agente LLM arranca — e isto
+# é código, não disciplina. Default False (inviolável).
+CHECKAL_ANTHROPIC_DPA_OK = _env_bool("CHECKAL_ANTHROPIC_DPA_OK", False)
+
+# Tetos de custo LLM (swarm/tetos.py). Atingido o teto diário agregado, cria-se a
+# flag-ficheiro PAUSA_LLM: os crons DETERMINISTAS continuam; só os passos LLM
+# pausam. Os tetos NUNCA tocam os gates de segurança (parecer/modo teste/SMTP).
+TETO_DIARIO_EUR = float(_env("CHECKAL_TETO_DIARIO_EUR", "5"))
+TETO_AGENTE_EUR = float(_env("CHECKAL_TETO_AGENTE_EUR", "2"))
+PAUSA_LLM_PATH = Path(_env("CHECKAL_PAUSA_LLM_PATH", "/run/checkal/PAUSA_LLM"))
+
+# 🚦 RT-DGC — gate fail-closed do feed de oposição da DGC: o envio frio exige a
+# lista carregada, não-vazia e com idade < DGC_MAX_IDADE_DIAS; lista vazia ou
+# estagnada ⇒ trata-se como se TODOS estivessem opostos (recusa). O caminho do
+# ficheiro é dado pelo dono quando o feed existir; vazio ⇒ gate fechado.
+LISTA_DGC_PATH = _env("CHECKAL_LISTA_DGC_PATH", "")
+DGC_MAX_IDADE_DIAS = int(_env("CHECKAL_DGC_MAX_IDADE_DIAS", "30"))
+
+
+def anthropic_dpa_ok() -> bool:
+    """O DPA comercial da Anthropic está assinado? (live-gate dos agentes LLM)."""
+    return CHECKAL_ANTHROPIC_DPA_OK
+
+
+def agente_llm_pode_arrancar() -> bool:
+    """Portão de ARRANQUE de qualquer agente LLM (`claude -p`) no Polaris.
+
+    False enquanto `CHECKAL_ANTHROPIC_DPA_OK` for False (RT-DPA): sem o DPA
+    assinado, os dados enviados à inferência (mesmo agregados) não têm o
+    enquadramento art. 28.º/Cap. V fechado — o runner e o wrapper recusam o
+    arranque. Independente dos tetos de custo e dos gates de cold.
+    """
+    return CHECKAL_ANTHROPIC_DPA_OK
+
+
 def cookie_secure() -> bool:
     """Cookie de sessão só por HTTPS em produção; relaxado sob pytest."""
     return not a_testar()

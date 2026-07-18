@@ -1,0 +1,15 @@
+# SENTINELA-SERVIÇO — 4×/dia em timer PRÓPRIO, deliberadamente FORA DE FASE do
+# MAESTRO (:40 vs :50) e dos crons de domínio: tem de conseguir apanhar o próprio
+# orquestrador morto. DISABLED até o dono ativar.
+[Unit]
+Description=CheckAL SENTINELA — watchdog de entrega do serviço (06,12,18,23:40)
+
+[Timer]
+OnCalendar=*-*-* 06,12,18,23:40
+RandomizedDelaySec=180
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@sentinela.service
+
+[Install]
+WantedBy=timers.target

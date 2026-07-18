@@ -1,0 +1,10 @@
+[Unit]
+Description=CheckAL — reset da PAUSA_LLM à meia-noite
+
+[Timer]
+OnCalendar=*-*-* 00:00
+Persistent=true
+Unit=checkal-reset-pausa-llm.service
+
+[Install]
+WantedBy=timers.target

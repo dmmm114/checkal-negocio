@@ -183,8 +183,16 @@ def relatorio_mensal(
     cta_url: str = "",
     email_destinatario: str = "",
     token_optout: str = "",
+    divulgacao_ia: str = "",
 ) -> EmailRenderizado:
-    """Relatório mensal "Tudo em ordem" (dia 1). NÃO é alerta: sem disclaimer de aconselhamento."""
+    """Relatório mensal "Tudo em ordem" (dia 1). NÃO é alerta: sem disclaimer de aconselhamento.
+
+    `divulgacao_ia` (RT-relatório mensal, AI Act art. 50): quando o texto é
+    redigido/apoiado por agente IA, o chamador passa a frase canónica
+    (`app.compliance.linter.DIVULGACAO_IA`) e o template embute-a; o linter
+    reprova (fail-closed) qualquer render gerado por IA sem ela. Vazio ⇒ o
+    render determinístico mantém-se exatamente igual ao histórico.
+    """
     return base.render_email(
         "relatorio_mensal",
         assunto=assunto_relatorio_mensal(mes),
@@ -198,6 +206,7 @@ def relatorio_mensal(
         cta_url=cta_url,
         email_destinatario=email_destinatario,
         token_optout=token_optout,
+        divulgacao_ia=divulgacao_ia,
     )
 
 

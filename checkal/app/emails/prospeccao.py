@@ -64,6 +64,7 @@ DISCLAIMER_INDEPENDENCIA = (
 # base legal do *tratamento* (interesse legítimo), mas **NÃO** afirma que o email é público
 # "por imposição do art. 10.º" — essa base está por confirmar documentalmente (parecer §2).
 # Conservação a 6 meses para quem nunca interage (§5); a lista de supressão conserva-se à parte.
+# Fecha com o disclaimer "informação, não aconselhamento" (linter R7 — exigido em canal COLD).
 NOTA_RGPD = (
     f"Proteção de dados: o CheckAL é operado por {base.ENTIDADE_LEGAL} O contacto desta "
     "mensagem foi obtido no Registo Nacional de Alojamento Local (RNAL). Tratamos apenas o "
@@ -75,7 +76,8 @@ NOTA_RGPD = (
     "6 meses ou até à sua oposição, o que ocorrer primeiro. Pode opor-se num clique, sem "
     "custos, em checkal.pt/remover. Tem ainda direito de acesso, retificação, apagamento e "
     "limitação, e o direito de apresentar queixa à CNPD (cnpd.pt). Política de privacidade "
-    "completa: checkal.pt/privacidade."
+    "completa: checkal.pt/privacidade. Os conteúdos do CheckAL são informação a partir de "
+    "fontes públicas; não constituem aconselhamento jurídico."
 )
 
 # Cadência da sequência (COPY-VENDAS.md §2): D+0, prova social D+4, caso real D+10.
@@ -160,6 +162,11 @@ def _link_relatorio(nr: str) -> tuple[str, str]:
 # ==========================================================================
 #  Corpo de cada peça — (assunto, corpo_html, corpo_texto). Copy: COPY-VENDAS §2.
 # ==========================================================================
+def _fmt_eur(v: int) -> str:
+    """25000 -> '25.000' (milhares à portuguesa) — só valores de `config.COIMA`."""
+    return f"{v:,}".replace(",", ".")
+
+
 def _d0(c: dict[str, str]) -> tuple[str, str, str]:
     nr, empresa, concelho, aloj = c["nr"], c["empresa"], c["concelho"], c["alojamento"]
 
@@ -178,13 +185,22 @@ def _d0(c: dict[str, str]) -> tuple[str, str, str]:
         reg_txt = f"{sujeito_txt} é titular de um registo de Alojamento Local{loc_txt}."
     link_html, link_txt = _link_relatorio(nr)
 
+    # RT-copy: linguagem de serviço genérica e condicional — sem caracterizações
+    # jurídicas do destinatário; coimas SÓ de config.COIMA (fonte única) e nunca
+    # na mesma frase (nem adjacente) que o identificador do registo/empresa.
+    coima_lo, coima_hi = config.COIMA["coletiva"]
+    frase_contexto = (
+        "Contexto rápido: desde março de 2025 a prova anual do seguro é obrigatória, "
+        "e as câmaras já cancelaram mais de 10.000 registos, sobretudo por falta de "
+        "comunicação do seguro. No regime aplicável às pessoas coletivas, as coimas "
+        f"previstas podem ir de {_fmt_eur(coima_lo)}€ a {_fmt_eur(coima_hi)}€."
+    )
+
     corpo_html = "\n".join([
         _p("Bom dia,"),
         _p(f"{reg_html} Encontrámo-lo na lista pública do RNAL — é isso que fazemos: "
            "vigiamos os 120.000+ registos do país."),
-        _p("Contexto rápido: desde março de 2025 a prova anual do seguro é obrigatória, e "
-           "as câmaras já cancelaram mais de 10.000 registos por incumprimento. Para pessoas "
-           "coletivas, as coimas por exploração irregular vão de 25.000€ a 40.000€."),
+        _p(frase_contexto),
         _p("O CheckAL monitoriza semanalmente o estado do registo, o prazo do seguro e os "
            "regulamentos do concelho, e envia alertas interpretados: «isto afeta o vosso AL "
            "— sim/não e porquê». No dia 1 de cada mês, um relatório confirma que está tudo "
@@ -197,9 +213,7 @@ def _d0(c: dict[str, str]) -> tuple[str, str, str]:
         "Bom dia,",
         f"{reg_txt} Encontrámo-lo na lista pública do RNAL — é isso que fazemos: vigiamos "
         "os 120.000+ registos do país.",
-        "Contexto rápido: desde março de 2025 a prova anual do seguro é obrigatória, e as "
-        "câmaras já cancelaram mais de 10.000 registos por incumprimento. Para pessoas "
-        "coletivas, as coimas por exploração irregular vão de 25.000€ a 40.000€.",
+        frase_contexto,
         "O CheckAL monitoriza semanalmente o estado do registo, o prazo do seguro e os "
         "regulamentos do concelho, e envia alertas interpretados: «isto afeta o vosso AL — "
         "sim/não e porquê». No dia 1 de cada mês, um relatório confirma que está tudo em "
@@ -254,9 +268,12 @@ def _d10(c: dict[str, str]) -> tuple[str, str, str]:
         "(Observador). O Porto seguiu-se com 1.413. A ALEP estima que o processo chegue aos "
         "40–45 mil cancelamentos no país."
     )
+    # RT-copy: sem "cancelamento tácito" (caracterização jurídica) — descrição
+    # factual e genérica do processo, sem concluir o desfecho jurídico.
     mecanica = (
-        "A mecânica: notificação, prazo curto, silêncio = cancelamento tácito. Recuperar um "
-        "registo cancelado num concelho em contenção pode ser impossível — não há novos "
+        "A mecânica é sempre a mesma: notificação, prazo curto e, sem resposta, o "
+        "processo segue para o cancelamento do registo. Recuperar um registo "
+        "cancelado num concelho em contenção pode ser impossível — não há novos "
         "registos lá."
     )
     fecho_html = (

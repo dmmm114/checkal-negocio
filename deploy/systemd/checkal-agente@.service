@@ -1,0 +1,50 @@
+# Serviço templado dos AGENTES do enxame CheckAL (single-shot, headless).
+# Instância (%i) ∈ { maestro-digest | maestro-governanca | angariador |
+#                    gestor | gestor-suporte | sentinela }.
+#
+# ⚠️ CORREÇÃO RED-TEAM (crítica): unidade NATIVA — o `claude -p` corre como
+# filho direto de correr-agente.sh DENTRO do cgroup desta unit, pelo que
+# MemoryMax/CPUQuota recaem no processo REAL do modelo (não num cliente
+# `exec` de um container partilhado). Validação: ver deploy/systemd/README.md
+# (systemd-cgls + /sys/fs/cgroup/.../memory.max).
+#
+# Os timers ficam DISABLED até o dono os ativar (systemctl enable — decisão
+# humana, nunca deste repositório).
+[Unit]
+Description=CheckAL agente %i (single-shot, headless)
+After=network-online.target
+Wants=network-online.target
+# Anti-reentrância (1.ª camada): se a passagem anterior ainda corre, não entra.
+ConditionPathExists=!/run/checkal/%i.lock
+
+[Service]
+Type=oneshot
+User=checkal
+Group=checkal
+WorkingDirectory=/opt/checkal/checkal
+# Segredos (ANTHROPIC_API_KEY, HC_PING_KEY, TELEGRAM_*) — chmod 600, root:checkal.
+# Os gates de compliance NÃO se abrem aqui: CHECKAL_MODO_TESTE/CHECKAL_PARECER_RGPD_OK/
+# CHECKAL_ANTHROPIC_DPA_OK herdam os defaults seguros do código.
+EnvironmentFile=/etc/checkal/agente.env
+# --- TETOS DE RAM/CPU: o que resolve o OOM do Polaris ---
+MemoryMax=1200M
+MemoryHigh=900M
+CPUQuota=60%
+TasksMax=64
+OOMScoreAdjust=800
+OOMPolicy=kill
+# --- TEMPO: nada fica pendurado ---
+RuntimeMaxSec=900
+TimeoutStartSec=960
+# --- lock anti-reentrância (2.ª camada: flock no wrapper) + healthcheck ---
+ExecStartPre=/usr/bin/install -d -o checkal -g checkal /run/checkal
+ExecStart=/opt/checkal/deploy/bin/correr-agente.sh %i
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+# --- Endurecimento: sem privilégios novos, FS read-mostly ---
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/opt/checkal/checkal/data /run/checkal

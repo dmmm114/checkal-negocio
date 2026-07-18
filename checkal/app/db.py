@@ -21,6 +21,7 @@ class Base(DeclarativeBase):
 def init_db() -> None:
     """Cria as tabelas (idempotente). Em prod usa-se migrações; aqui basta isto."""
     import app.models  # noqa: F401  (regista os modelos)
+    import app.models_swarm  # noqa: F401  (schema ADITIVO do enxame — Fase A)
     Base.metadata.create_all(engine)
 
 

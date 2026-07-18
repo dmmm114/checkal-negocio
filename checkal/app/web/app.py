@@ -49,6 +49,7 @@ from app.web import (
     consentimento,
     landing,
     marca,
+    pagar,
     paginas,
     remover,
     selo,
@@ -89,6 +90,9 @@ def criar_app() -> FastAPI:
     app.include_router(remover.router)
     app.include_router(selo.router)
     app.include_router(webhook_stripe.router)
+    # Fase G — pagamento cold-direto (IfThenPay, LIVE-GATED): GET/POST /pagar +
+    # POST /callback/ifthenpay. Fatura (série CKL) e onboarding só com callback pago.
+    app.include_router(pagar.router)
 
     # Painel admin (FASE 1 · WF3) — área privada do dono. Os routers já embutem o
     # prefixo `/admin` nos paths, por isso montam-se sem prefixo adicional. O login é

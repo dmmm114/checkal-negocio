@@ -1,0 +1,15 @@
+# ANGARIADOR — seg/qui 03:30 (~30 min após o varrimento nacional 2×/sem) +
+# diária 12:00 (eventos regulatórios + conteúdo consent-first). DISABLED até o dono ativar.
+[Unit]
+Description=CheckAL ANGARIADOR — pós-varrimento + diária de conteúdo
+
+[Timer]
+OnCalendar=Mon,Thu 03:30
+OnCalendar=*-*-* 12:00
+RandomizedDelaySec=300
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@angariador.service
+
+[Install]
+WantedBy=timers.target

@@ -19,4 +19,7 @@ O teu escudo este mês: analisámos {{ n_analisadas }} publicações regulatóri
 {% if cta_url %}
 {{ cta_texto or 'Ver o meu relatório' }}: {{ cta_url }}
 {% endif %}
+{% if divulgacao_ia %}
+{{ divulgacao_ia }}
+{% endif %}
 {% endblock %}

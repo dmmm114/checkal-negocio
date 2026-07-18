@@ -1,0 +1,14 @@
+# GESTOR-DE-CLIENTE — diária 07:15 (dunning/relatório mensal/onboarding), ANTES
+# do cron_dunning das 09:00 (os rascunhos ficam prontos p/ o digest). DISABLED até o dono ativar.
+[Unit]
+Description=CheckAL GESTOR-DE-CLIENTE — passagem diária (07:15)
+
+[Timer]
+OnCalendar=*-*-* 07:15
+RandomizedDelaySec=300
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@gestor.service
+
+[Install]
+WantedBy=timers.target

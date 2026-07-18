@@ -1,0 +1,14 @@
+# MAESTRO — passagem de DIGEST (07:50): compõe e envia o resumo diário ao dono.
+# Fica DISABLED até o dono ativar: sudo systemctl enable --now checkal-maestro-digest.timer
+[Unit]
+Description=CheckAL MAESTRO — digest diário (07:50)
+
+[Timer]
+OnCalendar=*-*-* 07:50
+RandomizedDelaySec=300
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@maestro-digest.service
+
+[Install]
+WantedBy=timers.target

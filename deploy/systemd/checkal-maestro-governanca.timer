@@ -1,0 +1,14 @@
+# MAESTRO — passagens de GOVERNANÇA (11:50/15:50/19:50): saúde, fila, escalações,
+# arbitragem de retries. DISABLED até o dono ativar.
+[Unit]
+Description=CheckAL MAESTRO — governança (11:50/15:50/19:50)
+
+[Timer]
+OnCalendar=*-*-* 11,15,19:50
+RandomizedDelaySec=300
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@maestro-governanca.service
+
+[Install]
+WantedBy=timers.target

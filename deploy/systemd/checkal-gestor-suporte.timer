@@ -1,0 +1,14 @@
+# GESTOR-DE-CLIENTE — supervisão leve de suporte a cada 15 min (o cron_suporte
+# determinista continua a ser a reatividade primária). DISABLED até o dono ativar.
+[Unit]
+Description=CheckAL GESTOR — supervisão de suporte (cada 15 min)
+
+[Timer]
+OnCalendar=*-*-* *:0/15
+RandomizedDelaySec=120
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@gestor-suporte.service
+
+[Install]
+WantedBy=timers.target
