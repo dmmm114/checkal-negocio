@@ -133,6 +133,12 @@ de getcheckal.com; (5) feed DGC (`CHECKAL_LISTA_DGC_PATH`); (6) seguro E&O antes
   mirror lícito do RNAL). Nada se perde por o canal estar parqueado: quando o dono o ativar,
   o backbone regenera o lote de cartas (`ProspetoCarta`) a partir do espelho, sem scraping e
   sem esses campos passarem alguma vez pelo contexto dos agentes LLM (minimização mantida).
+- **Bootstrap do espelho ≠ gatilhos de mercado (18/07/2026):** o 1.º varrimento nacional
+  criou 119.538 eventos `novo` — a carga inicial do espelho, não registos genuinamente
+  novos. Foram todos marcados como usados-para-campanha com o marcador canónico
+  (`alertas.canal='campanha'`, `conteudo='bootstrap_baseline'`) ANTES de o angariador
+  correr: a prospeção parte de baseline zero e só os diffs dos varrimentos seguintes
+  geram gatilhos. Verificado: `angariador detetar` → no-op em ~1s; Sentinela → verde.
 - **Instalação isolada no Polaris:** tudo (código, venv, BD, prompts, segredos, locks,
   PAUSA_LLM) vive dentro da pasta do projeto; o symlink `/home/diogo/checkal-polaris` dá às
   units um caminho sem espaços, e `deploy/polaris/` traz as units nativas + `agente.env`
