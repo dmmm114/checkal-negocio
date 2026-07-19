@@ -19,6 +19,7 @@ que cada agente single-shot usa (sem shell livre, sem SQL cru):
     GESTOR     gestor {onboarding-tarefas | relatorio-mensal-compor |
                dunning-estado | suporte-triar --stdin}
     SENTINELA  sentinela verificar
+    COMUNICADOR comunicador {lint --stdin | enfileirar --tipo T --stdin | estado}
 
 Regras duras (código, não disciplina): leituras abrem a BD em READ-ONLY
 (PRAGMA query_only); escritas usam a sessão de governação (`app.swarm.fila.
@@ -1246,6 +1247,114 @@ def _cmd_sentinela_verificar(args) -> int:
 
 
 # ==========================================================================
+#  COMUNICADOR
+# ==========================================================================
+_TIPOS_COMUNICADOR = {
+    "post_grupo": ("post_grupo", "medio"),
+}
+# Camada explícita: o post é um RASCUNHO que o dono cola manualmente no grupo —
+# a ação irreversível é dele, não do sistema (spec §4.3). Sem isto, o mapa
+# risco→camada poria "medio" na camada 3 (clique obrigatório de camada alta).
+_CAMADA_POST_GRUPO = 2
+
+
+def _peca_comunicador(texto: str, *, url_fonte=None):
+    from app.compliance import linter
+
+    # gerado_por_ia=True é factual; o canal POST_SOCIAL dispensa R5 (o dono
+    # revê e publica em nome próprio — decisão 19/07/2026).
+    return linter.PecaOutward(
+        texto=texto, canal=linter.Canal.POST_SOCIAL, url_fonte=url_fonte,
+        gerado_por_ia=True,
+    )
+
+
+def _cmd_comunicador_lint(args) -> int:
+    texto = sys.stdin.read()
+    from app.compliance import linter
+
+    r = linter.lint(_peca_comunicador(texto, url_fonte=args.fonte))
+    _print_json({
+        "aprovado": r.aprovado, "versao": r.versao,
+        "violacoes": [
+            {"regra": v.regra, "razao": v.razao, "trecho": v.trecho}
+            for v in r.violacoes
+        ],
+    })
+    return 0
+
+
+def _cmd_comunicador_enfileirar(args) -> int:
+    import app.models_swarm as ms
+    from app.swarm import fila, tetos
+
+    texto = sys.stdin.read() if args.stdin else ""
+
+    if args.escalar:
+        with fila.sessao_governacao() as s:
+            tetos.escalar(
+                s, severidade="media", agente="comunicador",
+                mensagem=args.motivo or "escalação sem motivo explícito",
+            )
+        _print_json({"escalado": True})
+        return 0
+
+    peca = _peca_comunicador(texto, url_fonte=args.fonte)
+    try:
+        with fila.sessao_governacao() as s:
+            evento = ms.EventoAgente(
+                agente="comunicador", tipo="conteudo_proposto",
+                mensagem=f"post para grupo proposto ({args.tipo})",
+                payload={"tipo": args.tipo, "corpo_texto": texto,
+                         "grupo_alvo": args.grupo},
+                criado_em=_agora(),
+            )
+            s.add(evento)
+            s.flush()
+            item = fila.enfileirar(
+                s, tipo=_TIPOS_COMUNICADOR[args.tipo][0],
+                risco=_TIPOS_COMUNICADOR[args.tipo][1],
+                camada_risco=_CAMADA_POST_GRUPO,
+                agente_origem="comunicador",
+                ref_tipo="evento_agente", ref_id=str(evento.id),
+                resumo=(args.resumo or f"{args.tipo} p/ colar"
+                        + (f" · {args.grupo}" if args.grupo else "")),
+                peca=peca,
+            )
+            item_id = item.id
+    except fila.LinterReprovado as exc:
+        _print_json({
+            "aprovado": False,
+            "violacoes": [
+                {"regra": v.regra, "razao": v.razao, "trecho": v.trecho}
+                for v in exc.violacoes
+            ],
+        })
+        return 1
+
+    _print_json({"aprovado": True, "revisao_id": item_id})
+    return 0
+
+
+def _cmd_comunicador_estado(args) -> int:
+    import app.models_swarm as ms
+    from sqlalchemy import func
+
+    s = _sessao_leitura()
+    try:
+        revisao = dict(
+            s.query(ms.RevisaoItem.estado, func.count())
+            .filter(ms.RevisaoItem.agente_origem == "comunicador")
+            .group_by(ms.RevisaoItem.estado).all()
+        )
+    finally:
+        s.rollback()
+        s.close()
+    _print_json({"revisao": revisao})
+    return 0
+
+
+# ==========================================================================
 #  Parser + dispatch
 # ==========================================================================
 def _construir_parser() -> argparse.ArgumentParser:
@@ -1321,6 +1430,24 @@ def _construir_parser() -> argparse.ArgumentParser:
     sen = sub.add_parser("sentinela")
     sen_sub = sen.add_subparsers(dest="acao", required=True)
     sen_sub.add_parser("verificar").set_defaults(func=_cmd_sentinela_verificar)
+
+    # COMUNICADOR
+    com = sub.add_parser("comunicador")
+    com_sub = com.add_subparsers(dest="acao", required=True)
+    cl = com_sub.add_parser("lint")
+    cl.add_argument("--stdin", action="store_true", required=True)
+    cl.add_argument("--fonte", default=None)
+    cl.set_defaults(func=_cmd_comunicador_lint)
+    ce = com_sub.add_parser("enfileirar")
+    ce.add_argument("--tipo", choices=sorted(_TIPOS_COMUNICADOR), required=True)
+    ce.add_argument("--stdin", action="store_true")
+    ce.add_argument("--fonte", default=None)
+    ce.add_argument("--grupo", default=None)
+    ce.add_argument("--resumo", default=None)
+    ce.add_argument("--escalar", action="store_true")
+    ce.add_argument("--motivo", default=None)
+    ce.set_defaults(func=_cmd_comunicador_enfileirar)
+    com_sub.add_parser("estado").set_defaults(func=_cmd_comunicador_estado)
 
     return p
 
