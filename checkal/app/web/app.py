@@ -12,6 +12,8 @@ SPEC) e reunidos só aqui:
     app.web.remover         → GET/POST /remover        (opt-out / direito de oposição)
     app.web.selo            → GET /selo/{nr_registo}    (página pública do selo — FDS 3)
     app.web.webhook_stripe  → POST /webhooks/stripe     (webhook único da Stripe)
+    app.web.gate            → GET /gate/{item_id} · POST /gate/{item_id}/aprovar|rejeitar
+                              (portão 1-clique do enxame — Fase 2 · F2.2)
 
     app.web.admin.auth               → GET/POST /admin/login · GET /admin/logout
     app.web.admin.dashboard_overview → GET /admin · GET /admin/leads
@@ -47,6 +49,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.web import (
     consentimento,
+    gate,
     landing,
     marca,
     pagar,
@@ -69,9 +72,10 @@ def criar_app() -> FastAPI:
 
     Monta a landing (+ healthcheck), a verificação pública consent-first, as páginas
     institucionais, o funil de consentimento (double opt-in), o opt-out, a página
-    pública do selo e o webhook único da Stripe. Não cria tabelas nem abre ligações: a
-    persistência resolve-se em `app.db` no momento de cada request (o que permite aos
-    testes trocarem o motor por um SQLite temporário antes de exercitar as rotas).
+    pública do selo, o webhook único da Stripe e o portão 1-clique do enxame
+    (`/gate/{item_id}`). Não cria tabelas nem abre ligações: a persistência
+    resolve-se em `app.db` no momento de cada request (o que permite aos testes
+    trocarem o motor por um SQLite temporário antes de exercitar as rotas).
     """
     app = FastAPI(
         title="CheckAL",
@@ -90,6 +94,9 @@ def criar_app() -> FastAPI:
     app.include_router(remover.router)
     app.include_router(selo.router)
     app.include_router(webhook_stripe.router)
+    # Portão 1-clique do enxame (Fase 2 · F2.2): token na query/form é a única
+    # credencial — sem sessão/login, tal como /inscrever e /remover acima.
+    app.include_router(gate.router)
     # Fase G — pagamento cold-direto (IfThenPay, LIVE-GATED): GET/POST /pagar +
     # POST /callback/ifthenpay. Fatura (série CKL) e onboarding só com callback pago.
     app.include_router(pagar.router)

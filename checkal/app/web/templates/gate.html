@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{# Portão 1-clique (GET /gate/{item_id}?token=…; POST .../aprovar|/rejeitar).
+   `estado` decide o ecrã:
+     pendente  → mostra o item (tipo/agente/risco/camada/resumo) + os 2 forms
+                 POST — cada um com o MESMO token no hidden input;
+     aprovado  → confirmação da decisão;
+     rejeitado → confirmação da decisão;
+     invalido  → ligação inválida/expirada/já usada/item já decidido — nunca
+                 rebenta (nunca 500), mesmo com token vazio, errado, não-ASCII,
+                 ou item inexistente. #}
+
+{% block title %}Aprovação · {{ marca.nome }}{% endblock %}
+
+{% block meta %}
+  <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block content %}
+<section class="secao">
+  <div class="secao__interior" style="max-width: 36rem;">
+    <div class="cartao">
+    {% if estado == "pendente" %}
+      <p class="estado estado--atencao" role="status">Aguarda a tua decisão</p>
+      <h1>Aprovação · CheckAL</h1>
+      <p>Item nº {{ item.id }} — <strong>{{ item.tipo }}</strong>, proposto por
+        <strong>{{ item.agente_origem }}</strong>.</p>
+
+      <div class="campo">
+        <label>Risco</label>
+        {{ item.risco }} (camada {{ item.camada_risco }})
+      </div>
+      {% if item.resumo %}
+      <div class="campo">
+        <label>Resumo</label>
+        <p style="margin: 0;">{{ item.resumo }}</p>
+      </div>
+      {% endif %}
+
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem;">
+        <form method="post" action="/gate/{{ item.id }}/aprovar">
+          <input type="hidden" name="token" value="{{ token }}">
+          <button type="submit" class="btn btn--acao btn--grande">✓ Aprovar</button>
+        </form>
+        <form method="post" action="/gate/{{ item.id }}/rejeitar">
+          <input type="hidden" name="token" value="{{ token }}">
+          <button type="submit" class="btn btn--contorno btn--grande">✗ Rejeitar</button>
+        </form>
+      </div>
+    {% elif estado == "aprovado" %}
+      <p class="estado estado--ok" role="status">Aprovado ✓</p>
+      <h1>Decisão registada.</h1>
+      <p>O item foi aprovado. Fica em fila para o executor determinista.</p>
+    {% elif estado == "rejeitado" %}
+      <p class="estado estado--falhou" role="status">Rejeitado</p>
+      <h1>Decisão registada.</h1>
+      <p>O item foi rejeitado — não avança.</p>
+    {% else %}
+      <h1>Esta ligação já não é válida.</h1>
+      <p>Ligação inválida — este link expirou, já foi usado, ou o item já foi
+        decidido.</p>
+    {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
