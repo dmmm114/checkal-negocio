@@ -1,6 +1,6 @@
 # AGENTES do enxame CheckAL — variante POLARIS, tudo isolado no projeto.
 # Instância (%i): maestro-digest | maestro-governanca | angariador | gestor |
-#                 gestor-suporte | sentinela
+#                 gestor-suporte | sentinela | editor | comunicador
 # Cgroups NATIVOS: o claude -p corre como filho direto DENTRO desta unit.
 [Unit]
 Description=CheckAL agente %i (single-shot, headless)

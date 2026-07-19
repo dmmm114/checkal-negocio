@@ -20,7 +20,8 @@ que cada agente single-shot usa (sem shell livre, sem SQL cru):
                dunning-estado | suporte-triar --stdin}
     SENTINELA  sentinela verificar
     EDITOR     editor {plano | lint --stdin | enfileirar --tipo artigo_seo --stdin | estado}
-    COMUNICADOR comunicador {lint --stdin | enfileirar --tipo T --stdin | estado}
+    COMUNICADOR comunicador {lint --stdin | enfileirar --tipo post_grupo --stdin | estado}
+               (+ editor plano, leitura)
 
 Regras duras (código, não disciplina): leituras abrem a BD em READ-ONLY
 (PRAGMA query_only); escritas usam a sessão de governação (`app.swarm.fila.
@@ -1393,12 +1394,27 @@ def _cmd_editor_plano(args) -> int:
             .filter(ms.RevisaoItem.tipo == "artigo_seo")
             .order_by(ms.RevisaoItem.criado_em.desc()).limit(20)
         ]
+        # Sinais de eventos regulatórios frescos (spec §3.2) — ativam as
+        # páginas-gatilho do EDITOR. Janela de 90 dias, mais recentes primeiro;
+        # só campos institucionais (nenhum dado pessoal em EventoRegulatorio).
+        janela = _agora().date() - timedelta(days=90)
+        eventos_regulatorios = [
+            {"id": e.id, "fonte": e.fonte, "concelhos": e.concelhos,
+             "publicado_em": e.publicado_em, "titulo": e.titulo,
+             "resumo_ia": e.resumo_ia}
+            for e in s.query(models.EventoRegulatorio)
+            .filter(models.EventoRegulatorio.publicado_em.isnot(None))
+            .filter(models.EventoRegulatorio.publicado_em >= janela)
+            .order_by(models.EventoRegulatorio.publicado_em.desc())
+            .limit(10)
+        ]
     finally:
         s.rollback()
         s.close()
     _print_json({
         "top_concelhos": [{"concelho": c, "registos": n} for c, n in top],
         "artigos": artigos,
+        "eventos_regulatorios": eventos_regulatorios,
     })
     return 0
 
@@ -1481,7 +1497,7 @@ def _cmd_comunicador_enfileirar(args) -> int:
                 agente="comunicador", tipo="conteudo_proposto",
                 mensagem=f"post para grupo proposto ({args.tipo})",
                 payload={"tipo": args.tipo, "corpo_texto": texto,
-                         "grupo_alvo": args.grupo},
+                         "grupo_alvo": args.grupo, "fonte_url": args.fonte},
                 criado_em=_agora(),
             )
             s.add(evento)

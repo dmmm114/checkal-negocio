@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import io
 import json
+from datetime import date
 
 import pytest
 from sqlalchemy import create_engine
@@ -71,6 +72,7 @@ def test_comunicador_enfileirar_cria_item_camada_2(bd, capsys, monkeypatch):
     rc = manage.main([
         "comunicador", "enfileirar", "--tipo", "post_grupo", "--stdin",
         "--grupo", "AL Porto e Norte",
+        "--fonte", "https://www.cm-porto.pt/regulamento-al",
     ])
     assert rc == 0
     dados = _json_out(capsys)
@@ -87,6 +89,7 @@ def test_comunicador_enfileirar_cria_item_camada_2(bd, capsys, monkeypatch):
         assert evento.agente == "comunicador"
         assert evento.payload["corpo_texto"] == _POST_OK
         assert evento.payload["grupo_alvo"] == "AL Porto e Norte"
+        assert evento.payload["fonte_url"] == "https://www.cm-porto.pt/regulamento-al"
 
 
 def test_comunicador_enfileirar_reprovado_nao_insere(bd, capsys, monkeypatch):
@@ -230,6 +233,34 @@ def test_editor_plano_e_estado_read_only(bd, capsys, monkeypatch):
     plano2 = _json_out(capsys)
     assert len(plano2["artigos"]) == 1
     assert "regulamentos-al-porto" in plano2["artigos"][0]["resumo"]
+
+
+def test_editor_plano_expoe_eventos_regulatorios_frescos(bd, capsys):
+    """A spec §3.2 promete sinais de eventos regulatórios frescos no `plano` —
+    é o que ativa as páginas-gatilho do EDITOR (e os posts de gatilho do
+    COMUNICADOR). Campos reais de `models.EventoRegulatorio` (linha ~210):
+    id, fonte, url, titulo, publicado_em, concelhos (JSON), triagem,
+    resumo_ia, processado. Nenhum é dado pessoal (documentos institucionais).
+    """
+    with db.get_session() as s:
+        s.add(models.EventoRegulatorio(
+            fonte="dre",
+            url="https://dre.pt/dr/detalhe/aviso/123-2026",
+            titulo="Regulamento municipal de Alojamento Local — Faro",
+            publicado_em=date(2026, 7, 14),
+            concelhos=["Faro"],
+            triagem="relevante",
+            resumo_ia="Novo regulamento municipal altera prazos de registo.",
+        ))
+    assert manage.main(["editor", "plano"]) == 0
+    plano = _json_out(capsys)
+    assert "top_concelhos" in plano
+    assert "artigos" in plano
+    assert len(plano["eventos_regulatorios"]) == 1
+    evento = plano["eventos_regulatorios"][0]
+    assert evento["titulo"] == "Regulamento municipal de Alojamento Local — Faro"
+    assert evento["concelhos"] == ["Faro"]
+    assert evento["publicado_em"] == "2026-07-14"
 
 
 # ==========================================================================

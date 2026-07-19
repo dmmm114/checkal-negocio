@@ -1,6 +1,6 @@
 # Serviço templado dos AGENTES do enxame CheckAL (single-shot, headless).
 # Instância (%i) ∈ { maestro-digest | maestro-governanca | angariador |
-#                    gestor | gestor-suporte | sentinela }.
+#                    gestor | gestor-suporte | sentinela | editor | comunicador }.
 #
 # ⚠️ CORREÇÃO RED-TEAM (crítica): unidade NATIVA — o `claude -p` corre como
 # filho direto de correr-agente.sh DENTRO do cgroup desta unit, pelo que

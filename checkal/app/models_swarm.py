@@ -1,7 +1,7 @@
 """Esquema de estado partilhado do ENXAME (ADITIVO a app/models.py).
 
 Fecha o loop entre o backbone determinista (registos/eventos_registo/
-eventos_regulatorios/clientes/alertas/leads/optouts) e os 4 agentes single-shot
+eventos_regulatorios/clientes/alertas/leads/optouts) e os 6 agentes single-shot
 (MAESTRO / ANGARIADOR / GESTOR-DE-CLIENTE / SENTINELA-SERVICO). Nenhuma tabela
 aqui substitui as existentes — só persiste o que hoje vive em memória
 (RascunhoFrio), o que não tem casa (fila de aprovação humana, ledger de outreach,
