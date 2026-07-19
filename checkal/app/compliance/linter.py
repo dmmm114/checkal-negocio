@@ -229,6 +229,8 @@ _EXIGE_R9 = {Canal.COLD}
 # conteúdo autónomo de IA ⇒ R5 dispensado. R7/R8/R9 são regras de email/site
 # e não se aplicam (basta não estar nos conjuntos). R6-pleno idem: posts curtos
 # não têm estrutura fonte+excerto; a fonte oficial é garantida por R4.
+# A premissa "o dono publica manualmente" é estrutural: o POST_SOCIAL não tem
+# caminho de publicação automática (spec 2026-07-19 §4.3, camada_risco=2).
 _ISENTO_R5 = {Canal.POST_SOCIAL}
 
 

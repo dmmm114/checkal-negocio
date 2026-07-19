@@ -463,7 +463,7 @@ def test_post_social_conforme_aprova_sem_ia_disclaimer_optout():
     r = lint(PecaOutward(texto=texto, canal=Canal.POST_SOCIAL, gerado_por_ia=True))
     assert r.aprovado is True, [v.razao for v in r.violacoes]
     # O POST_SOCIAL dispensa R5 (dono revê e publica em nome próprio), R7, R8, R9.
-    assert not ({"R5_DIVULGACAO_IA", "R7_DISCLAIMER", "R8_OPTOUT",
+    assert not ({"R5_DIVULGACAO_IA", "R6_GROUNDING", "R7_DISCLAIMER", "R8_OPTOUT",
                  "R9_IDENTIFICACAO"} & _regras(r))
 
 
