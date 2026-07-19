@@ -45,7 +45,8 @@ _ARTIGO = {
     "fontes": [
         {"url": "https://www.cm-porto.pt/regulamento-al",
          "titulo": "Regulamento AL — CM Porto", "data": "2026-05-10",
-         "excerto": "O presente regulamento define as regras aplicáveis."},
+         "excerto": "O presente regulamento, publicado a 10 de maio de 2026, "
+                    "define as regras aplicáveis."},
     ],
 }
 
@@ -147,6 +148,17 @@ def test_sitemap_recusa_slug_hostil(tmp_path):
     sm.write_text(SITEMAP_BASE)
     with pytest.raises(ValueError):
         publicador.atualizar_sitemap(sm, slug="../../evil", lastmod="2026-07-19")
+
+
+def test_render_recusa_fonte_javascript():
+    """As fontes entram cruas no `href` (`_render_fontes`) — um esquema não
+    http(s) (`javascript:`, `data:`, …) executaria no clique. Whitelist
+    estrita fail-closed: só `http://`/`https://` (case-insensitive) rendeza
+    como link; qualquer outro esquema levanta `ValueError`."""
+    mau = dict(_ARTIGO)
+    mau["fontes"] = [{"url": "javascript:alert(1)", "titulo": "Fonte hostil"}]
+    with pytest.raises(ValueError):
+        publicador.render_artigo(mau)
 
 
 # ==========================================================================
@@ -307,6 +319,33 @@ def test_correr_em_modo_teste_nao_drena_nem_executa(bd, tmp_path, monkeypatch):
     assert (tmp_path / "ensaio" / "regulamentos-al-porto.html").exists()
 
 
+def test_ensaio_tolera_item_malformado(bd, tmp_path, monkeypatch):
+    """O ensaio é diagnóstico read-only sobre itens já aprovados na BD — um
+    payload malformado (aqui: slug inválido, que `render_artigo` recusa com
+    `ValueError`) não pode rebentar a passagem nem impedir os restantes itens
+    de renderizar: fica no relatório com o erro, a passagem continua."""
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", True)
+    mau = dict(_ARTIGO)
+    mau["slug"] = "../evil"
+    with db.get_session() as s:
+        id_bom = _semear_artigo(s)
+        id_mau = _semear_artigo(s, artigo=mau)
+
+    chamadas: list = []
+    rel = publicador.correr(
+        site_dir=tmp_path / "site", ensaio_dir=tmp_path / "ensaio",
+        executar=lambda cmd, **kw: chamadas.append(cmd),
+    )
+
+    assert rel["modo"] == "ensaio"
+    assert chamadas == []
+    bons = [a for a in rel["artigos"] if "erro" not in a]
+    maus = [a for a in rel["artigos"] if "erro" in a]
+    assert len(bons) == 1 and bons[0]["item_id"] == id_bom
+    assert len(maus) == 1 and maus[0]["item_id"] == id_mau
+    assert (tmp_path / "ensaio" / "regulamentos-al-porto.html").exists()
+
+
 def test_correr_live_publica_artigo_e_fecha_post(bd, tmp_path, monkeypatch):
     monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
     with db.get_session() as s:
@@ -381,6 +420,62 @@ def test_correr_live_sem_flag_ignora_pendentes(bd, tmp_path, monkeypatch):
         assert s.get(ms.RevisaoItem, item_id).estado == "pendente"
     assert not (site_dir / "regulamentos-al-porto.html").exists()
     assert chamadas == []
+
+
+# Mesmo texto de `_TEXTO_COLD_OK` em test_manage_agentes.py — peça COLD
+# conforme (opt-out + identificação legal + disclaimer + divulgação de IA já
+# no próprio corpo, `tem_optout_carimbado=True`).
+_TEXTO_COLD_OK = (
+    "Bom dia,\n\nO CheckAL vigia o registo, o seguro e os regulamentos do concelho "
+    "do vosso Alojamento Local. Conteúdo preparado com apoio de inteligência "
+    "artificial (IA).\n\nInformação, não aconselhamento jurídico.\n"
+    "Para não voltar a ser contactado: checkal.pt/remover\n"
+    "O CheckAL é operado por Cosmic Oasis, Lda."
+)
+
+
+def test_correr_live_auto_aprova_ignora_outros_tipos(bd, tmp_path, monkeypatch):
+    """PINA o filtro por tipo da auto-aprovação (docstring de `correr`, (a):
+    "SÓ esse tipo — o filtro por tipo é responsabilidade de quem chama
+    `auto_aprovar`, não da função"). Com `AUTO_PUBLICAR_ARTIGO_SEO=True`, um
+    `post_grupo` e um `cold_email` pendentes com `linter_ok` NUNCA são
+    auto-aprovados nem publicados — só `artigo_seo` o é. Sem este teste,
+    remover o filtro `tipo == "artigo_seo"` de `correr` (chamando
+    `fila.auto_aprovar` sobre TODOS os pendentes com `linter_ok`, tipo
+    `cold_email` incluído) passaria despercebido: `auto_aprovar` em si é
+    TYPE-AGNOSTIC por design (ver o seu docstring) — só o chamador guarda o
+    invariante."""
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    monkeypatch.setattr(config, "AUTO_PUBLICAR_ARTIGO_SEO", True)
+
+    with db.get_session() as s:
+        post_item = fila.enfileirar(
+            s, tipo="post_grupo", risco="medio", camada_risco=2,
+            agente_origem="comunicador", resumo="Post sobre o regulamento do Porto",
+            peca=PecaOutward(texto=_POST_OK, canal=Canal.POST_SOCIAL),
+        )
+        cold_item = fila.enfileirar(
+            s, tipo="cold_email", risco="alto", agente_origem="angariador",
+            resumo="cold d0 → geral@sul.pt",
+            peca=PecaOutward(
+                texto=_TEXTO_COLD_OK, canal=Canal.COLD, tem_optout_carimbado=True,
+            ),
+        )
+        post_id, cold_id = post_item.id, cold_item.id
+        assert post_item.estado == "pendente" and post_item.linter_ok is True
+        assert cold_item.estado == "pendente" and cold_item.linter_ok is True
+
+    site_dir = _site_fake(tmp_path)
+    chamadas: list = []
+    publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas),
+    )
+
+    with db.get_session() as s:
+        assert s.get(ms.RevisaoItem, post_id).estado == "pendente"
+        assert s.get(ms.RevisaoItem, cold_id).estado == "pendente"
+    assert chamadas == []          # nada foi publicado/deployado
 
 
 def test_deploy_falha_marca_falhado_com_backoff(bd, tmp_path, monkeypatch):

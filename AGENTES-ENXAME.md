@@ -87,7 +87,9 @@ fechado ⇒ fica em fila.
 - **Fase 2 — Gestor + Sentinela.** *Passa quando:* `requer_atencao` < 5 % e sem backlog > 48 h;
   relatório mensal a 100 % dos ativos; renovação D0 mensurável; 0 clientes ativos sem cobertura.
 - **Auto-aprovação:** só ações de risco mínimo JÁ provadas, promovidas por config pelo dono.
-  Envio em massa, publicação, faturas e cobranças **nunca** saem do gate humano.
+  Envio em massa, publicação, faturas e cobranças **nunca** saem do gate humano — com UMA
+  exceção opt-in do dono: `CHECKAL_AUTO_PUBLICAR_ARTIGO_SEO` (fase 3, default false) auto-aprova
+  artigos SEO com linter_ok como `auto_aprovado`; ver docs/superpowers/specs/2026-07-19.
 
 ## 6. Alarmes
 

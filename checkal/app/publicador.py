@@ -62,6 +62,12 @@ __all__ = ["md_para_html", "render_artigo", "atualizar_sitemap", "correr"]
 # (antes de o artigo sequer entrar na fila), não só aqui no render.
 _RE_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
+# Whitelist de esquema para o `href` das fontes — também autorado pelo LLM.
+# Só `http://`/`https://` (case-insensitive); `javascript:`/`data:`/etc.
+# recusados fail-closed. Reutilizada por `_render_fontes` e importada por
+# `manage.py` para recusar na ORIGEM (mesmo padrão do `_RE_SLUG`).
+_RE_URL_HTTP = re.compile(r"^https?://", re.IGNORECASE)
+
 
 # ==========================================================================
 #  md_para_html — mini-conversor markdown → HTML determinista
@@ -218,6 +224,12 @@ def _render_fontes(fontes: list[dict]) -> str:
     links = []
     for fonte in fontes:
         url = fonte.get("url", "")
+        # Fail-closed: o url é autorado pelo LLM e entra cru no `href` — um
+        # esquema não http(s) (`javascript:`, `data:`, …) executaria/injetaria
+        # no clique. Mesma filosofia da whitelist do slug (_RE_SLUG): recusa
+        # em vez de sanitizar. Reutilizada na ORIGEM por `manage.py`.
+        if not _RE_URL_HTTP.match(url):
+            raise ValueError(f"fonte com esquema não permitido: {url!r}")
         rotulo = html.escape(fonte.get("titulo") or url)
         data_f = fonte.get("data")
         if data_f:
@@ -445,7 +457,11 @@ def correr(
     de tipo `artigo_seo`/`post_grupo`, renderiza os artigos para `ensaio_dir`
     e devolve `{"modo": "ensaio", "artigos": [...], "posts": N}`. Zero
     `fila.drain`, zero escrita na BD, zero escrita em `site_dir`, zero comando
-    executado.
+    executado. Um item `artigo_seo` malformado (payload em falta/inválido, ou
+    recusado pelo próprio `render_artigo` — slug hostil, esquema de fonte não
+    permitido) não rebenta a passagem: fica em `artigos` como
+    `{"item_id": ..., "erro": str(exc)}` e os restantes itens continuam a
+    renderizar normalmente (diagnóstico tolerante — é read-only por natureza).
 
     **Modo live**: (a) se `config.AUTO_PUBLICAR_ARTIGO_SEO`, auto-aprova (via
     `fila.auto_aprovar`) os `artigo_seo` `pendente`s com `linter_ok` — SÓ esse
@@ -496,13 +512,19 @@ def correr(
                     continue
                 try:
                     artigo = _carregar_artigo(s, item)
-                except ValueError:
-                    # Ensaio é diagnóstico read-only: um item malformado não
-                    # rebenta a passagem — só fica de fora do relatório.
-                    continue
-                html_final = render_artigo(artigo)
-                (ensaio_dir / f"{artigo['slug']}.html").write_text(html_final, encoding="utf-8")
-                artigos.append({"item_id": item.id, "slug": artigo["slug"]})
+                    html_final = render_artigo(artigo)
+                    (ensaio_dir / f"{artigo['slug']}.html").write_text(
+                        html_final, encoding="utf-8"
+                    )
+                    artigos.append({"item_id": item.id, "slug": artigo["slug"]})
+                except (ValueError, KeyError) as exc:
+                    # Ensaio é diagnóstico read-only: um item malformado — payload
+                    # em falta/inválido (`_carregar_artigo`) OU recusado pelo
+                    # próprio render (slug hostil, esquema de fonte não permitido,
+                    # `KeyError` de campo obrigatório em falta) — não rebenta a
+                    # passagem; fica no relatório com o erro, e os restantes itens
+                    # continuam a ser processados.
+                    artigos.append({"item_id": item.id, "erro": str(exc)})
         return {"modo": "ensaio", "artigos": artigos, "posts": posts}
 
     hoje = date.today().isoformat()

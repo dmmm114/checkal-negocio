@@ -146,7 +146,8 @@ _ARTIGO_OK = {
     "fontes": [
         {"url": "https://www.cm-porto.pt/regulamento-al",
          "titulo": "Regulamento AL — CM Porto", "data": "2026-05-10",
-         "excerto": "O presente regulamento define as regras aplicáveis."},
+         "excerto": "O presente regulamento, publicado a 10 de maio de 2026, "
+                    "define as regras aplicáveis."},
     ],
 }
 
@@ -201,10 +202,49 @@ def test_editor_enfileirar_slug_hostil_da_2(bd, capsys, monkeypatch):
         assert s.query(ms.RevisaoItem).count() == 0
 
 
+def test_editor_enfileirar_fonte_esquema_invalido_da_2(bd, capsys, monkeypatch):
+    """Regressão (revisão de conjunto F3, M2): o url das fontes também é
+    autorado pelo LLM e entra cru no `href` do render (`publicador.
+    _render_fontes`) — um esquema não http(s) (`javascript:`) nunca deve
+    sequer entrar na fila. Validado na ORIGEM com o mesmo critério do render
+    (`app.publicador._RE_URL_HTTP`), antes de o artigo ser enfileirado."""
+    mau = dict(_ARTIGO_OK)
+    mau["fontes"] = [{"url": "javascript:alert(1)", "titulo": "Fonte hostil"}]
+    _stdin(monkeypatch, json.dumps(mau, ensure_ascii=False))
+    assert manage.main(["editor", "lint", "--stdin"]) == 2
+
+    _stdin(monkeypatch, json.dumps(mau, ensure_ascii=False))
+    rc = manage.main(["editor", "enfileirar", "--tipo", "artigo_seo", "--stdin"])
+    assert rc == 2
+    with db.get_session() as s:
+        assert s.query(ms.RevisaoItem).count() == 0
+
+
 def test_editor_enfileirar_artigo_ofensivo_reprova(bd, capsys, monkeypatch):
     mau = dict(_ARTIGO_OK)
     mau["seccoes"] = [{"h2": "Risco",
                        "corpo_md": "O seu registo está ilegal e sem seguro."}]
+    _stdin(monkeypatch, json.dumps(mau, ensure_ascii=False))
+    rc = manage.main(["editor", "enfileirar", "--tipo", "artigo_seo", "--stdin"])
+    assert rc == 1
+    dados = _json_out(capsys)
+    assert dados["aprovado"] is False
+    with db.get_session() as s:
+        assert s.query(ms.RevisaoItem).count() == 0
+
+
+def test_editor_lint_reprova_meta_description_ofensiva(bd, capsys, monkeypatch):
+    """Regressão: `_texto_lint_artigo` lintava só título/secções/URLs das
+    fontes — a `meta_description` (publicada em `<meta name="description">` e
+    `og:description`, `publicador._HEAD_FMT`) escapava ao lint por completo.
+    Um artigo com secções limpas mas `meta_description` ofensiva passava e
+    seria publicado tal e qual."""
+    mau = dict(_ARTIGO_OK)
+    mau["meta_description"] = "O seu registo está ilegal — coima até 40.000€"
+    _stdin(monkeypatch, json.dumps(mau, ensure_ascii=False))
+    assert manage.main(["editor", "lint", "--stdin"]) == 0
+    assert _json_out(capsys)["aprovado"] is False
+
     _stdin(monkeypatch, json.dumps(mau, ensure_ascii=False))
     rc = manage.main(["editor", "enfileirar", "--tipo", "artigo_seo", "--stdin"])
     assert rc == 1

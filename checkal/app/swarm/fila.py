@@ -73,7 +73,8 @@ TABELAS_GOVERNACAO = frozenset({
 })
 
 # Mapeamento risco (texto, schema canónico) → camada_risco (1 mínimo … 4 máximo).
-# Camadas 3–4 = dinheiro/terceiros/publicação/envio em massa ⇒ SEMPRE clique do dono.
+# Camadas 3–4 = dinheiro/terceiros/publicação/envio em massa ⇒ SEMPRE clique do dono
+# (exceção: auto_aprovar sob config do dono — ver docstring).
 _CAMADA_POR_RISCO = {"baixo": 1, "medio": 3, "alto": 4}
 
 _BACKOFF_MAX_S = 6 * 3600

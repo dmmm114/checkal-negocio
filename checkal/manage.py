@@ -1271,6 +1271,22 @@ _TIPOS_EDITOR = {
 }
 
 
+def _validar_fontes_esquema(artigo: dict) -> None:
+    """Valida o esquema do `url` de cada fonte na ORIGEM — mesmo critério do
+    render (`app.publicador._RE_URL_HTTP`, só `http://`/`https://`). Um
+    esquema hostil (`javascript:`, `data:`, …) nunca deve sequer entrar na
+    fila; levanta `ValueError` (mesmo padrão do slug hostil). Chamada por
+    `_cmd_editor_lint` e `_cmd_editor_enfileirar`, antes de qualquer coisa
+    hostil ser sequer analisada/lintada.
+    """
+    from app import publicador
+
+    for f in artigo.get("fontes", []):
+        url = f.get("url", "")
+        if not publicador._RE_URL_HTTP.match(url):
+            raise ValueError(f"fonte com esquema não permitido: {url!r}")
+
+
 def _texto_lint_artigo(artigo: dict):
     """Compõe (texto_a_lintar, url_fonte, excerto) a partir do JSON do artigo.
 
@@ -1280,17 +1296,25 @@ def _texto_lint_artigo(artigo: dict):
     (mesmo princípio do `tem_optout_carimbado` no cold: o seam carimba). O
     template da fase 3 TEM de usar as mesmas constantes
     (`linter.DISCLAIMER_NAO_ACONSELHAMENTO` e `linter.DIVULGACAO_IA`) — senão
-    o texto lintado diverge do publicado.
+    o texto lintado diverge do publicado. Cobertura completa (regressão
+    2026-07-19, revisão de conjunto F3): título, `meta_description` (vai para
+    `<meta name="description">` e `og:description`, `publicador._HEAD_FMT`),
+    secções, e — para cada fonte — o URL E os rótulos (`titulo`/`data`) que
+    `publicador._render_fontes` usa como TEXTO VISÍVEL dos links, mais as
+    frases canónicas.
     """
     from app.compliance import linter
 
-    partes = [artigo.get("titulo", "")]
+    partes = [artigo.get("titulo", ""), artigo.get("meta_description", "")]
     for seccao in artigo.get("seccoes", []):
         partes.append(seccao.get("h2", ""))
         partes.append(seccao.get("corpo_md", ""))
     fontes = artigo.get("fontes", [])
     urls = " · ".join(f.get("url", "") for f in fontes if f.get("url"))
     partes.append(f"Fontes: {urls}")
+    for f in fontes:
+        partes.append(f.get("titulo", ""))
+        partes.append(f.get("data", ""))
     partes.append(linter.DISCLAIMER_NAO_ACONSELHAMENTO)
     partes.append(linter.DIVULGACAO_IA)
     texto = "\n\n".join(p for p in partes if p)
@@ -1311,6 +1335,7 @@ def _cmd_editor_lint(args) -> int:
         # na ORIGEM, antes de qualquer coisa hostil ser sequer analisada.
         if not publicador._RE_SLUG.fullmatch(artigo["slug"]):
             raise ValueError(f"slug inválido: {artigo['slug']!r}")
+        _validar_fontes_esquema(artigo)
     except (ValueError, KeyError, TypeError):
         sys.stderr.write("payload tem de ser JSON do artigo (slug, titulo, seccoes, fontes)\n")
         return 2
@@ -1356,6 +1381,7 @@ def _cmd_editor_enfileirar(args) -> int:
         # hostil nunca chega sequer a ser enfileirado (fail-closed na ORIGEM).
         if not publicador._RE_SLUG.fullmatch(slug):
             raise ValueError(f"slug inválido: {slug!r}")
+        _validar_fontes_esquema(artigo)
         titulo = artigo["titulo"]
     except (ValueError, KeyError, TypeError):
         sys.stderr.write("payload tem de ser JSON do artigo (slug, titulo, seccoes, fontes)\n")

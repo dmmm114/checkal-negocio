@@ -1,6 +1,6 @@
-# CRONS DETERMINISTAS do backbone (varrimento|dre|dunning|suporte|backup|token)
-# — variante POLARIS nativa (sem docker), tudo isolado no projeto. LIVE-GATED:
-# sem credenciais no agente.env, nada envia/liga (seams devolvem None).
+# CRONS DETERMINISTAS do backbone (varrimento|dre|dunning|suporte|backup|token|
+# publicador) — variante POLARIS nativa (sem docker), tudo isolado no projeto.
+# LIVE-GATED: sem credenciais no agente.env, nada envia/liga (seams devolvem None).
 [Unit]
 Description=CheckAL cron %i (backbone determinista)
 After=network-online.target
