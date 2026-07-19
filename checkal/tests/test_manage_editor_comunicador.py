@@ -128,6 +128,92 @@ def test_comunicador_estado_vazio(bd, capsys):
     assert _json_out(capsys) == {"revisao": {}}
 
 
+# --------------------------------------------------------------------------
+#  post_pagina (fase FB, 19/07): canal POST_PAGINA — publicação AUTOMÁTICA
+#  pelo sistema (camada 4), por isso EXIGE a divulgação de IA (diverge do
+#  post_grupo, que o dono cola manualmente e fica isento).
+# --------------------------------------------------------------------------
+_POST_PAGINA_OK = (
+    "Novo regulamento municipal do Porto para o Alojamento Local — resumo em "
+    "5 pontos.\n1) Âmbito. 2) Prazos. 3) Registos. 4) Vistorias. 5) Onde ler.\n"
+    "Fonte oficial: https://www.cm-porto.pt/regulamento-al\n"
+    "Preparado com apoio de IA."
+)
+
+
+def test_comunicador_lint_default_continua_post_grupo(bd, capsys, monkeypatch):
+    # Retrocompatibilidade: sem --tipo, o lint continua a vetar como POST_SOCIAL.
+    _stdin(monkeypatch, _POST_OK)
+    assert manage.main(["comunicador", "lint", "--stdin"]) == 0
+    dados = _json_out(capsys)
+    assert dados["aprovado"] is True
+
+
+def test_comunicador_lint_post_pagina_com_tipo(bd, capsys, monkeypatch):
+    _stdin(monkeypatch, _POST_PAGINA_OK)
+    rc = manage.main(["comunicador", "lint", "--stdin", "--tipo", "post_pagina"])
+    assert rc == 0
+    dados = _json_out(capsys)
+    assert dados["aprovado"] is True
+
+
+def test_comunicador_lint_post_pagina_sem_divulgacao_reprova(bd, capsys, monkeypatch):
+    _stdin(monkeypatch, _POST_OK)  # sem "Preparado com apoio de IA."
+    rc = manage.main(["comunicador", "lint", "--stdin", "--tipo", "post_pagina"])
+    assert rc == 0  # lint devolve 0 e reporta aprovado=False no JSON
+    dados = _json_out(capsys)
+    assert dados["aprovado"] is False
+    assert any(v["regra"] == "R5_DIVULGACAO_IA" for v in dados["violacoes"])
+
+
+def test_comunicador_enfileirar_post_pagina_cria_item_camada_4(bd, capsys, monkeypatch):
+    _stdin(monkeypatch, _POST_PAGINA_OK)
+    rc = manage.main([
+        "comunicador", "enfileirar", "--tipo", "post_pagina", "--stdin",
+        "--fonte", "https://www.cm-porto.pt/regulamento-al",
+    ])
+    assert rc == 0
+    dados = _json_out(capsys)
+    assert dados["aprovado"] is True
+    with db.get_session() as s:
+        item = s.query(ms.RevisaoItem).one()
+        assert item.tipo == "post_pagina"
+        assert item.risco == "alto"
+        assert item.camada_risco == 4          # publicação pelo sistema, não pelo dono
+        assert item.agente_origem == "comunicador"
+        assert item.estado == "pendente"
+        assert item.linter_ok is True
+        evento = s.query(ms.EventoAgente).one()
+        assert evento.agente == "comunicador"
+        assert evento.payload["tipo"] == "post_pagina"
+        assert evento.payload["corpo_texto"] == _POST_PAGINA_OK
+
+
+def test_comunicador_enfileirar_post_pagina_sem_divulgacao_da_1(bd, capsys, monkeypatch):
+    _stdin(monkeypatch, _POST_OK)  # sem "Preparado com apoio de IA."
+    rc = manage.main(["comunicador", "enfileirar", "--tipo", "post_pagina", "--stdin"])
+    assert rc == 1
+    dados = _json_out(capsys)
+    assert dados["aprovado"] is False
+    assert any(v["regra"] == "R5_DIVULGACAO_IA" for v in dados["violacoes"])
+    with db.get_session() as s:
+        assert s.query(ms.RevisaoItem).count() == 0
+
+
+def test_comunicador_enfileirar_post_grupo_continua_camada_2_sem_divulgacao(
+    bd, capsys, monkeypatch,
+):
+    # Regressão: acrescentar post_pagina não pode mexer no post_grupo — sem
+    # divulgação de IA continua a aprovar, e a camada mantém-se 2.
+    _stdin(monkeypatch, _POST_OK)
+    rc = manage.main(["comunicador", "enfileirar", "--tipo", "post_grupo", "--stdin"])
+    assert rc == 0
+    with db.get_session() as s:
+        item = s.query(ms.RevisaoItem).one()
+        assert item.tipo == "post_grupo"
+        assert item.camada_risco == 2
+
+
 # ==========================================================================
 #  EDITOR
 # ==========================================================================

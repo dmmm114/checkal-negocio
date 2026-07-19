@@ -20,7 +20,8 @@ que cada agente single-shot usa (sem shell livre, sem SQL cru):
                dunning-estado | suporte-triar --stdin}
     SENTINELA  sentinela verificar
     EDITOR     editor {plano | lint --stdin | enfileirar --tipo artigo_seo --stdin | estado}
-    COMUNICADOR comunicador {lint --stdin | enfileirar --tipo post_grupo --stdin | estado}
+    COMUNICADOR comunicador {lint [--tipo post_grupo|post_pagina] --stdin |
+               enfileirar --tipo T --stdin | estado}
                (+ editor plano, leitura)
     EMBAIXADOR embaixador {detetar --limiar N --max N | lint --stdin |
                enfileirar --tipo proposta_parceria --stdin --nif N
@@ -1507,21 +1508,33 @@ def _cmd_editor_estado(args) -> int:
 # ==========================================================================
 _TIPOS_COMUNICADOR = {
     "post_grupo": ("post_grupo", "medio"),
+    "post_pagina": ("post_pagina", "alto"),
 }
-# Camada explícita: o post é um RASCUNHO que o dono cola manualmente no grupo —
-# a ação irreversível é dele, não do sistema (spec §4.3). Sem isto, o mapa
-# risco→camada poria "medio" na camada 3 (clique obrigatório de camada alta).
+# Camada explícita: o post_grupo é um RASCUNHO que o dono cola manualmente no
+# grupo — a ação irreversível é dele, não do sistema (spec §4.3). Sem isto, o
+# mapa risco→camada poria "medio" na camada 3 (clique obrigatório de camada
+# alta). post_pagina NÃO tem override: risco "alto" cai na camada 4 por
+# omissão (`fila._CAMADA_POR_RISCO`) — é o sistema que publica, via Graph API,
+# depois do gate do dono (fase FB, 19/07/2026).
 _CAMADA_POST_GRUPO = 2
 
+# Canal do linter por tipo — despacho da regra de divulgação de IA (fase FB):
+# post_grupo é assistência de escrita (o dono revê e publica em nome próprio,
+# dispensa R5); post_pagina é publicação automática do sistema (exige R5).
+_CANAL_POR_TIPO_COMUNICADOR = {
+    "post_grupo": "POST_SOCIAL",
+    "post_pagina": "POST_PAGINA",
+}
 
-def _peca_comunicador(texto: str, *, url_fonte=None):
+
+def _peca_comunicador(texto: str, *, tipo: str = "post_grupo", url_fonte=None):
     from app.compliance import linter
 
-    # gerado_por_ia=True é factual; o canal POST_SOCIAL dispensa R5 (o dono
-    # revê e publica em nome próprio — decisão 19/07/2026).
+    canal = getattr(linter.Canal, _CANAL_POR_TIPO_COMUNICADOR[tipo])
+    # gerado_por_ia=True é factual nos dois; o canal é que despacha se R5
+    # (divulgação de IA) é exigida — ver _CANAL_POR_TIPO_COMUNICADOR acima.
     return linter.PecaOutward(
-        texto=texto, canal=linter.Canal.POST_SOCIAL, url_fonte=url_fonte,
-        gerado_por_ia=True,
+        texto=texto, canal=canal, url_fonte=url_fonte, gerado_por_ia=True,
     )
 
 
@@ -1529,7 +1542,7 @@ def _cmd_comunicador_lint(args) -> int:
     texto = sys.stdin.read()
     from app.compliance import linter
 
-    r = linter.lint(_peca_comunicador(texto, url_fonte=args.fonte))
+    r = linter.lint(_peca_comunicador(texto, tipo=args.tipo, url_fonte=args.fonte))
     _print_json({
         "aprovado": r.aprovado, "versao": r.versao,
         "violacoes": [
@@ -1555,12 +1568,19 @@ def _cmd_comunicador_enfileirar(args) -> int:
         _print_json({"escalado": True})
         return 0
 
-    peca = _peca_comunicador(texto, url_fonte=args.fonte)
+    peca = _peca_comunicador(texto, tipo=args.tipo, url_fonte=args.fonte)
+    # post_grupo é um rascunho: camada fixa 2 (o dono cola à mão). post_pagina
+    # não tem override — risco "alto" cai na camada 4 por omissão, porque é o
+    # sistema que publica (fase FB, 19/07/2026).
+    camada_risco = _CAMADA_POST_GRUPO if args.tipo == "post_grupo" else None
+    resumo_default = (
+        f"{args.tipo} p/ colar" if args.tipo == "post_grupo" else args.tipo
+    ) + (f" · {args.grupo}" if args.grupo else "")
     try:
         with fila.sessao_governacao() as s:
             evento = ms.EventoAgente(
                 agente="comunicador", tipo="conteudo_proposto",
-                mensagem=f"post para grupo proposto ({args.tipo})",
+                mensagem=f"{args.tipo} proposto",
                 payload={"tipo": args.tipo, "corpo_texto": texto,
                          "grupo_alvo": args.grupo, "fonte_url": args.fonte},
                 criado_em=_agora(),
@@ -1570,11 +1590,10 @@ def _cmd_comunicador_enfileirar(args) -> int:
             item = fila.enfileirar(
                 s, tipo=_TIPOS_COMUNICADOR[args.tipo][0],
                 risco=_TIPOS_COMUNICADOR[args.tipo][1],
-                camada_risco=_CAMADA_POST_GRUPO,
+                camada_risco=camada_risco,
                 agente_origem="comunicador",
                 ref_tipo="evento_agente", ref_id=str(evento.id),
-                resumo=(args.resumo or f"{args.tipo} p/ colar"
-                        + (f" · {args.grupo}" if args.grupo else "")),
+                resumo=args.resumo or resumo_default,
                 peca=peca,
             )
             item_id = item.id
@@ -1837,6 +1856,7 @@ def _construir_parser() -> argparse.ArgumentParser:
     cl = com_sub.add_parser("lint")
     cl.add_argument("--stdin", action="store_true", required=True)
     cl.add_argument("--fonte", default=None)
+    cl.add_argument("--tipo", choices=sorted(_TIPOS_COMUNICADOR), default="post_grupo")
     cl.set_defaults(func=_cmd_comunicador_lint)
     ce = com_sub.add_parser("enfileirar")
     ce.add_argument("--tipo", choices=sorted(_TIPOS_COMUNICADOR), required=True)

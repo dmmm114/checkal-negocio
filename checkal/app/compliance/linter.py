@@ -29,6 +29,15 @@ isso dispensa R5 (divulgação de IA), R7 (disclaimer) e R8/R9 (opt-out/remetent
 cold), mas mantém R4 (fonte oficial) e todas as proibições globais (R1/R2/R3/
 R6-moldura/RT-*).
 
+Canal POST_PAGINA (decisão do dono, 19/07/2026, fase FB): posts para a Página de
+Facebook da marca, também redigidos pelo COMUNICADOR mas publicados AUTOMATICAMENTE
+pelo sistema via Graph API — sem adoção manual do dono. Diverge deliberadamente do
+POST_SOCIAL: como não há revisão/republicação em nome próprio de alguém, a
+divulgação de IA (R5, AI Act art. 50) é EXIGIDA — a linha curta "Preparado com
+apoio de IA." satisfaz o mesmo regex de R5. Mantém R4 (fonte oficial) e as
+proibições globais; sem R6-pleno/R7/R8/R9 (regras de email/site, posts curtos não
+têm essa estrutura). Reversível por decisão do advogado.
+
 Função pura, determinística, SEM I/O de rede/BD, conservadora: na dúvida REJEITA
 (o viés inviolável herdado de `validacao.py`/`guardrails.py` — alargar a deteção é
 sempre seguro; nunca um falso "aprovado").
@@ -57,7 +66,7 @@ __all__ = [
 ]
 
 # Versionado como GUARDRAILS_VERSAO — parte do dossier de defesa (regras curadas).
-LINTER_VERSAO = "2026-07-19"
+LINTER_VERSAO = "2026-07-19b"
 
 # Frase canónica de divulgação de IA (AI Act art. 50) — os templates redigidos por
 # agente embutem-na; o linter (R5) reprova a ausência quando `gerado_por_ia=True`.
@@ -88,6 +97,7 @@ class Canal(enum.Enum):
     ONE_PAGER = "one_pager"
     RELATORIO = "relatorio"
     POST_SOCIAL = "post_social"
+    POST_PAGINA = "post_pagina"
 
 
 class Severidade(enum.Enum):
@@ -226,7 +236,8 @@ _RE_R9_IDENTIFICACAO = re.compile(r"cosmic\s+oasis")
 # RELATORIO = transacional do pagante: sem R7 por decisão de produto (o relatório
 # mensal "passou no check" não é alerta — compliance §9.5); opt-out garantido pela
 # base de email. R6-pleno (validar_alerta) nos canais que afirmam factos regulatórios.
-_EXIGE_R4 = {Canal.ALERTA, Canal.PAGINA_PUBLICA, Canal.ONE_PAGER, Canal.POST_SOCIAL}
+_EXIGE_R4 = {Canal.ALERTA, Canal.PAGINA_PUBLICA, Canal.ONE_PAGER, Canal.POST_SOCIAL,
+             Canal.POST_PAGINA}
 _EXIGE_R6_PLENO = {Canal.ALERTA, Canal.PAGINA_PUBLICA, Canal.ONE_PAGER}
 _EXIGE_R7 = {Canal.ALERTA, Canal.COLD, Canal.NURTURE_TRANSACIONAL,
              Canal.PAGINA_PUBLICA, Canal.ONE_PAGER}
@@ -240,6 +251,12 @@ _EXIGE_R9 = {Canal.COLD}
 # não têm estrutura fonte+excerto; a fonte oficial é garantida por R4.
 # A premissa "o dono publica manualmente" é estrutural: o POST_SOCIAL não tem
 # caminho de publicação automática (spec 2026-07-19 §4.3, camada_risco=2).
+#
+# POST_PAGINA (fase FB, 19/07/2026) fica de FORA deste conjunto de propósito:
+# é publicação AUTOMÁTICA do sistema na Página de Facebook (camada_risco=4),
+# sem adoção manual do dono ⇒ R5 continua EXIGIDO — a linha curta "Preparado
+# com apoio de IA." satisfaz o mesmo `_RE_R5_DIVULGACAO`. Divergência
+# deliberada face ao POST_SOCIAL; reversível por decisão do advogado.
 _ISENTO_R5 = {Canal.POST_SOCIAL}
 
 

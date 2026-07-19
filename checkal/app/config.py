@@ -305,6 +305,18 @@ DGC_MAX_IDADE_DIAS = int(_env("CHECKAL_DGC_MAX_IDADE_DIAS", "30"))
 AUTO_PUBLICAR_ARTIGO_SEO = _env_bool("CHECKAL_AUTO_PUBLICAR_ARTIGO_SEO", False)
 PUBLICADOR_CAP_PASSAGEM = int(_env("CHECKAL_PUBLICADOR_CAP_PASSAGEM", "2"))
 
+# 🚦 Página de Facebook da marca (fase FB, 19/07) — publicação AUTOMÁTICA de
+# posts `post_pagina` aprovados via Graph API. Live-gated: sem page id +
+# token, `facebook_ativo()` (fundo do ficheiro) é False e o publicador (fase
+# FB2) nem drena post_pagina. Token de página de longa duração — expira/
+# invalida-se com mudança de password; renová-lo é manutenção do dono.
+FACEBOOK_PAGE_ID = _env("CHECKAL_FACEBOOK_PAGE_ID", "")        # id da Página (não segredo, mas vazio por omissão)
+FACEBOOK_PAGE_TOKEN = _env("CHECKAL_FACEBOOK_PAGE_TOKEN", "")  # token de acesso de página (segredo)
+
+# Autonomia gradual do PUBLICADOR para post_pagina — simétrica à de
+# AUTO_PUBLICAR_ARTIGO_SEO: fail-closed, o dono liga só quando confiar.
+AUTO_PUBLICAR_POST_PAGINA = _env_bool("CHECKAL_AUTO_PUBLICAR_POST_PAGINA", False)
+
 
 def anthropic_dpa_ok() -> bool:
     """O DPA comercial da Anthropic está assinado? (live-gate dos agentes LLM)."""
@@ -345,6 +357,15 @@ def telegram_ativo() -> bool:
 def backups_ativo() -> bool:
     """O pg_dump real só corre com DSN de origem definido (live-gate)."""
     return bool(BACKUP_DB_URL)
+
+
+def facebook_ativo() -> bool:
+    """A Página de Facebook só publica com page id + token configurados (live-gate).
+
+    Espelha `imap_ativo`/`cold_smtp_ativo`: sem os dois, o publicador (fase FB2)
+    nem drena `post_pagina` — os itens aprovados ficam intactos à espera.
+    """
+    return bool(FACEBOOK_PAGE_ID and FACEBOOK_PAGE_TOKEN)
 
 
 def cold_smtp_ativo() -> bool:

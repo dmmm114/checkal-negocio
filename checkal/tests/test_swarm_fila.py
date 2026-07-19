@@ -236,6 +236,18 @@ def test_auto_publicar_default_fail_closed():
     assert config.AUTO_PUBLICAR_ARTIGO_SEO is False
 
 
+def test_auto_publicar_post_pagina_default_fail_closed():
+    # Simétrico ao dos artigos (fase FB, 19/07): sem o dono ligar a flag, a
+    # Página de Facebook nunca publica sozinha.
+    assert config.AUTO_PUBLICAR_POST_PAGINA is False
+
+
+def test_facebook_ativo_default_fail_closed():
+    # Live-gate: sem CHECKAL_FACEBOOK_PAGE_ID + _PAGE_TOKEN, o publicador nem
+    # deve drenar post_pagina (FB2) — aqui só o predicado puro.
+    assert config.facebook_ativo() is False
+
+
 def test_auto_aprovar_escreve_auto_aprovado_nunca_aprovado(bd):
     with db.get_session() as s:
         item = _enfileirar_ok(s)

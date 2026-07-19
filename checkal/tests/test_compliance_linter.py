@@ -484,3 +484,74 @@ def test_isencao_r5_e_exclusiva_do_post_social():
         canal=Canal.PAGINA_PUBLICA, gerado_por_ia=True,
     ))
     assert "R5_DIVULGACAO_IA" in _regras(r)
+
+
+# ==========================================================================
+#  Canal POST_PAGINA (fase FB, decisão do dono 19/07/2026): posts publicados
+#  AUTOMATICAMENTE na Página de Facebook via Graph API — sem adoção manual do
+#  dono (diverge do POST_SOCIAL, colado pelo dono em nome próprio) ⇒ R5
+#  (divulgação de IA) é EXIGIDA. Sem R6-pleno/R7/R8/R9; R4 (fonte oficial) e
+#  proibições globais aplicam-se.
+# ==========================================================================
+_POST_PAGINA_BASE = (
+    "Novo regulamento municipal do Funchal para o Alojamento Local — resumo "
+    "em 5 pontos.\n1) Âmbito. 2) Prazos. 3) Registos. 4) Vistorias. "
+    "5) Onde ler mais.\nFonte oficial: https://www.cm-funchal.pt/regulamento-al"
+)
+
+
+def test_post_pagina_proibicoes_globais_aplicam():
+    r = lint(_peca("O seu alojamento está ilegal e sem seguro.", Canal.POST_PAGINA))
+    assert r.aprovado is False
+    assert "R1_ILEGALIDADE" in _regras(r)
+
+
+def test_post_pagina_exige_fonte_oficial():
+    r = lint(PecaOutward(
+        texto="Novo regulamento para o Alojamento Local — resumo em 5 pontos.",
+        canal=Canal.POST_PAGINA, gerado_por_ia=True,
+    ))
+    assert r.aprovado is False
+    assert "R4_FONTE_OFICIAL" in _regras(r)
+
+
+def test_post_pagina_sem_divulgacao_ia_reprova_com_r5():
+    # Publicação automática pela página ⇒ sem a linha de divulgação, reprova.
+    r = lint(PecaOutward(texto=_POST_PAGINA_BASE, canal=Canal.POST_PAGINA,
+                          gerado_por_ia=True))
+    assert r.aprovado is False
+    assert "R5_DIVULGACAO_IA" in _regras(r)
+
+
+def test_post_pagina_com_divulgacao_curta_aprova():
+    texto = f"{_POST_PAGINA_BASE}\nPreparado com apoio de IA."
+    r = lint(PecaOutward(texto=texto, canal=Canal.POST_PAGINA, gerado_por_ia=True))
+    assert r.aprovado is True, [f"{v.regra}: {v.razao}" for v in r.violacoes]
+
+
+def test_post_pagina_r6_r7_r8_r9_nunca_disparam():
+    texto = f"{_POST_PAGINA_BASE}\nPreparado com apoio de IA."
+    r = lint(PecaOutward(texto=texto, canal=Canal.POST_PAGINA, gerado_por_ia=True))
+    regras = _regras(r)
+    assert not ({"R6_GROUNDING", "R7_DISCLAIMER", "R8_OPTOUT",
+                 "R9_IDENTIFICACAO"} & regras)
+
+
+def test_post_pagina_coima_ameaca_continua_bloqueada():
+    r = lint(PecaOutward(
+        texto="A tua coima pode chegar aos 4.000 € se não agires já. "
+              "Fonte: https://www.cm-porto.pt/al\nPreparado com apoio de IA.",
+        canal=Canal.POST_PAGINA, gerado_por_ia=True,
+    ))
+    assert r.aprovado is False
+    assert "R3_COIMA_AMEACA" in _regras(r)
+
+
+def test_post_social_continua_isento_de_r5_apos_post_pagina():
+    # Guarda de regressão: acrescentar POST_PAGINA (que EXIGE R5) não pode
+    # alterar a isenção do POST_SOCIAL (o dono publica em nome próprio).
+    r = lint(PecaOutward(
+        texto="O vosso AL passou no check. Fonte: https://www.cm-porto.pt/al",
+        canal=Canal.POST_SOCIAL, gerado_por_ia=True,
+    ))
+    assert not any(v.regra.startswith("R5") for v in r.violacoes)
