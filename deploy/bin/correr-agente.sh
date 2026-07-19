@@ -3,7 +3,7 @@
 # correr-agente.sh <instancia> — o ÚNICO ponto que invoca o Claude CLI no Polaris.
 #
 # Instâncias: maestro-digest | maestro-governanca | angariador | gestor |
-#             gestor-suporte | sentinela
+#             gestor-suporte | sentinela | editor | comunicador
 #
 # Ordem canónica (prompt-mestre §3.9), tudo fail-closed:
 #   1. flock anti-reentrância (sai 0 em silêncio se já corre);
@@ -30,7 +30,7 @@ PAUSA="${CHECKAL_PAUSA_LLM_PATH:-${RUN_DIR}/PAUSA_LLM}"
 PY="${CHECKAL_PYTHON:-${BASE}/.venv/bin/python}"
 CLAUDE_BIN="${CHECKAL_CLAUDE_BIN:-claude}"
 MAX_TURNS="${CHECKAL_MAX_TURNS:-40}"
-TIMEOUT_S="${CHECKAL_TIMEOUT_S:-840}"          # < RuntimeMaxSec=900 da unit
+TIMEOUT_S="${CHECKAL_TIMEOUT_S:-840}"          # < TimeoutStartSec=960 da unit
 HC_BASE="${HEALTHCHECKS_BASE_URL:-https://hc-ping.com}"
 HC_KEY="${HEALTHCHECKS_PING_KEY:-}"
 
@@ -48,6 +48,11 @@ exec 9>"${RUN_DIR}/${AGENTE}.lock" || exit 0
 if ! flock -n 9; then
   exit 0
 fi
+# O lock é nosso: apagar o FICHEIRO em qualquer saída. A unit testa a
+# existência do ficheiro (ConditionPathExists=!lock), não o flock — um
+# ficheiro deixado para trás bloqueia todas as execuções futuras da instância.
+trap 'rm -f "${RUN_DIR}/${AGENTE}.lock"' EXIT
+trap 'exit 143' TERM INT   # SIGTERM (systemd stop) não corre o trap EXIT sozinho
 
 # 2) ping START.
 hc_ping start
@@ -96,6 +101,16 @@ ARG_LLM=""
 case "${AGENTE}" in
   maestro-digest)
     "${PY}" manage.py maestro-run --modo digest || { hc_ping fail "maestro-run digest falhou"; exit 1; }
+    # Em MODO_TESTE o artefacto do digest (insert na BD + Telegram) está
+    # live-gated a jusante (manage.py maestro-digest via obter_escalador):
+    # a passagem LLM custaria €€ para um no-op. Salta até o modo live abrir.
+    # Truthiness espelha _env_bool do config.py (ausente → teste ativo).
+    MT="$(printf '%s' "${CHECKAL_MODO_TESTE:-1}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+    case "${MT}" in
+      1|true|sim|yes|on)
+        hc_ping log "MODO_TESTE ativo — passagem LLM do digest saltada (artefacto live-gated)"
+        exit 0 ;;
+    esac
     PROMPT_FILE="${PROMPTS}/maestro.txt"; ARG_LLM="modo=digest" ;;
   maestro-governanca)
     "${PY}" manage.py maestro-run --modo governanca || { hc_ping fail "maestro-run governanca falhou"; exit 1; }
@@ -116,6 +131,10 @@ case "${AGENTE}" in
       exit 0
     fi
     PROMPT_FILE="${PROMPTS}/sentinela.txt"; ARG_LLM="passagem=adjudicacao" ;;
+  editor)
+    PROMPT_FILE="${PROMPTS}/editor.txt"; ARG_LLM="passagem=editorial" ;;
+  comunicador)
+    PROMPT_FILE="${PROMPTS}/comunicador.txt"; ARG_LLM="passagem=diaria" ;;
   *)
     hc_ping fail "instância desconhecida: ${AGENTE}"
     exit 2 ;;
@@ -133,11 +152,16 @@ case "${AGENTE}" in
     TOOLS="Read,Bash(python manage.py gestor onboarding-tarefas:*),Bash(python manage.py gestor relatorio-mensal-compor:*),Bash(python manage.py gestor dunning-estado:*),Bash(python manage.py gestor suporte-triar:*)" ;;
   sentinela)
     TOOLS="Read,Bash(python manage.py sentinela verificar)" ;;
+  editor)
+    TOOLS="Read,Bash(python manage.py editor estado),Bash(python manage.py editor plano),Bash(python manage.py editor lint:*),Bash(python manage.py editor enfileirar:*)" ;;
+  comunicador)
+    TOOLS="Read,Bash(python manage.py comunicador estado),Bash(python manage.py comunicador lint:*),Bash(python manage.py comunicador enfileirar:*),Bash(python manage.py editor plano)" ;;
 esac
 
 SAIDA="$(mktemp "${RUN_DIR}/${AGENTE}.XXXXXX.json")"
 ERRO="$(mktemp "${RUN_DIR}/${AGENTE}.XXXXXX.err")"
-trap 'rm -f "${SAIDA}" "${ERRO}"' EXIT
+# NB: este trap SUBSTITUI o anterior (semântica do bash) — tem de repetir o lock.
+trap 'rm -f "${SAIDA}" "${ERRO}" "${RUN_DIR}/${AGENTE}.lock"' EXIT
 
 timeout "${TIMEOUT_S}" "${CLAUDE_BIN}" -p "${ARG_LLM}" \
   --append-system-prompt "$(cat "${PROMPT_FILE}")" \
