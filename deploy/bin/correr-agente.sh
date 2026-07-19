@@ -134,7 +134,7 @@ case "${AGENTE}" in
   editor)
     PROMPT_FILE="${PROMPTS}/editor.txt"; ARG_LLM="passagem=editorial" ;;
   comunicador)
-    PROMPT_FILE="${PROMPTS}/comunicador.txt"; ARG_LLM="passagem=diaria" ;;
+    PROMPT_FILE="${PROMPTS}/comunicador.txt"; ARG_LLM="passagem=comunidade" ;;
   *)
     hc_ping fail "instância desconhecida: ${AGENTE}"
     exit 2 ;;
