@@ -426,3 +426,12 @@ def test_alerta_cancelado_com_breaker_e_crosscheck_enfileira(bd):
             breaker_confirmado=True, cross_check_ok=True,
         )
         assert item.estado == "pendente"
+
+
+# ==========================================================================
+#  Portão 1-clique (fase 2): GATE_BASE_URL fail-closed
+# ==========================================================================
+def test_gate_base_url_default_vazio_fail_closed():
+    import app.config as config
+
+    assert config.GATE_BASE_URL == ""

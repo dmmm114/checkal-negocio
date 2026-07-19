@@ -216,7 +216,8 @@ def _decidir(session, item_id: int, *, token: str, decidido_por: str,
         raise TokenInvalido(f"item {item_id} inexistente")
     if item.estado != "pendente":
         raise TokenInvalido(f"item {item_id} já não está pendente ({item.estado})")
-    if not token or not item.token_aprovacao or token != item.token_aprovacao:
+    if (not token or not item.token_aprovacao
+            or not secrets.compare_digest(token, item.token_aprovacao)):
         raise TokenInvalido("token de aprovação ausente ou inválido")
     autor = item.agente_origem or "desconhecido"
     if decidido_por == autor:

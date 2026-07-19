@@ -63,6 +63,12 @@ _DEFAULT_SECRET = "dev-inseguro-trocar"
 BASE_URL = _env("CHECKAL_BASE_URL", "http://localhost:8000")
 SITE_URL = _env("CHECKAL_SITE_URL", "http://localhost:8000")
 
+# Portão 1-clique (fase 2): base URL pública das rotas /gate. Fail-closed:
+# vazio ⇒ o maestro-gate-token não compõe URL e o digest cai para instrução
+# manual. Em produção no Polaris: https://polaris.tail2f0d3e.ts.net:8443
+# (tailscale funnel na porta 8443 — ver HANDOFF fase 2).
+GATE_BASE_URL = _env("CHECKAL_GATE_BASE_URL", "")
+
 # --- RNAL (Turismo de Portugal) ---
 RNAL_API = "https://webservices.turismodeportugal.pt/RNT_External/rest/RNT/list_RNAL"
 RNAL_PAGINA = "https://rnt.turismodeportugal.pt/rnt/rnal.aspx"
