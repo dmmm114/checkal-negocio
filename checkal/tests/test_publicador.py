@@ -11,10 +11,19 @@ dicts/ficheiros.
 from __future__ import annotations
 
 import re
-from datetime import date
+import subprocess
+from datetime import date, datetime, timezone
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
+import app.config as config
+import app.db as db
+import app.models_swarm as ms
+import manage
+from app.compliance.linter import Canal, PecaOutward
+from app.swarm import fila
 from app import publicador
 
 # Baseado no `_ARTIGO_OK` de test_manage_editor_comunicador.py, com
@@ -138,3 +147,237 @@ def test_sitemap_recusa_slug_hostil(tmp_path):
     sm.write_text(SITEMAP_BASE)
     with pytest.raises(ValueError):
         publicador.atualizar_sitemap(sm, slug="../../evil", lastmod="2026-07-19")
+
+
+# ==========================================================================
+#  F3.4 — a passagem: modo ensaio (read-only) vs modo live (drain + git +
+#  wrangler pinado). Isolamento igual a test_swarm_fila.py/test_gate_web.py:
+#  BD SQLite temporária via monkeypatch de db.engine/db.SessionLocal. SEM
+#  git/wrangler/rede reais — `executar` é sempre um fake.
+# ==========================================================================
+def _agora() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+@pytest.fixture()
+def bd(tmp_path, monkeypatch):
+    url = f"sqlite:///{tmp_path / 'checkal_publicador_test.db'}"
+    eng = create_engine(url, future=True, connect_args={"check_same_thread": False})
+    SessionLocal = sessionmaker(bind=eng, expire_on_commit=False, class_=Session)
+    monkeypatch.setattr(db, "engine", eng)
+    monkeypatch.setattr(db, "SessionLocal", SessionLocal)
+    db.init_db()
+    try:
+        yield
+    finally:
+        eng.dispose()
+
+
+# Post conforme (linter R4: fonte oficial cm-porto.pt no próprio texto) — o
+# mesmo texto de test_gate_web.py/_POST_OK.
+_POST_OK = (
+    "Novo regulamento municipal do Porto para o Alojamento Local — resumo em "
+    "5 pontos.\n1) Âmbito. 2) Prazos. 3) Registos. 4) Vistorias. 5) Onde ler.\n"
+    "Fonte oficial: https://www.cm-porto.pt/regulamento-al"
+)
+
+
+def _semear_artigo(s, *, agente_origem: str = "editor", estado_pendente: bool = False,
+                    artigo: dict | None = None) -> int:
+    """Enfileira um `artigo_seo` conforme com o payload no `EventoAgente`
+    (exatamente como `manage._cmd_editor_enfileirar` o faz) e, por omissão,
+    aprova-o já (token + `fila.aprovar`). `estado_pendente=True` deixa-o
+    `pendente` — usado pelos testes de auto-aprovação sob flag."""
+    artigo = artigo if artigo is not None else _ARTIGO
+    texto, url_fonte, excerto = manage._texto_lint_artigo(artigo)
+    peca = PecaOutward(
+        texto=texto, canal=Canal.PAGINA_PUBLICA,
+        url_fonte=url_fonte, excerto=excerto, gerado_por_ia=True,
+    )
+    evento = ms.EventoAgente(
+        agente=agente_origem, tipo="conteudo_proposto",
+        mensagem=f"artigo proposto (/{artigo['slug']})",
+        payload={"tipo": "artigo_seo", "artigo": artigo},
+        criado_em=_agora(),
+    )
+    s.add(evento)
+    s.flush()
+    item = fila.enfileirar(
+        s, tipo="artigo_seo", risco="alto", agente_origem=agente_origem,
+        ref_tipo="evento_agente", ref_id=str(evento.id),
+        resumo=f"artigo_seo /{artigo['slug']}",
+        peca=peca,
+    )
+    s.flush()
+    if not estado_pendente:
+        token = fila.gerar_token(s, item.id)
+        fila.aprovar(s, item.id, token=token, decidido_por="dono")
+    return item.id
+
+
+def _semear_post_grupo(s, *, agente_origem: str = "comunicador") -> int:
+    peca = PecaOutward(texto=_POST_OK, canal=Canal.POST_SOCIAL)
+    item = fila.enfileirar(
+        s, tipo="post_grupo", risco="medio", camada_risco=2,
+        agente_origem=agente_origem, resumo="Post sobre o regulamento do Porto",
+        peca=peca,
+    )
+    s.flush()
+    token = fila.gerar_token(s, item.id)
+    fila.aprovar(s, item.id, token=token, decidido_por="dono")
+    return item.id
+
+
+def _site_fake(tmp_path):
+    """`site_dir` fake: sitemap.xml base + `functions/` vazia (para o `cp -r`
+    — nunca corre de verdade, `executar` é fake, mas o caminho tem de existir
+    para o teste ler o conteúdo real do sitemap/HTML escritos por `correr`)."""
+    site_dir = tmp_path / "site"
+    site_dir.mkdir()
+    (site_dir / "sitemap.xml").write_text(SITEMAP_BASE, encoding="utf-8")
+    (site_dir / "functions").mkdir()
+    return site_dir
+
+
+class _ResultadoFake:
+    def __init__(self, stdout: str = "") -> None:
+        self.stdout = stdout
+
+
+def _texto_cmd(cmd) -> str:
+    return " ".join(cmd) if isinstance(cmd, (list, tuple)) else str(cmd)
+
+
+def _fake_executar(chamadas: list, *, falha_wrangler: bool = False):
+    """Fake de `executar`: acumula os cmds em `chamadas`; devolve um objeto
+    com `.stdout` contendo "Uploading Functions bundle" quando o cmd é o
+    wrangler — ou levanta `CalledProcessError` nesse passo, se pedido (para o
+    teste de falha de deploy). Nunca toca em git/wrangler/rede reais."""
+    def _exec(cmd, **kw):
+        chamadas.append(cmd)
+        if "wrangler" in _texto_cmd(cmd):
+            if falha_wrangler:
+                raise subprocess.CalledProcessError(1, cmd, output="", stderr="deploy falhou")
+            return _ResultadoFake(stdout="Uploading Functions bundle\n✨ Deployment complete\n")
+        return _ResultadoFake(stdout="")
+    return _exec
+
+
+def test_correr_em_modo_teste_nao_drena_nem_executa(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", True)
+    with db.get_session() as s:
+        item_id = _semear_artigo(s)
+
+    chamadas: list = []
+    rel = publicador.correr(
+        site_dir=tmp_path / "site", ensaio_dir=tmp_path / "ensaio",
+        executar=lambda cmd, **kw: chamadas.append(cmd),
+    )
+
+    assert rel["modo"] == "ensaio"
+    assert chamadas == []                                  # zero git/wrangler
+
+    # item CONTINUA aprovado — não foi drenado nem marcado feito (drenar em
+    # ensaio marcaria 'feito' sem publicar de facto, perdendo-o).
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "aprovado"
+        assert item.lease_ate is None
+
+    assert (tmp_path / "ensaio" / "regulamentos-al-porto.html").exists()
+
+
+def test_correr_live_publica_artigo_e_fecha_post(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    with db.get_session() as s:
+        artigo_id = _semear_artigo(s)
+        post_id = _semear_post_grupo(s)
+
+    site_dir = _site_fake(tmp_path)
+    chamadas: list = []
+    rel = publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas),
+    )
+
+    assert rel["modo"] == "live"
+    # site_dir/{slug}.html escrito; sitemap atualizado.
+    assert (site_dir / "regulamentos-al-porto.html").exists()
+    assert "regulamentos-al-porto" in (site_dir / "sitemap.xml").read_text(encoding="utf-8")
+    # o post_grupo é no-op — nenhum ficheiro extra além do artigo.
+    ficheiros = {p.name for p in site_dir.iterdir()}
+    assert ficheiros == {"sitemap.xml", "functions", "regulamentos-al-porto.html"}
+
+    # sequência de comandos: git add/commit/push + wrangler pages deploy
+    # (validado via «Uploading Functions bundle» no stdout do fake).
+    comandos = [_texto_cmd(c) for c in chamadas]
+    assert any(c.startswith("git -C") and " add " in c for c in comandos)
+    assert any(c.startswith("git -C") and " commit " in c for c in comandos)
+    assert any(c.startswith("git -C") and " push " in c for c in comandos)
+    assert any("wrangler" in c and "pages deploy" in c for c in comandos)
+
+    with db.get_session() as s:
+        assert s.get(ms.RevisaoItem, artigo_id).estado == "feito"
+        assert s.get(ms.RevisaoItem, post_id).estado == "feito"
+
+
+def test_correr_live_auto_aprova_sob_flag(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    monkeypatch.setattr(config, "AUTO_PUBLICAR_ARTIGO_SEO", True)
+    with db.get_session() as s:
+        item_id = _semear_artigo(s, estado_pendente=True)
+
+    site_dir = _site_fake(tmp_path)
+    chamadas: list = []
+    publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas),
+    )
+
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "feito"                     # pendente → auto_aprovado → feito
+        assert item.decidido_por == "auto"
+        apr = s.query(ms.Aprovacao).filter(ms.Aprovacao.revisao_item_id == item_id).one()
+        assert apr.decisao == "auto_aprovado"
+    assert (site_dir / "regulamentos-al-porto.html").exists()
+
+
+def test_correr_live_sem_flag_ignora_pendentes(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    assert config.AUTO_PUBLICAR_ARTIGO_SEO is False       # fail-closed por omissão
+    with db.get_session() as s:
+        item_id = _semear_artigo(s, estado_pendente=True)
+
+    site_dir = _site_fake(tmp_path)
+    chamadas: list = []
+    publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas),
+    )
+
+    # só o gate humano decide — sem a flag, pendente fica pendente.
+    with db.get_session() as s:
+        assert s.get(ms.RevisaoItem, item_id).estado == "pendente"
+    assert not (site_dir / "regulamentos-al-porto.html").exists()
+    assert chamadas == []
+
+
+def test_deploy_falha_marca_falhado_com_backoff(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    with db.get_session() as s:
+        item_id = _semear_artigo(s)
+
+    site_dir = _site_fake(tmp_path)
+    chamadas: list = []
+    publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas, falha_wrangler=True),
+    )
+
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "falhado"
+        assert item.tentativas == 1
+        assert item.nao_antes_de is not None               # backoff futuro
+        assert item.lease_ate is None

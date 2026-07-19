@@ -3,9 +3,17 @@ dono/config aprova, ISTO publica.
 
 Parte 1 (fase 3, F3.3): só o render. Composição da página HTML final de um
 artigo aprovado e a manutenção do sitemap — funções puras, sem I/O de rede
-nem BD, deterministas (mesmo artigo ⇒ mesmo HTML byte a byte). A passagem
-completa (drain da fila, modo ensaio/live, git, deploy Cloudflare) é a F3.4,
-noutro módulo desta mesma peça — NÃO está aqui.
+nem BD, deterministas (mesmo artigo ⇒ mesmo HTML byte a byte).
+
+Parte 2 (fase 3, F3.4): `correr()` — a passagem completa chamada pelo job
+`manage.py publicador`. Em `config.CHECKAL_MODO_TESTE` é ensaio read-only
+(SELECT + render para `ensaio_dir`, zero escrita na BD/site); em modo live
+drena `artigo_seo`/`post_grupo` aprovados via `fila.drain` (dentro de UMA
+`fila.sessao_governacao()`) e publica cada artigo: escreve o HTML, atualiza o
+sitemap, e faz commit+push no repo aninhado + deploy Cloudflare Pages via
+staging com `npx wrangler` PINADO. `post_grupo` é sempre no-op (o dono cola à
+mão). Nada aqui corre git/wrangler diretamente — tudo passa pelo seam
+`executar` injetável (testes usam fakes; NUNCA rede/processos reais em teste).
 
 Auditoria-chave (`docs/superpowers/plans/2026-07-19-fase3-publicador.md`
 §F3.3): o molde é `site/porto.html`. Os blocos que não variam de artigo para
@@ -38,12 +46,13 @@ from __future__ import annotations
 import html
 import json
 import re
+import subprocess
 from datetime import date
 from pathlib import Path
 
 from app.compliance.linter import DISCLAIMER_NAO_ACONSELHAMENTO, DIVULGACAO_IA
 
-__all__ = ["md_para_html", "render_artigo", "atualizar_sitemap"]
+__all__ = ["md_para_html", "render_artigo", "atualizar_sitemap", "correr"]
 
 # Whitelist estrita do slug — não é só escape. O slug é um segmento de URL
 # AUTORADO PELO LLM (payload do EDITOR) e entra cru em canonical/og:url/
@@ -331,3 +340,197 @@ def atualizar_sitemap(caminho: Path, *, slug: str, lastmod: str) -> None:
     )
     texto = texto.replace("</urlset>", bloco_novo + "</urlset>", 1)
     caminho.write_text(texto, encoding="utf-8")
+
+
+# ==========================================================================
+#  Parte 2 (F3.4) — a passagem: ensaio (read-only) vs live (drain+git+wrangler)
+# ==========================================================================
+_TIPOS_PUBLICAVEIS = ("artigo_seo", "post_grupo")
+
+# rsync: nunca leva o `.git` aninhado, o estado do wrangler, docs internos nem
+# as ferramentas de manutenção — e `functions/` fica de fora porque vai à
+# parte, como pasta IRMÃ de `dist/` (é assim que o Cloudflare Pages a exige).
+_RSYNC_EXCLUDES = (
+    "--exclude=.git", "--exclude=.wrangler", "--exclude=*.md",
+    "--exclude=tools", "--exclude=functions",
+)
+_WRANGLER_VERSAO = "wrangler@4.111.0"  # PINADA — `npx wrangler` sem pin flutua
+
+
+def _executar_padrao(cmd, **kw):
+    """Default do parâmetro `executar` de :func:`correr` — `subprocess.run`
+    real. Injetável: os testes passam sempre um fake (nenhum corre git/
+    wrangler/rede de verdade)."""
+    return subprocess.run(cmd, check=True, capture_output=True, text=True, **kw)
+
+
+def _carregar_artigo(session, item) -> dict:
+    """Carrega o payload do artigo a partir do `EventoAgente` referido por
+    `item.ref_id` (o mesmo padrão do EDITOR em `manage._cmd_editor_enfileirar`:
+    `payload={"tipo": "artigo_seo", "artigo": {...}}`).
+
+    Levanta `ValueError` se o ref for inexistente/não-numérico ou o payload
+    não tiver `"artigo"` — quem chama isto dentro de um `processador` do
+    `fila.drain` sabe que a exceção vira `falhado` + backoff exponencial
+    (nunca publica um artigo fantasma).
+    """
+    import app.models_swarm as ms
+
+    if not item.ref_id:
+        raise ValueError(f"item {item.id} (artigo_seo) sem ref_id")
+    try:
+        evento_id = int(item.ref_id)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"item {item.id}: ref_id {item.ref_id!r} não é um id de EventoAgente"
+        ) from exc
+    evento = session.get(ms.EventoAgente, evento_id)
+    if evento is None or not isinstance(evento.payload, dict) or "artigo" not in evento.payload:
+        raise ValueError(
+            f"item {item.id}: EventoAgente {item.ref_id!r} inexistente ou sem "
+            "payload['artigo']"
+        )
+    return evento.payload["artigo"]
+
+
+def _publicar_no_cloudflare(site_dir: Path, executar) -> None:
+    """Commit+push no repo aninhado `site_dir` + deploy de staging (wrangler
+    PINADO). Todos os passos passam por `executar` (injetável) — nada aqui
+    toca git/rede diretamente.
+
+    Staging: `stage/` nasce sempre de novo (irmã de `site_dir`), `dist/` é o
+    rsync do site (com os excludes) e `functions/` entra à parte, como pasta
+    IRMÃ de `dist/` dentro de `stage/` (exigência do Cloudflare Pages — não
+    fica dentro de `dist/`). Valida a linha "Uploading Functions bundle" no
+    stdout do wrangler; ausente ⇒ `RuntimeError` (o deploy não fica confirmado
+    só por o processo ter saído com código 0).
+    """
+    stage_dir = site_dir.parent / "stage"
+    executar(["rm", "-rf", str(stage_dir)])
+    executar(["mkdir", "-p", str(stage_dir / "dist")])
+    executar(["rsync", "-a", *_RSYNC_EXCLUDES, f"{site_dir}/", f"{stage_dir}/dist/"])
+    executar(["cp", "-r", str(site_dir / "functions"), str(stage_dir / "functions")])
+    resultado = executar(
+        ["npx", "--yes", _WRANGLER_VERSAO, "pages", "deploy", "dist",
+         "--project-name", "checkal", "--branch", "main"],
+        cwd=str(stage_dir),
+    )
+    stdout = getattr(resultado, "stdout", "") or ""
+    if "Uploading Functions bundle" not in stdout:
+        raise RuntimeError(
+            "wrangler pages deploy: 'Uploading Functions bundle' ausente do "
+            "stdout — deploy não confirmado."
+        )
+
+
+def correr(
+    *,
+    site_dir: Path | str | None = None,
+    ensaio_dir: Path | str | None = None,
+    executar=None,
+) -> dict:
+    """A passagem do PUBLICADOR — chamada pelo job `manage.py publicador`.
+
+    **Modo ensaio** (`config.CHECKAL_MODO_TESTE=True`): NUNCA drena — um
+    dry-run que drenasse marcaria itens `feito` sem os publicar de facto,
+    perdendo-os. Faz um SELECT read-only dos itens `aprovado`/`auto_aprovado`
+    de tipo `artigo_seo`/`post_grupo`, renderiza os artigos para `ensaio_dir`
+    e devolve `{"modo": "ensaio", "artigos": [...], "posts": N}`. Zero
+    `fila.drain`, zero escrita na BD, zero escrita em `site_dir`, zero comando
+    executado.
+
+    **Modo live**: (a) se `config.AUTO_PUBLICAR_ARTIGO_SEO`, auto-aprova (via
+    `fila.auto_aprovar`) os `artigo_seo` `pendente`s com `linter_ok` — SÓ esse
+    tipo (o filtro por tipo é responsabilidade de quem chama `auto_aprovar`,
+    não da função); (b) drena `artigo_seo`/`post_grupo` aprovados +
+    auto-aprovados (`fila.drain`, cap `config.PUBLICADOR_CAP_PASSAGEM`) — tudo
+    dentro de UMA `fila.sessao_governacao()`; (c) por item: `post_grupo` é
+    no-op (o dono cola sempre à mão — o `drain` marca `feito`); `artigo_seo`
+    renderiza, escreve `{slug}.html`, atualiza o sitemap e publica (git
+    commit+push + deploy Cloudflare via staging), POR ITEM — idempotente por
+    slug: um re-serviço após lease expirado sobrescreve, nunca duplica o
+    efeito externo.
+
+    `executar(cmd, **kw)` é o seam injetável (testes) — o default embrulha
+    `subprocess.run(cmd, check=True, capture_output=True, text=True, **kw)`.
+    """
+    import app.config as config
+    import app.db as db
+    import app.models_swarm as ms
+    from app.swarm import fila
+
+    site_dir = Path(site_dir) if site_dir is not None else (config.BASE_DIR.parent / "site")
+    ensaio_dir = (
+        Path(ensaio_dir) if ensaio_dir is not None
+        else (config.DATA_DIR / "publicador-ensaio")
+    )
+    ensaio_dir.mkdir(parents=True, exist_ok=True)
+    executar = executar or _executar_padrao
+
+    if config.CHECKAL_MODO_TESTE:
+        artigos: list[dict] = []
+        posts = 0
+        with db.get_session() as s:
+            itens = (
+                s.query(ms.RevisaoItem)
+                .filter(ms.RevisaoItem.estado.in_(("aprovado", "auto_aprovado")))
+                .filter(ms.RevisaoItem.tipo.in_(_TIPOS_PUBLICAVEIS))
+                .order_by(ms.RevisaoItem.criado_em, ms.RevisaoItem.id)
+                .all()
+            )
+            for item in itens:
+                if item.tipo == "post_grupo":
+                    posts += 1
+                    continue
+                try:
+                    artigo = _carregar_artigo(s, item)
+                except ValueError:
+                    # Ensaio é diagnóstico read-only: um item malformado não
+                    # rebenta a passagem — só fica de fora do relatório.
+                    continue
+                html_final = render_artigo(artigo)
+                (ensaio_dir / f"{artigo['slug']}.html").write_text(html_final, encoding="utf-8")
+                artigos.append({"item_id": item.id, "slug": artigo["slug"]})
+        return {"modo": "ensaio", "artigos": artigos, "posts": posts}
+
+    hoje = date.today().isoformat()
+    publicados: list[dict] = []
+
+    def _processar(item) -> None:
+        if item.tipo == "post_grupo":
+            return  # no-op — o dono cola sempre à mão; o drain marca 'feito'.
+        artigo = _carregar_artigo(s, item)
+        slug = artigo["slug"]
+        html_final = render_artigo(artigo)
+        (site_dir / f"{slug}.html").write_text(html_final, encoding="utf-8")
+        atualizar_sitemap(site_dir / "sitemap.xml", slug=slug, lastmod=hoje)
+
+        executar(["git", "-C", str(site_dir), "add", f"{slug}.html", "sitemap.xml"])
+        executar(["git", "-C", str(site_dir), "commit", "-m", f"artigo: /{slug} (publicador)"])
+        executar(["git", "-C", str(site_dir), "push", "origin", "main"])
+        _publicar_no_cloudflare(site_dir, executar)
+
+        publicados.append({"item_id": item.id, "slug": slug})
+
+    with fila.sessao_governacao() as s:
+        if config.AUTO_PUBLICAR_ARTIGO_SEO:
+            pendentes = (
+                s.query(ms.RevisaoItem)
+                .filter(ms.RevisaoItem.tipo == "artigo_seo",
+                        ms.RevisaoItem.estado == "pendente",
+                        ms.RevisaoItem.linter_ok.is_(True))
+                .all()
+            )
+            for item in pendentes:
+                fila.auto_aprovar(s, item.id)
+
+        servidos = fila.drain(
+            s, "publicador", tipos=_TIPOS_PUBLICAVEIS,
+            cap=config.PUBLICADOR_CAP_PASSAGEM, incluir_auto_aprovado=True,
+            processador=_processar,
+        )
+        posts_fechados = sum(
+            1 for i in servidos if i.tipo == "post_grupo" and i.estado == "feito"
+        )
+
+    return {"modo": "live", "publicados": publicados, "posts_fechados": posts_fechados}

@@ -1,7 +1,7 @@
 """CLI de operação do CheckAL — invocado pelos systemd timers (um job por invocação).
 
     python manage.py <job>
-    jobs: varrimento | dre | dunning | suporte | backup | token
+    jobs: varrimento | dre | dunning | suporte | backup | token | publicador
 
 Cada job chama o respetivo cron (`app.crons` / `app.faturacao.cron_toconline`), que já
 compõem os seams **live-gated** a partir do ambiente (nada envia/liga sem credenciais) e
@@ -92,6 +92,15 @@ def _token() -> None:
         raise SystemExit(rc)
 
 
+def _publicador() -> None:
+    # Passagem do PUBLICADOR (fase 3, F3.4): ensaio read-only sob MODO_TESTE;
+    # em live drena artigo_seo/post_grupo aprovados, publica (git+wrangler) e
+    # imprime o relatório JSON — mesmo padrão dos outros jobs desta tabela.
+    from app import publicador
+
+    _print_json(publicador.correr())
+
+
 _JOBS = {
     "varrimento": _varrimento,  # 2×/semana (seg, qui 03:00)
     "dre": _dre,                # diário (07:00)
@@ -99,6 +108,7 @@ _JOBS = {
     "suporte": _suporte,        # cada 15 min
     "backup": _backup,          # noturno (02:00)
     "token": _token,            # cada ~3h (TOConline OAuth)
+    "publicador": _publicador,  # cada 15 min (drain artigo_seo/post_grupo aprovados)
 }
 
 
