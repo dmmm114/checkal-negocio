@@ -22,6 +22,13 @@ Fronteira de domínio (nota ADENDA §1/§6): no canal COLD o que é proibido é 
 proteger). Links de DESTINO para checkal.pt são legítimos e desejados — o CTA
 "Pagar já" do próprio email frio aponta a `checkal.pt/pagar` (decisão do dono).
 
+Canal POST_SOCIAL (decisão do dono, 19/07/2026): posts para grupos redigidos pelo
+agente COMUNICADOR, mas sempre revistos, editados e publicados manualmente pelo
+dono em nome próprio — assistência de escrita, não conteúdo autónomo de IA. Por
+isso dispensa R5 (divulgação de IA), R7 (disclaimer) e R8/R9 (opt-out/remetente
+cold), mas mantém R4 (fonte oficial) e todas as proibições globais (R1/R2/R3/
+R6-moldura/RT-*).
+
 Função pura, determinística, SEM I/O de rede/BD, conservadora: na dúvida REJEITA
 (o viés inviolável herdado de `validacao.py`/`guardrails.py` — alargar a deteção é
 sempre seguro; nunca um falso "aprovado").
@@ -49,7 +56,7 @@ __all__ = [
 ]
 
 # Versionado como GUARDRAILS_VERSAO — parte do dossier de defesa (regras curadas).
-LINTER_VERSAO = "2026-07-18"
+LINTER_VERSAO = "2026-07-19"
 
 # Frase canónica de divulgação de IA (AI Act art. 50) — os templates redigidos por
 # agente embutem-na; o linter (R5) reprova a ausência quando `gerado_por_ia=True`.
@@ -71,6 +78,7 @@ class Canal(enum.Enum):
     PAGINA_PUBLICA = "pagina_publica"
     ONE_PAGER = "one_pager"
     RELATORIO = "relatorio"
+    POST_SOCIAL = "post_social"
 
 
 class Severidade(enum.Enum):
@@ -209,12 +217,19 @@ _RE_R9_IDENTIFICACAO = re.compile(r"cosmic\s+oasis")
 # RELATORIO = transacional do pagante: sem R7 por decisão de produto (o relatório
 # mensal "passou no check" não é alerta — compliance §9.5); opt-out garantido pela
 # base de email. R6-pleno (validar_alerta) nos canais que afirmam factos regulatórios.
-_EXIGE_R4 = {Canal.ALERTA, Canal.PAGINA_PUBLICA, Canal.ONE_PAGER}
+_EXIGE_R4 = {Canal.ALERTA, Canal.PAGINA_PUBLICA, Canal.ONE_PAGER, Canal.POST_SOCIAL}
 _EXIGE_R6_PLENO = {Canal.ALERTA, Canal.PAGINA_PUBLICA, Canal.ONE_PAGER}
 _EXIGE_R7 = {Canal.ALERTA, Canal.COLD, Canal.NURTURE_TRANSACIONAL,
              Canal.PAGINA_PUBLICA, Canal.ONE_PAGER}
 _EXIGE_R8 = {Canal.COLD, Canal.NURTURE_TRANSACIONAL, Canal.RELATORIO}
 _EXIGE_R9 = {Canal.COLD}
+
+# POST_SOCIAL (posts para grupos, decisão do dono 19/07/2026): o dono revê,
+# edita e publica manualmente em nome próprio — assistência de escrita, não
+# conteúdo autónomo de IA ⇒ R5 dispensado. R7/R8/R9 são regras de email/site
+# e não se aplicam (basta não estar nos conjuntos). R6-pleno idem: posts curtos
+# não têm estrutura fonte+excerto; a fonte oficial é garantida por R4.
+_ISENTO_R5 = {Canal.POST_SOCIAL}
 
 
 def _molduras_coima() -> set[float]:
@@ -352,7 +367,7 @@ def lint(peca: PecaOutward) -> ResultadoLint:
 
     # R5: o marcador pode viver num comentário HTML (<!-- AI-DISCLOSURE -->),
     # que o strip de tags remove — por isso aceita-se também no texto bruto.
-    if peca.gerado_por_ia and not (
+    if peca.gerado_por_ia and peca.canal not in _ISENTO_R5 and not (
         _RE_R5_DIVULGACAO.search(plano_lc) or "ai-disclosure" in bruto_lc
     ):
         _bloqueia(

@@ -434,3 +434,53 @@ def test_relatorio_mensal_conforme_passa():
 def test_texto_vazio_nao_rebenta():
     r = lint(_peca("", Canal.RELATORIO))
     assert isinstance(r.aprovado, bool)
+
+
+# ==========================================================================
+#  Canal POST_SOCIAL (fase 1 EDITOR/COMUNICADOR — decisão do dono 19/07/2026)
+# ==========================================================================
+def test_post_social_proibicoes_globais_aplicam():
+    r = lint(_peca("O seu alojamento está ilegal e sem seguro.", Canal.POST_SOCIAL))
+    assert r.aprovado is False
+    assert "R1_ILEGALIDADE" in _regras(r)
+
+
+def test_post_social_exige_fonte_oficial():
+    r = lint(_peca(
+        "Novo regulamento para o Alojamento Local — resumo em 5 pontos.",
+        Canal.POST_SOCIAL,
+    ))
+    assert r.aprovado is False
+    assert "R4_FONTE_OFICIAL" in _regras(r)
+
+
+def test_post_social_conforme_aprova_sem_ia_disclaimer_optout():
+    texto = (
+        "Novo regulamento municipal do Funchal para o Alojamento Local — "
+        "resumo em 5 pontos.\n1) Âmbito. 2) Prazos. 3) Registos. 4) Vistorias. "
+        "5) Onde ler mais.\nFonte oficial: https://www.cm-funchal.pt/regulamento-al"
+    )
+    r = lint(PecaOutward(texto=texto, canal=Canal.POST_SOCIAL, gerado_por_ia=True))
+    assert r.aprovado is True, [v.razao for v in r.violacoes]
+    # O POST_SOCIAL dispensa R5 (dono revê e publica em nome próprio), R7, R8, R9.
+    assert not ({"R5_DIVULGACAO_IA", "R7_DISCLAIMER", "R8_OPTOUT",
+                 "R9_IDENTIFICACAO"} & _regras(r))
+
+
+def test_post_social_coima_ameaca_continua_bloqueada():
+    r = lint(_peca(
+        "A tua coima pode chegar aos 4.000 € se não agires já. "
+        "Fonte: https://www.cm-porto.pt/al",
+        Canal.POST_SOCIAL,
+    ))
+    assert r.aprovado is False
+    assert "R3_COIMA_AMEACA" in _regras(r)
+
+
+def test_isencao_r5_e_exclusiva_do_post_social():
+    # Guarda de regressão: PAGINA_PUBLICA gerada por IA continua a exigir R5.
+    r = lint(PecaOutward(
+        texto="Guia do registo RNAL. Fonte: https://rnt.turismodeportugal.pt/x",
+        canal=Canal.PAGINA_PUBLICA, gerado_por_ia=True,
+    ))
+    assert "R5_DIVULGACAO_IA" in _regras(r)
