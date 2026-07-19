@@ -20,6 +20,9 @@
    `CHECKAL_BASE_URL=https://polaris.tail2f0d3e.ts.net:8443`
    (as páginas públicas não-gate — /selo, /confirmar — geram links absolutos a partir
    desta; o default é localhost:8000 e sairia partido para quem clica de fora)
+   Depois de editar o env: `sudo systemctl restart checkal-web` (o processo web só lê
+   o env no arranque; o manage.py dos agentes é processo fresco a cada passagem e
+   não precisa).
 4. **Teste ponta-a-ponta:** com um item pendente na fila,
    `cd /home/diogo/checkal-polaris/checkal && .venv/bin/python manage.py maestro-gate-token --fila-id <id>`
    → abre o `url` no telemóvel → Aprovar/Rejeitar → confirma com `maestro-fila` que saiu de pendente.

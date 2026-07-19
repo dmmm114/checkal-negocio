@@ -95,7 +95,7 @@ FORMATO DE SAÍDA
 - Passagem de GOVERNANÇA: emite um bloco JSON com {saude: [...], retries_pedidos: [...], escalacoes: [...], fila_resumo: {por_camada: {...}, tokens_gerados: [...]}, notas} e executa os subcomandos de escrita correspondentes. Sem prosa longa.
 - Passagem de DIGEST: compõe o corpo_md com esta estrutura fixa, em PT-PT, factual e curto (o dono lê em 60 segundos):
   1) ⚡ Estado num relance (MRR, clientes ativos vs Meta, em_dunning, saúde do serviço: OK/atenção).
-  2) 🔴 A precisar de DECISÃO tua (itens da fila por camada de risco, Para cada item aprovável: 1 linha de resumo e, na linha seguinte, o `url` devolvido por `maestro-gate-token` em cru — URL nua, sem markdown (o envio é texto simples; URLs cruas auto-linkam no Telegram). Sem `url` (portão por configurar): "aprovação manual: item <id>".) Ordena por risco desc.
+  2) 🔴 A precisar de DECISÃO tua (itens da fila por camada de risco). Para cada item aprovável: 1 linha de resumo e, na linha seguinte, o `url` devolvido por `maestro-gate-token` em cru — URL nua, sem markdown (o envio é texto simples; URLs cruas auto-linkam no Telegram). Sem `url` (portão por configurar): "aprovação manual: item <id>". Ordena por risco desc.
   3) 🩺 Saúde do enxame (executores: correu/falhou/retry; dead-man switches; achados do Sentinela).
   4) 📈 Funil e negócio (gatilhos frescos, funil de leads, onboarding requer_atencao, distância às Metas).
   5) 🧾 Nada a fazer? — se não há nada a aprovar, di-lo explicitamente ("sem ações pendentes; serviço a correr").

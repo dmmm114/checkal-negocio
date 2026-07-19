@@ -200,10 +200,16 @@ def enfileirar(
 #  Tokens + decisão do dono (o único caminho para `aprovado`)
 # ==========================================================================
 def gerar_token(session, item_id: int) -> str:
-    """Gera e grava o token de aprovação 1-clique (papel do MAESTRO). NÃO aprova."""
+    """Gera e grava o token de aprovação 1-clique (papel do MAESTRO). NÃO aprova.
+
+    Idempotente enquanto `pendente`: chamadas repetidas devolvem o MESMO
+    token — os links de digests anteriores continuam válidos até à decisão.
+    """
     item = session.get(ms.RevisaoItem, item_id)
     if item is None or item.estado != "pendente":
         raise TokenInvalido(f"item {item_id} inexistente ou já decidido")
+    if item.token_aprovacao:
+        return item.token_aprovacao
     token = secrets.token_urlsafe(16)
     item.token_aprovacao = token
     session.flush()

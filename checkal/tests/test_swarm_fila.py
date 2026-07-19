@@ -139,6 +139,17 @@ def test_gerar_token_nao_aprova(bd):
         assert item.token_aprovacao == token
 
 
+def test_gerar_token_idempotente_enquanto_pendente(bd):
+    # A governança corre 3x/dia: regenerar mataria os links do digest da manhã.
+    with db.get_session() as s:
+        item = _enfileirar_ok(s)
+        s.flush()
+        t1 = fila.gerar_token(s, item.id)
+        t2 = fila.gerar_token(s, item.id)
+        assert t2 == t1                      # mesmo token enquanto pendente
+        assert item.token_aprovacao == t1
+
+
 def test_aprovar_exige_token_valido(bd):
     with db.get_session() as s:
         item = _enfileirar_ok(s)
