@@ -279,8 +279,11 @@ CHECKAL_ANTHROPIC_DPA_OK = _env_bool("CHECKAL_ANTHROPIC_DPA_OK", False)
 # Tetos de custo LLM (swarm/tetos.py). Atingido o teto diário agregado, cria-se a
 # flag-ficheiro PAUSA_LLM: os crons DETERMINISTAS continuam; só os passos LLM
 # pausam. Os tetos NUNCA tocam os gates de segurança (parecer/modo teste/SMTP).
-TETO_DIARIO_EUR = float(_env("CHECKAL_TETO_DIARIO_EUR", "5"))
-TETO_AGENTE_EUR = float(_env("CHECKAL_TETO_AGENTE_EUR", "2"))
+# Calibrados como DISJUNTOR (loop descontrolado), não como travão diário: o
+# custo é indicativo (subscrição Max, sem faturação API) e um dia normal e
+# cheio dos 4 agentes anda nos 8-15€ indicativos.
+TETO_DIARIO_EUR = float(_env("CHECKAL_TETO_DIARIO_EUR", "25"))
+TETO_AGENTE_EUR = float(_env("CHECKAL_TETO_AGENTE_EUR", "10"))
 PAUSA_LLM_PATH = Path(_env("CHECKAL_PAUSA_LLM_PATH", "/run/checkal/PAUSA_LLM"))
 
 # 🚦 RT-DGC — gate fail-closed do feed de oposição da DGC: o envio frio exige a

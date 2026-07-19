@@ -178,5 +178,9 @@ def test_dpa_gate_aberto_liberta_arranque(monkeypatch):
     assert config.agente_llm_pode_arrancar() is True
 
 
-def test_teto_diario_default_5_eur():
-    assert config.TETO_DIARIO_EUR == 5.0
+def test_tetos_default_disjuntor():
+    # Recalibrados 19/07/2026: disjuntor contra loops, não travão diário (o
+    # custo é indicativo — subscrição Max). O valor operacional real vem do
+    # agente.env (CHECKAL_TETO_DIARIO_EUR); com 6 agentes o dono usa 40.
+    assert config.TETO_DIARIO_EUR == 25.0
+    assert config.TETO_AGENTE_EUR == 10.0
