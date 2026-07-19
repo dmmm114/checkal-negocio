@@ -153,3 +153,11 @@ alinhada à tabela canónica completa do PRICING, regex de salvaguarda refinada
 produto já não escala), bloco pré-vendas no prompt do gestor, opção
 "comercial" no formulário do site (caixa comercial@ por criar — handoff).
 Suite: 1650 verdes. Handoffs: `docs/superpowers/plans/2026-07-19-embaixador-HANDOFF.md`.
+
+**Página de Facebook** (FB1-3): canal `POST_PAGINA` novo no linter (R4+R5
+divulgação de IA obrigatória; sem R7/R8/R9), comunicador redige `post_pagina`
+a par dos posts de grupo, publicador publica na página via Graph API
+(`publicar_facebook`) — live-gated por `CHECKAL_FACEBOOK_PAGE_ID`/
+`_PAGE_TOKEN` no agente.env (sem config, o item fica `aprovado` intacto, não
+drenado); dashboard ganhou o label "post de página". Suite: 1675 verdes.
+Handoff próprio: `docs/superpowers/plans/2026-07-19-facebook-HANDOFF.md`.
