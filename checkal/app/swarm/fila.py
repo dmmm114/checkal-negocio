@@ -50,6 +50,7 @@ __all__ = [
     "enfileirar",
     "drain",
     "gerar_token",
+    "token_bate",
     "aprovar",
     "rejeitar",
     "dgc_ok",
@@ -209,6 +210,16 @@ def gerar_token(session, item_id: int) -> str:
     return token
 
 
+def token_bate(item, token: str) -> bool:
+    """Comparação constant-time do token 1-clique (SOBRE BYTES — não-ASCII
+    de query param falha fechado, nunca TypeError). Fonte única: gate e
+    _decidir usam AMBOS este helper."""
+    if not token or not item.token_aprovacao:
+        return False
+    return secrets.compare_digest(
+        token.encode("utf-8"), item.token_aprovacao.encode("utf-8"))
+
+
 def _decidir(session, item_id: int, *, token: str, decidido_por: str,
              decisao: str, nota: str | None) -> ms.RevisaoItem:
     item = session.get(ms.RevisaoItem, item_id)
@@ -216,12 +227,7 @@ def _decidir(session, item_id: int, *, token: str, decidido_por: str,
         raise TokenInvalido(f"item {item_id} inexistente")
     if item.estado != "pendente":
         raise TokenInvalido(f"item {item_id} já não está pendente ({item.estado})")
-    # Comparação constant-time SOBRE BYTES: compare_digest com str levanta
-    # TypeError perante não-ASCII — e o token vem de um query param controlado
-    # pelo exterior (rota /gate). Em bytes aceita qualquer input e falha fechado.
-    if (not token or not item.token_aprovacao
-            or not secrets.compare_digest(
-                token.encode("utf-8"), item.token_aprovacao.encode("utf-8"))):
+    if not token_bate(item, token):
         raise TokenInvalido("token de aprovação ausente ou inválido")
     autor = item.agente_origem or "desconhecido"
     if decidido_por == autor:
