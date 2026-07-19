@@ -421,6 +421,73 @@ def test_gestor_suporte_triar_regulamento_prescritivo_escala_alta(bd, capsys, mo
 
 
 # ==========================================================================
+#  Revisão E1 (19/07 tarde): a adjacência estrita deixava escapar prescrições
+#  naturais em PT ("o regulamento DO PORTO proíbe", plurais "regulamentos
+#  .../obrigam/proíbem/impedem") — a regex passa a tolerar até 4 tokens de
+#  qualificador entre o substantivo e o verbo, e cobre as formas plurais.
+# ==========================================================================
+@pytest.mark.parametrize("resposta", [
+    "No Porto, o regulamento do Porto proíbe alojamento no piso térreo.",
+    "O regulamento municipal do Funchal exige seguro adicional para o AL.",
+    "Os regulamentos obrigam-te a registar o alojamento antes de operar.",
+    "Os regulamentos municipais do Porto proíbem novos registos na zona histórica.",
+    "Os regulamentos impedem o registo de novos ALs nesta rua.",
+])
+def test_gestor_suporte_triar_regulamento_prescritivo_com_qualificador_ou_plural_escala(
+    bd, capsys, monkeypatch, resposta,
+):
+    pedido = {
+        "assunto": "Posso alugar?", "corpo": "Posso alojar aqui?",
+        "resposta": resposta, "categoria": "factual", "confianca": "alta",
+    }
+    _stdin(monkeypatch, json.dumps(pedido))
+    assert manage.main(["gestor", "suporte-triar", "--stdin"]) == 0
+    dados = _json_out(capsys)
+    assert dados["acao"] == "escalado"
+    # motivo tem de vir do RT-suporte (_RE_SUPORTE_SENSIVEL), não do linter (R2)
+    # — o linter também reprovaria linguagem prescritiva, o que mascararia um
+    # falso-verde da regex; isto prova que É a regex a apanhar o caso.
+    assert "resposta toca estado de registo/seguro/regime legal" in dados["motivo"]
+    with db.get_session() as s:
+        assert s.query(ms.RevisaoItem).count() == 0
+        esc = s.query(ms.Escalacao).one()
+        assert esc.severidade == "alta"
+
+
+@pytest.mark.parametrize("resposta", [
+    (
+        "Acompanhamos os regulamentos e avisamos-te de mudanças por email. "
+        "Informação a partir de fontes públicas; não constitui aconselhamento "
+        "jurídico. Conteúdo preparado com apoio de inteligência artificial (IA)."
+    ),
+    (
+        "O regulamento está disponível e o teu contrato obriga-te a manter o "
+        "seguro em dia. Informação a partir de fontes públicas; não constitui "
+        "aconselhamento jurídico. Conteúdo preparado com apoio de inteligência "
+        "artificial (IA)."
+    ),
+])
+def test_gestor_suporte_triar_regulamento_nao_prescritivo_nao_escala(
+    bd, capsys, monkeypatch, resposta,
+):
+    # guarda anti-bleed cross-clause: o cap {0,4} não pode saltar de "regulamento"
+    # para um verbo de OUTRA oração — no 2.º caso, "obriga" é do "contrato", não
+    # do "regulamento"; no 1.º, é descrição do produto, sem verbo prescritivo perto.
+    pedido = {
+        "assunto": "Como funciona", "corpo": "O que é que o CheckAL vigia?",
+        "resposta": resposta, "categoria": "factual", "confianca": "alta",
+    }
+    _stdin(monkeypatch, json.dumps(pedido))
+    assert manage.main(["gestor", "suporte-triar", "--stdin"]) == 0
+    dados = _json_out(capsys)
+    assert dados["acao"] == "enfileirado"
+    with db.get_session() as s:
+        assert s.query(ms.Escalacao).count() == 0
+        item = s.query(ms.RevisaoItem).one()
+        assert item.tipo == "suporte_rascunho"
+
+
+# ==========================================================================
 #  SENTINELA-SERVIÇO
 # ==========================================================================
 def test_sentinela_verificar_tudo_verde(bd, capsys):

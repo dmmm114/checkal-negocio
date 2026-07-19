@@ -971,8 +971,14 @@ _RE_SUPORTE_SENSIVEL = _re.compile(
     r"regime\s+legal|jur[íi]dic|\blei\b|"
     # "regulament" sozinho apanhava a descrição do produto ("vigiamos os
     # regulamentos municipais") — não é prescrição jurídica. Só escala o uso
-    # PRESCRITIVO ("o regulamento proíbe/obriga/exige/impede/impõe").
-    r"regulamento\s+(?:pro[íi]be|obriga|exige|impede|imp[õo]e)"
+    # PRESCRITIVO ("o regulamento(s) [qualificador] proíbe/obriga/exige/impede/
+    # impõe", singular ou plural) — tolera até 4 tokens de qualificador entre o
+    # substantivo e o verbo (revisão 19/07: adjacência estrita deixava escapar
+    # "o regulamento DO PORTO proíbe" e os plurais); a descrição do produto
+    # ("vigiamos os regulamentos municipais") continua a não escalar.
+    r"regulamento\w*\s+(?:\S+\s+){0,4}?"
+    r"(?:pro[íi]be|obriga|exige|impede|imp[õo]e|"
+    r"pro[íi]bem|obrigam|exigem|impedem|imp[õo]em)"
 )
 _RE_SUPORTE_DISCLAIMER = _re.compile(
     r"(?:informa[çc][ãa]o[^.!?\n]{0,150}?)?n[ãa]o\s+constitu\w*\s+aconselhamento"
