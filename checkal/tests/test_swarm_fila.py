@@ -435,3 +435,21 @@ def test_gate_base_url_default_vazio_fail_closed():
     import app.config as config
 
     assert config.GATE_BASE_URL == ""
+
+
+def test_token_nao_ascii_falha_fechado_sem_typeerror(bd):
+    # Token de query param controlado pelo exterior: não-ASCII tem de dar
+    # TokenInvalido (fail-closed), nunca TypeError/500 (regressão do
+    # compare_digest sobre str).
+    with db.get_session() as s:
+        item = _enfileirar_ok(s)
+        s.flush()
+        fila.gerar_token(s, item.id)
+        item_id = item.id
+
+    with pytest.raises(fila.TokenInvalido):
+        with db.get_session() as s:
+            fila.aprovar(s, item_id, token="café-ñ", decidido_por="dono")
+
+    with db.get_session() as s:
+        assert s.get(ms.RevisaoItem, item_id).estado == "pendente"

@@ -216,8 +216,12 @@ def _decidir(session, item_id: int, *, token: str, decidido_por: str,
         raise TokenInvalido(f"item {item_id} inexistente")
     if item.estado != "pendente":
         raise TokenInvalido(f"item {item_id} já não está pendente ({item.estado})")
+    # Comparação constant-time SOBRE BYTES: compare_digest com str levanta
+    # TypeError perante não-ASCII — e o token vem de um query param controlado
+    # pelo exterior (rota /gate). Em bytes aceita qualquer input e falha fechado.
     if (not token or not item.token_aprovacao
-            or not secrets.compare_digest(token, item.token_aprovacao)):
+            or not secrets.compare_digest(
+                token.encode("utf-8"), item.token_aprovacao.encode("utf-8"))):
         raise TokenInvalido("token de aprovação ausente ou inválido")
     autor = item.agente_origem or "desconhecido"
     if decidido_por == autor:
