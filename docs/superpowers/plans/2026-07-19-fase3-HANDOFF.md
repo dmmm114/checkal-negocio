@@ -22,4 +22,6 @@ em baixo), o item fica `falhado` e PARA. Recuperar = repor o estado a
 `aprovado` na BD (sqlite3 …/checkal.db "UPDATE revisao_itens SET estado='aprovado',
 nao_antes_de=NULL, lease_ate=NULL WHERE id=<id> AND estado='falhado'") — a
 passagem seguinte retoma (o commit vazio já não bloqueia; push+deploy são
-idempotentes). Itens `morto` (5 falhas) merecem investigação antes de repor.
+idempotentes). Se já corrigiste a causa-raiz e queres orçamento de falhas
+fresco, acrescenta `tentativas=0` ao SET (senão um item em tentativas=4 morre
+à próxima falha). Itens `morto` (5 falhas) merecem investigação antes de repor.
