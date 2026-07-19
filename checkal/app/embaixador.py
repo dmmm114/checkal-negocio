@@ -55,7 +55,7 @@ from sqlalchemy import text
 
 from app.compliance import minimizacao, optout
 from app.compliance.email import e_generico
-from app.compliance.nif import e_enderecavel
+from app.compliance.nif import _limpar, e_enderecavel
 
 __all__ = ["detetar_candidatos"]
 
@@ -118,7 +118,13 @@ def _nifs_ja_propostos(session) -> frozenset[str]:
         if isinstance(payload, dict):
             nif = payload.get("nif")
             if isinstance(nif, str) and nif:
-                nifs.add(nif)
+                # Canonicaliza com a MESMA `nif._limpar` da autoridade de
+                # compliance (espaços/pontuação/prefixo 'PT') — um NIF
+                # gravado como "PT 509375499" e outro como "509375499" são
+                # o MESMO titular para efeitos de dedupe (E3 add-on).
+                limpo = _limpar(nif)
+                if limpo:
+                    nifs.add(limpo)
     return frozenset(nifs)
 
 
@@ -151,7 +157,11 @@ def detetar_candidatos(
         # apanha whitespace Unicode/edge-cases que `trim()` do SQLite ignora.
         if not e_enderecavel(nif):
             continue
-        if nif in nifs_excluidos:  # regra 3 — dedupe (qualquer estado)
+        # Dedupe canónico (E3 add-on): compara a forma limpa dos dois lados,
+        # não o texto bruto — senão "PT 509375499" e "509375499" seriam
+        # tratados como titulares diferentes e o mesmo candidato voltaria a
+        # ser proposto.
+        if _limpar(nif) in nifs_excluidos:  # regra 3 — dedupe (qualquer estado)
             continue
 
         grupo = (

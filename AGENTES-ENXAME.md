@@ -35,6 +35,7 @@ O SENTINELA corre em timer próprio, fora de fase, para apanhar o próprio orque
 | SENTINELA-SERVIÇO | 06,12,18,23:40 | watchdog: freshness, alucinação, breaker-bypass, cobertura | **só** `eventos_agente` (achados) + `escalacoes` |
 | EDITOR | seg/qui 05:00 | redige conteúdo SEO consent-first (páginas-gatilho/pilar/concelho) | `revisao_itens`, `eventos_agente`, `escalacoes` |
 | COMUNICADOR | diária 07:10 | redige posts para grupos de FB (rascunhos p/ o dono colar) | `revisao_itens`, `eventos_agente`, `escalacoes` |
+| EMBAIXADOR | Ter 10:00 | deteta candidatos a parceiro multi-AL (compliance-gated) e redige propostas de parceria B2B | `revisao_itens`, `eventos_agente`, `escalacoes` |
 
 Cada invocação: `claude -p` headless via `deploy/bin/correr-agente.sh`, allowlist exata de
 subcomandos `manage.py`, `--max-turns`, `timeout`, e SAI. O passo LLM do sentinela é opcional

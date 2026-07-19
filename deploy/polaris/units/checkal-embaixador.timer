@@ -1,0 +1,10 @@
+[Unit]
+Description=CheckAL agente embaixador
+[Timer]
+OnCalendar=Tue 10:00
+RandomizedDelaySec=180
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@embaixador.service
+[Install]
+WantedBy=timers.target

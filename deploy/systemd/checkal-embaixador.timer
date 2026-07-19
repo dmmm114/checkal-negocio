@@ -1,0 +1,14 @@
+# EMBAIXADOR — semanal Ter 10:00, cap 3 propostas/passagem (piloto GTM = 3-5
+# parceiros). DISABLED até o dono ativar.
+[Unit]
+Description=CheckAL EMBAIXADOR — passagem de parcerias (propostas B2B multi-AL)
+
+[Timer]
+OnCalendar=Tue 10:00
+RandomizedDelaySec=300
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@embaixador.service
+
+[Install]
+WantedBy=timers.target

@@ -45,7 +45,7 @@ class EventoAgente(Base):
     __tablename__ = "eventos_agente"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    agente: Mapped[str] = mapped_column(Text, nullable=False)      # maestro|angariador|gestor|sentinela|editor|comunicador
+    agente: Mapped[str] = mapped_column(Text, nullable=False)      # maestro|angariador|gestor|sentinela|editor|comunicador|embaixador
     execucao_id: Mapped[str | None] = mapped_column(Text)          # UUID da invocação single-shot (correlaciona uma passagem)
     tipo: Mapped[str] = mapped_column(Text, nullable=False)        # execucao_inicio|execucao_fim|detecao|escalada|erro|achado|deadman
     severidade: Mapped[str] = mapped_column(Text, default="info", nullable=False)  # info|aviso|critico
@@ -303,7 +303,7 @@ class Aprovacao(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     revisao_item_id: Mapped[int] = mapped_column(Integer, nullable=False)  # → revisao_itens.id
-    autor: Mapped[str] = mapped_column(Text, nullable=False)       # agente que propôs (angariador|gestor|sentinela|editor|comunicador)
+    autor: Mapped[str] = mapped_column(Text, nullable=False)       # agente que propôs (angariador|gestor|sentinela|editor|comunicador|embaixador)
     decidido_por: Mapped[str] = mapped_column(Text, nullable=False)  # 'dono' | 'auto' — nunca o autor
     decisao: Mapped[str] = mapped_column(Text, nullable=False)     # aprovado|rejeitado|auto_aprovado
     token_usado: Mapped[str | None] = mapped_column(Text)         # o token 1-clique que validou a decisão
@@ -346,7 +346,7 @@ class AgenteExecucao(Base):
     __tablename__ = "agente_execucoes"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    agente: Mapped[str] = mapped_column(Text, nullable=False)      # angariador|gestor|sentinela|maestro|editor|comunicador
+    agente: Mapped[str] = mapped_column(Text, nullable=False)      # angariador|gestor|sentinela|maestro|editor|comunicador|embaixador
     execucao_id: Mapped[str | None] = mapped_column(Text)          # UUID (correlaciona com eventos_agente)
     modo: Mapped[str | None] = mapped_column(Text)                # governanca|digest|None
     iniciado_em: Mapped[datetime] = mapped_column(_TS, nullable=False)

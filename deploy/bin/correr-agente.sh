@@ -3,7 +3,7 @@
 # correr-agente.sh <instancia> — o ÚNICO ponto que invoca o Claude CLI no Polaris.
 #
 # Instâncias: maestro-digest | maestro-governanca | angariador | gestor |
-#             gestor-suporte | sentinela | editor | comunicador
+#             gestor-suporte | sentinela | editor | comunicador | embaixador
 #
 # Ordem canónica (prompt-mestre §3.9), tudo fail-closed:
 #   1. flock anti-reentrância (sai 0 em silêncio se já corre);
@@ -135,6 +135,8 @@ case "${AGENTE}" in
     PROMPT_FILE="${PROMPTS}/editor.txt"; ARG_LLM="passagem=editorial" ;;
   comunicador)
     PROMPT_FILE="${PROMPTS}/comunicador.txt"; ARG_LLM="passagem=comunidade" ;;
+  embaixador)
+    PROMPT_FILE="${PROMPTS}/embaixador.txt"; ARG_LLM="passagem=parcerias" ;;
   *)
     hc_ping fail "instância desconhecida: ${AGENTE}"
     exit 2 ;;
@@ -156,6 +158,8 @@ case "${AGENTE}" in
     TOOLS="Read,Bash(python manage.py editor estado),Bash(python manage.py editor plano),Bash(python manage.py editor lint:*),Bash(python manage.py editor enfileirar:*)" ;;
   comunicador)
     TOOLS="Read,Bash(python manage.py comunicador estado),Bash(python manage.py comunicador lint:*),Bash(python manage.py comunicador enfileirar:*),Bash(python manage.py editor plano)" ;;
+  embaixador)
+    TOOLS="Read,Bash(python manage.py embaixador estado),Bash(python manage.py embaixador detetar:*),Bash(python manage.py embaixador lint:*),Bash(python manage.py embaixador enfileirar:*)" ;;
 esac
 
 SAIDA="$(mktemp "${RUN_DIR}/${AGENTE}.XXXXXX.json")"

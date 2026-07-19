@@ -154,6 +154,34 @@ def test_deteccao_dedupe_exclui_nif_com_proposta_ja_na_fila(bd):
     assert "513666666" not in nifs
 
 
+def test_deteccao_dedupe_canonicaliza_nif_pt_prefixo_e_espacos(bd):
+    """Add-on à revisão E3: o dedupe usa `nif._limpar` dos DOIS lados — um
+    payload gravado como "PT 509375499" (prefixo + espaço, como um agente
+    poderia escrever a mão) e o NIF limpo "509375499" na BD do RNAL são o
+    MESMO titular; sem canonicalização, o candidato voltaria a ser proposto."""
+    with db.get_session() as s:
+        _seed_grupo(s, "509375499", 6, email="geral@ptprefixo.pt", nr_base=610000)
+        evento = ms.EventoAgente(
+            agente="embaixador", tipo="conteudo_proposto",
+            payload={"tipo": "proposta_parceria", "nif": "PT 509375499",
+                     "corpo_texto": "proposta anterior"},
+            criado_em=manage._agora(),
+        )
+        s.add(evento)
+        s.flush()
+        s.add(ms.RevisaoItem(
+            tipo="proposta_parceria", risco="alto", camada_risco=4,
+            agente_origem="embaixador", ref_tipo="evento_agente",
+            ref_id=str(evento.id), estado="pendente", linter_ok=True,
+            criado_em=manage._agora(),
+        ))
+
+    with db.get_session() as s:
+        nifs = {c["nif"] for c in detetar_candidatos(s, limiar=5)}
+
+    assert "509375499" not in nifs
+
+
 def test_deteccao_optout_exclui(bd):
     with db.get_session() as s:
         _seed_grupo(s, "513777777", 6, email="geral@optout.pt", nr_base=700000)
