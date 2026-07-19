@@ -1261,7 +1261,10 @@ def _texto_lint_artigo(artigo: dict):
     O render final (PUBLICADOR, fase 3) embute no template as fontes, o
     disclaimer e a frase canónica de divulgação de IA — lintamos aqui o texto
     COMO SERÁ PUBLICADO, apensando esses blocos garantidos pelo template
-    (mesmo princípio do `tem_optout_carimbado` no cold: o seam carimba).
+    (mesmo princípio do `tem_optout_carimbado` no cold: o seam carimba). O
+    template da fase 3 TEM de usar as mesmas constantes
+    (`linter.DISCLAIMER_NAO_ACONSELHAMENTO` e `linter.DIVULGACAO_IA`) — senão
+    o texto lintado diverge do publicado.
     """
     from app.compliance import linter
 
@@ -1272,10 +1275,7 @@ def _texto_lint_artigo(artigo: dict):
     fontes = artigo.get("fontes", [])
     urls = " · ".join(f.get("url", "") for f in fontes if f.get("url"))
     partes.append(f"Fontes: {urls}")
-    partes.append(
-        "Informação de monitorização a partir de dados públicos; "
-        "não constitui aconselhamento jurídico."
-    )
+    partes.append(linter.DISCLAIMER_NAO_ACONSELHAMENTO)
     partes.append(linter.DIVULGACAO_IA)
     texto = "\n\n".join(p for p in partes if p)
     primeira = fontes[0] if fontes else {}
@@ -1288,10 +1288,13 @@ def _cmd_editor_lint(args) -> int:
     bruto = sys.stdin.read()
     try:
         artigo = json.loads(bruto)
-        texto, url_fonte, excerto = _texto_lint_artigo(artigo)
-    except (ValueError, TypeError, AttributeError):
+        if not isinstance(artigo, dict):
+            raise ValueError("payload tem de ser um objeto JSON")
+    except (ValueError, TypeError):
         sys.stderr.write("payload tem de ser JSON do artigo (slug, titulo, seccoes, fontes)\n")
         return 2
+
+    texto, url_fonte, excerto = _texto_lint_artigo(artigo)
     r = linter.lint(linter.PecaOutward(
         texto=texto, canal=linter.Canal.PAGINA_PUBLICA,
         url_fonte=url_fonte, excerto=excerto, gerado_por_ia=True,
@@ -1324,13 +1327,15 @@ def _cmd_editor_enfileirar(args) -> int:
 
     try:
         artigo = json.loads(bruto)
+        if not isinstance(artigo, dict):
+            raise ValueError("payload tem de ser um objeto JSON")
         slug = artigo["slug"]
         titulo = artigo["titulo"]
-        texto, url_fonte, excerto = _texto_lint_artigo(artigo)
-    except (ValueError, KeyError, TypeError, AttributeError):
+    except (ValueError, KeyError, TypeError):
         sys.stderr.write("payload tem de ser JSON do artigo (slug, titulo, seccoes, fontes)\n")
         return 2
 
+    texto, url_fonte, excerto = _texto_lint_artigo(artigo)
     peca = linter.PecaOutward(
         texto=texto, canal=linter.Canal.PAGINA_PUBLICA,
         url_fonte=url_fonte, excerto=excerto, gerado_por_ia=True,

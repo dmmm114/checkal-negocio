@@ -52,6 +52,7 @@ __all__ = [
     "ResultadoLint",
     "LINTER_VERSAO",
     "DIVULGACAO_IA",
+    "DISCLAIMER_NAO_ACONSELHAMENTO",
     "lint",
 ]
 
@@ -63,6 +64,14 @@ LINTER_VERSAO = "2026-07-19"
 DIVULGACAO_IA = (
     "Conteúdo preparado com apoio de inteligência artificial (IA) e validado por "
     "regras automáticas do CheckAL."
+)
+
+# Disclaimer canónico "informação, não aconselhamento" — fonte única de verdade:
+# o compositor do EDITOR (manage.py) e o template do PUBLICADOR (fase 3) TÊM de
+# usar esta mesma constante, senão o texto lintado diverge do publicado.
+DISCLAIMER_NAO_ACONSELHAMENTO = (
+    "Informação de monitorização a partir de dados públicos; "
+    "não constitui aconselhamento jurídico."
 )
 
 

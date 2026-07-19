@@ -148,6 +148,17 @@ _ARTIGO_OK = {
 }
 
 
+def test_editor_lint_aprova_artigo_conforme(bd, capsys, monkeypatch):
+    _stdin(monkeypatch, json.dumps(_ARTIGO_OK, ensure_ascii=False))
+    assert manage.main(["editor", "lint", "--stdin"]) == 0
+    assert _json_out(capsys)["aprovado"] is True
+
+
+def test_editor_lint_json_invalido_da_2(bd, capsys, monkeypatch):
+    _stdin(monkeypatch, "não é json")
+    assert manage.main(["editor", "lint", "--stdin"]) == 2
+
+
 def test_editor_enfileirar_artigo_valido(bd, capsys, monkeypatch):
     _stdin(monkeypatch, json.dumps(_ARTIGO_OK, ensure_ascii=False))
     rc = manage.main(["editor", "enfileirar", "--tipo", "artigo_seo", "--stdin"])
@@ -187,6 +198,15 @@ def test_editor_enfileirar_artigo_ofensivo_reprova(bd, capsys, monkeypatch):
         assert s.query(ms.RevisaoItem).count() == 0
 
 
+def test_editor_enfileirar_escalar(bd, capsys):
+    rc = manage.main(["editor", "enfileirar", "--tipo", "artigo_seo",
+                      "--escalar", "--motivo", "fonte oficial indisponível"])
+    assert rc == 0
+    assert _json_out(capsys) == {"escalado": True}
+    with db.get_session() as s:
+        assert s.query(ms.Escalacao).count() == 1
+
+
 def test_editor_plano_e_estado_read_only(bd, capsys, monkeypatch):
     with db.get_session() as s:
         s.add(models.Registo(
@@ -205,3 +225,8 @@ def test_editor_plano_e_estado_read_only(bd, capsys, monkeypatch):
     assert manage.main(["editor", "estado"]) == 0
     estado = _json_out(capsys)
     assert estado["revisao"] == {"pendente": 1}
+
+    assert manage.main(["editor", "plano"]) == 0
+    plano2 = _json_out(capsys)
+    assert len(plano2["artigos"]) == 1
+    assert "regulamentos-al-porto" in plano2["artigos"][0]["resumo"]
