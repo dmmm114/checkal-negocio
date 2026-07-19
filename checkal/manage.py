@@ -968,7 +968,11 @@ import re as _re
 _RE_SUPORTE_SENSIVEL = _re.compile(
     r"estado\s+do\s+(?:teu\s+|seu\s+|vosso\s+)?registo|cancelad|caducad|suspens|"
     r"sem\s+seguro|seguro\s+(?:est[áa]|caducad\w*|expirad\w*|inv[áa]lid\w*)|"
-    r"regime\s+legal|jur[íi]dic|\blei\b|regulament"
+    r"regime\s+legal|jur[íi]dic|\blei\b|"
+    # "regulament" sozinho apanhava a descrição do produto ("vigiamos os
+    # regulamentos municipais") — não é prescrição jurídica. Só escala o uso
+    # PRESCRITIVO ("o regulamento proíbe/obriga/exige/impede/impõe").
+    r"regulamento\s+(?:pro[íi]be|obriga|exige|impede|imp[õo]e)"
 )
 _RE_SUPORTE_DISCLAIMER = _re.compile(
     r"(?:informa[çc][ãa]o[^.!?\n]{0,150}?)?n[ãa]o\s+constitu\w*\s+aconselhamento"

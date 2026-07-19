@@ -351,6 +351,75 @@ def test_gestor_suporte_triar_resposta_reprovada_escala(bd, capsys, monkeypatch)
         assert s.query(ms.RevisaoItem).count() == 0
 
 
+def test_gestor_suporte_triar_pre_venda_enfileira_rascunho(bd, capsys, monkeypatch):
+    # E1: categoria pre_venda (interessado sem subscrição a perguntar preço/
+    # funcionamento) segue o fluxo normal — responde e enfileira, SEM escalar.
+    pedido = {
+        "assunto": "Preços", "corpo": "Quanto custa e como funciona?",
+        "resposta": (
+            "O CheckAL vigia o registo RNAL, o seguro obrigatório e os regulamentos "
+            "municipais do teu Alojamento Local, com alertas por email. Planos a "
+            "partir de 49€/ano. Faz o check grátis em checkal.pt — 30 segundos, sem "
+            "cartão. Informação a partir de fontes públicas; não constitui "
+            "aconselhamento jurídico. Conteúdo preparado com apoio de inteligência "
+            "artificial (IA)."
+        ),
+        "categoria": "pre_venda", "confianca": "alta",
+    }
+    _stdin(monkeypatch, json.dumps(pedido))
+    assert manage.main(["gestor", "suporte-triar", "--stdin"]) == 0
+    dados = _json_out(capsys)
+    assert dados["acao"] == "enfileirado"
+    with db.get_session() as s:
+        assert s.query(ms.Escalacao).count() == 0
+        item = s.query(ms.RevisaoItem).one()
+        assert item.tipo == "suporte_rascunho"
+
+
+def test_gestor_suporte_triar_descricao_do_produto_nao_escala(bd, capsys, monkeypatch):
+    # RT-suporte refinado: "regulamentos municipais" é descrição do produto, não
+    # prescrição jurídica — não pode disparar a regex sensível (_RE_SUPORTE_SENSIVEL).
+    pedido = {
+        "assunto": "Como funciona", "corpo": "O que é que o CheckAL vigia?",
+        "resposta": (
+            "Vigiamos os regulamentos municipais do teu concelho, o registo RNAL e o "
+            "seguro obrigatório, e avisamos-te por email se algo mudar. Informação a "
+            "partir de fontes públicas; não constitui aconselhamento jurídico. "
+            "Conteúdo preparado com apoio de inteligência artificial (IA)."
+        ),
+        "categoria": "factual", "confianca": "alta",
+    }
+    _stdin(monkeypatch, json.dumps(pedido))
+    assert manage.main(["gestor", "suporte-triar", "--stdin"]) == 0
+    dados = _json_out(capsys)
+    assert dados["acao"] == "enfileirado"
+    with db.get_session() as s:
+        assert s.query(ms.Escalacao).count() == 0
+        item = s.query(ms.RevisaoItem).one()
+        assert item.tipo == "suporte_rascunho"
+
+
+def test_gestor_suporte_triar_regulamento_prescritivo_escala_alta(bd, capsys, monkeypatch):
+    # uso PRESCRITIVO ("o regulamento proíbe X") continua a escalar sempre, mesmo
+    # com confiança alta e categoria factual (regex refinada, não regride).
+    pedido = {
+        "assunto": "Posso alugar?", "corpo": "Posso alojar no piso térreo no Porto?",
+        "resposta": (
+            "No Porto, o regulamento proíbe alojamento local no piso térreo da "
+            "zona histórica."
+        ),
+        "categoria": "factual", "confianca": "alta",
+    }
+    _stdin(monkeypatch, json.dumps(pedido))
+    assert manage.main(["gestor", "suporte-triar", "--stdin"]) == 0
+    dados = _json_out(capsys)
+    assert dados["acao"] == "escalado"
+    with db.get_session() as s:
+        assert s.query(ms.RevisaoItem).count() == 0
+        esc = s.query(ms.Escalacao).one()
+        assert esc.severidade == "alta"
+
+
 # ==========================================================================
 #  SENTINELA-SERVIÇO
 # ==========================================================================

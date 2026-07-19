@@ -210,6 +210,34 @@ def test_gatilho_de_categoria_escala_e_nao_responde(bd, categoria):
     assert "dono@exemplo.pt" in escalar.chamadas[0]["corpo"]
 
 
+# ==========================================================================
+#  Categoria pre_venda — interessado sem subscrição a perguntar preço/funcionamento
+#  (SPEC 2026-07-19 §2 / E1): responde, NÃO é gatilho de escalação por categoria.
+# ==========================================================================
+def test_pre_venda_esta_nas_categorias_fora_dos_gatilhos():
+    assert "pre_venda" in suporte.CATEGORIAS
+    assert "pre_venda" not in suporte.GATILHOS_ESCALACAO
+
+
+@pytest.mark.parametrize("confianca", ["alta", "media"])
+def test_pre_venda_responde_e_nao_escala(bd, confianca):
+    leitor = _Leitor([_email(de="curioso@exemplo.pt", corpo="Quanto custa e como funciona?")])
+    ia = _ClienteIA(_decisao_json(
+        categoria="pre_venda", confianca=confianca,
+        resposta="O CheckAL tem planos a partir de 49€/ano — faz o check grátis em checkal.pt.",
+    ))
+    enviar, escalar = _Enviar(), _Escalar()
+    with db.get_session() as s:
+        _cria_cliente(s)  # cliente é dono@, não curioso@ — interessado sem subscrição
+        res = suporte.correr_suporte(
+            s, leitor=leitor, cliente_ia=ia, enviar=enviar, escalar=escalar
+        )
+    assert res.respondidos == 1
+    assert res.escalados == 0
+    assert enviar.chamadas[0]["para"] == "curioso@exemplo.pt"
+    assert escalar.chamadas == []
+
+
 def test_confianca_baixa_escala(bd):
     leitor = _Leitor([_email()])
     ia = _ClienteIA(_decisao_json(acao="responder", categoria="factual", confianca="baixa"))

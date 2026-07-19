@@ -67,7 +67,7 @@ __all__ = [
 #  Vocabulário da decisão (enums do structured output)
 # ==========================================================================
 ACOES = ("responder", "escalar")
-CATEGORIAS = ("factual", "juridico", "reclamacao", "cancelar_queixa", "outro")
+CATEGORIAS = ("factual", "pre_venda", "juridico", "reclamacao", "cancelar_queixa", "outro")
 CONFIANCAS = ("alta", "media", "baixa")
 
 # Categorias que **obrigam** escalação ao dono, independentemente do `acao` do modelo
@@ -95,8 +95,9 @@ FAQ = (
     "FAQ DO CHECKAL (podes citar estes factos):\n"
     "- O que é: uma subscrição que vigia o registo RNAL, o seguro obrigatório e os "
     "regulamentos municipais de cada Alojamento Local, com alertas por email.\n"
-    "- Preços (IVA incl.): Anual 49€/ano; Trienal 119€/3 anos; +19€/ano por AL adicional; "
-    "Portfólio 149€ (4–10 ALs) / 299€ (11–25) / 499€ (26–50).\n"
+    "- Preços (IVA incl.): Anual 49€/ano; Trienal 119€/3 anos; +19€/ano (ou +45€/3 anos) "
+    "por AL adicional; Portfólio 149€ (4–10 ALs, ou 359€/3 anos) / 299€ (11–25) / "
+    "499€ (26–50).\n"
     "- Garantia: 30 dias, reembolso total sem perguntas.\n"
     "- Mudar cartão / faturação: o cliente gere o cartão no portal de pagamento; se não "
     "encontrar o link, envia-se de novo.\n"
@@ -123,7 +124,13 @@ _SISTEMA_REGRAS = (
     "cancelar COM queixa/insatisfação, define categoria=cancelar_queixa.\n"
     "4. Perguntas factuais respondíveis pela FAQ/estado → acao=responder, categoria=factual, "
     "e escreve a resposta no campo `resposta` (sem inventar números nem prazos).\n"
-    "5. Na dúvida sobre se deves responder, escolhe confianca=baixa."
+    "5. Se quem escreve é um interessado/curioso SEM subscrição a perguntar por preços ou "
+    "como funciona o CheckAL (ainda não é cliente), define categoria=pre_venda, "
+    "acao=responder, com tom de «inspetor amigo» (simpático, direto, sem pressão) e um "
+    "CTA suave para o check grátis em checkal.pt. NUNCA uses «AL legal» ou «AL "
+    "certificado» (o CheckAL não certifica nada) e NUNCA ofereças desconto fora dos "
+    "preços da FAQ.\n"
+    "6. Na dúvida sobre se deves responder, escolhe confianca=baixa."
 )
 
 # Assinatura dos seams injetados (só para leitura; não impõe verificação).
@@ -155,7 +162,8 @@ class Decisao:
     """Decisão do modelo sobre um email, já normalizada aos enums.
 
     :param acao: `responder` | `escalar`.
-    :param categoria: `factual` | `juridico` | `reclamacao` | `cancelar_queixa` | `outro`.
+    :param categoria: `factual` | `pre_venda` | `juridico` | `reclamacao` |
+        `cancelar_queixa` | `outro`.
     :param confianca: `alta` | `media` | `baixa`.
     :param resposta: rascunho da resposta factual (usado só se se responder).
     """
