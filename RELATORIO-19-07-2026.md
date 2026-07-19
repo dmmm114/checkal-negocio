@@ -19,7 +19,7 @@ tudo atrás do teu clique:
 | GESTOR 🤝 | clientes + suporte (agora também **pré-vendas**) | diário |
 | SENTINELA 🦉 | watchdog de integridade | 4×/dia |
 | **EDITOR ✍️** | artigos SEO consent-first → fila | seg/qui 05:00 |
-| **COMUNICADOR 📣** | posts p/ grupos de FB, prontos a colar | diário 07:10 |
+| **COMUNICADOR 📣** | posts p/ grupos (tu colas) + posts da Página (automáticos após gate) | diário 07:10 |
 | **EMBAIXADOR 🤵** | parcerias: deteta gestores multi-AL, redige propostas B2B | Ter 10:00 |
 
 Mais duas peças novas que fecham o ciclo:
@@ -30,7 +30,7 @@ Mais duas peças novas que fecham o ciclo:
   Em modo teste é ensaio read-only (nada sai).
 
 **Estado:** 51 commits hoje no repo principal (+3 no repo do site), suite a
-**1650 testes verdes, 0 falhas**. Dashboard com os 7 cartões e o painel "Para
+**1675 testes verdes, 0 falhas**. Dashboard com os 7 cartões e o painel "Para
 publicar" **já em produção**. Nada envia, publica ou cobra até correres os
 passos da secção 5 — e mesmo depois, tudo passa pelo teu gate.
 
@@ -82,6 +82,16 @@ passos da secção 5 — e mesmo depois, tudo passa pelo teu gate.
   produto não escala; prescrição jurídica escala mesmo com qualificadores).
 - Site: opção "Informações e preços (pré-venda)" → `comercial@checkal.pt`.
 
+### Lote E — Página de Facebook (publicação automática)
+- Canal `POST_PAGINA` no linter: fonte oficial obrigatória E divulgação de IA
+  ("Preparado com apoio de IA." — publicação automática não tem a tua adoção
+  manual; reversível se o advogado dispensar).
+- O Comunicador redige também 1 post por passagem para a Página (voz da marca);
+  aprovas no portão; o **Publicador publica via Graph API oficial** — live-gated:
+  sem `CHECKAL_FACEBOOK_PAGE_ID`/`_PAGE_TOKEN` no agente.env, os aprovados
+  aguardam intactos (nem são drenados). Token nunca aparece em logs/erros.
+- `CHECKAL_AUTO_PUBLICAR_POST_PAGINA` (default false) para autonomia total mais tarde.
+
 ### Correções de dívida apanhadas pelo caminho
 Fix dos locks da manhã commitado; tetos 5→25/2→10 com teste alinhado; README do
 site corrigido (passo de redeploy que partia os `/api/*`); rotação de tokens do
@@ -105,7 +115,7 @@ qualidade independentes, com re-verificação adversária. Apanhados e fechados:
 
 ## 4. Estado técnico final
 
-- **Repo `checkal-polaris`** (master): 51 commits hoje; suite **1650 verdes, 0 skips**.
+- **Repo `checkal-polaris`** (master): 51 commits hoje; suite **1675 verdes, 0 skips**.
   ⚠️ **55 commits à frente do origin** (github: dmmm114/checkal-negocio) — sem backup remoto do trabalho de hoje.
 - **Repo `site/`** (main): 3 commits à frente do origin (README + contacto).
 - **Dashboard Agent OS**: em produção (100.72.204.114:8100, funnel 443) com 7
@@ -150,6 +160,9 @@ traz links clicáveis, e tu aprovas do telemóvel. Teste rápido sem esperar:
 - [ ] **Criar caixa `comercial@checkal.pt`** (o formulário do site já aponta para lá)
 - [ ] **`RESEND_API_KEY` + `CONTACTO_REMETENTE` + `CHECKAL_API_ORIGIN`** nas env
       vars do Cloudflare Pages → o formulário de contacto e o widget passam a entregar
+- [ ] **Página de Facebook**: criar a Página + App na Meta e colar
+      `CHECKAL_FACEBOOK_PAGE_ID`/`_PAGE_TOKEN` no agente.env — passos exatos em
+      `docs/superpowers/plans/2026-07-19-facebook-HANDOFF.md`
 - [ ] **SMTP cold (getcheckal.com)** → habilita o envio real de propostas do
       EMBAIXADOR e do cold do angariador — mas só com o resto dos gates abertos (5.3)
 

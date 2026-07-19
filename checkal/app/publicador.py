@@ -508,9 +508,12 @@ def publicar_facebook(mensagem: str, *, page_id: str, token: str, http_post=None
     if status == 200 and post_id:
         return post_id
 
-    corpo_texto = (getattr(resposta, "text", "") or "")[:300]
+    # Redigir o token ANTES de truncar: truncar primeiro podia deixar um prefixo
+    # parcial do token a cavalo do corte fora do alcance do replace.
+    corpo_texto = getattr(resposta, "text", "") or ""
     if token:
         corpo_texto = corpo_texto.replace(token, "***")
+    corpo_texto = corpo_texto[:300]
     raise RuntimeError(
         f"Graph API /{page_id}/feed falhou (status={status}): {corpo_texto}"
     )
