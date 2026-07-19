@@ -305,7 +305,7 @@ class Aprovacao(Base):
     revisao_item_id: Mapped[int] = mapped_column(Integer, nullable=False)  # → revisao_itens.id
     autor: Mapped[str] = mapped_column(Text, nullable=False)       # agente que propôs (angariador|gestor|sentinela|editor|comunicador)
     decidido_por: Mapped[str] = mapped_column(Text, nullable=False)  # 'dono' | 'auto' — nunca o autor
-    decisao: Mapped[str] = mapped_column(Text, nullable=False)     # aprovado|rejeitado
+    decisao: Mapped[str] = mapped_column(Text, nullable=False)     # aprovado|rejeitado|auto_aprovado
     token_usado: Mapped[str | None] = mapped_column(Text)         # o token 1-clique que validou a decisão
     nota: Mapped[str | None] = mapped_column(Text)
     criado_em: Mapped[datetime] = mapped_column(_TS, nullable=False)

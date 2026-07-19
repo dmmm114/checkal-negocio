@@ -281,6 +281,11 @@ def auto_aprovar(session, item_id: int) -> ms.RevisaoItem:
     Regista a decisão em `aprovacoes` com decidido_por='auto' (autor≠aprovador
     mantido — o autor é o agente de origem). O gate de QUANDO auto-aprovar
     (config AUTO_PUBLICAR_*) é do chamador (publicador), não daqui.
+
+    ⚠️ TYPE-AGNOSTIC: esta função NÃO filtra por `tipo` — um cold_email
+    pendente com linter_ok seria auto-aprovável por ela. O filtro por tipo
+    (só os tipos promovidos por config, ex. artigo_seo) é responsabilidade
+    INEGOCIÁVEL do chamador; nunca a chames sobre itens de tipos não promovidos.
     """
     item = session.get(ms.RevisaoItem, item_id)
     if item is None or item.estado != "pendente":
