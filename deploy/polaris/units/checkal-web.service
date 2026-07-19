@@ -1,0 +1,17 @@
+[Unit]
+Description=CheckAL web portao de aprovacao
+After=network.target
+[Service]
+User=diogo
+Group=diogo
+WorkingDirectory=/home/diogo/checkal-polaris/checkal
+EnvironmentFile=/home/diogo/checkal-polaris/deploy/polaris/agente.env
+ExecStart=/home/diogo/checkal-polaris/checkal/.venv/bin/uvicorn app.web.app:criar_app --factory --host 127.0.0.1 --port 8600
+Restart=on-failure
+RestartSec=5
+MemoryMax=768M
+CPUQuota=50%
+NoNewPrivileges=true
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target

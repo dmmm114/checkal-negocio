@@ -1,0 +1,21 @@
+# Portão 1-clique + páginas públicas do CheckAL — uvicorn local (127.0.0.1:8600).
+# Exposição via tailscale (funnel 8443) é passo manual do dono — HANDOFF fase 2.
+[Unit]
+Description=CheckAL Web — portão de aprovação (uvicorn 127.0.0.1:8600)
+After=network.target
+
+[Service]
+User=diogo
+Group=diogo
+WorkingDirectory=/home/diogo/checkal-polaris/checkal
+EnvironmentFile=/home/diogo/checkal-polaris/deploy/polaris/agente.env
+ExecStart=/home/diogo/checkal-polaris/checkal/.venv/bin/uvicorn app.web.app:criar_app --factory --host 127.0.0.1 --port 8600
+Restart=on-failure
+RestartSec=5
+MemoryMax=768M
+CPUQuota=50%
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

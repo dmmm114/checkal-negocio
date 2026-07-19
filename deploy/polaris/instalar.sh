@@ -19,5 +19,9 @@ systemctl enable --now checkal-sentinela.timer checkal-maestro-digest.timer \
 # DESLIGADOS de propósito (ativar quando os pré-requisitos existirem):
 #   checkal-cron-suporte.timer / checkal-gestor-suporte.timer → precisam de IMAP (apoio@)
 #   checkal-cron-token.timer                                  → precisa das credenciais TOConline
+
+# Portão 1-clique (fase 2) — só local (127.0.0.1:8600); exposição tailscale é manual (HANDOFF fase 2)
+systemctl enable --now checkal-web.service
+
 echo "OK — timers ativos:"
 systemctl list-timers 'checkal*' --no-pager
