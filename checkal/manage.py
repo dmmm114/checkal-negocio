@@ -22,6 +22,9 @@ que cada agente single-shot usa (sem shell livre, sem SQL cru):
     EDITOR     editor {plano | lint --stdin | enfileirar --tipo artigo_seo --stdin | estado}
     COMUNICADOR comunicador {lint --stdin | enfileirar --tipo post_grupo --stdin | estado}
                (+ editor plano, leitura)
+    EMBAIXADOR embaixador {detetar --limiar N --max N | lint --stdin |
+               enfileirar --tipo proposta_parceria --stdin --nif N
+               [--escalar --motivo M] | estado}
 
 Regras duras (código, não disciplina): leituras abrem a BD em READ-ONLY
 (PRAGMA query_only); escritas usam a sessão de governação (`app.swarm.fila.
@@ -269,7 +272,8 @@ def _cmd_maestro_saude(args) -> int:
                           "idade_dias": None, "sla_ok": False}
 
         executores = {}
-        for agente in ("angariador", "gestor", "sentinela", "maestro", "editor", "comunicador"):
+        for agente in ("angariador", "gestor", "sentinela", "maestro", "editor",
+                      "comunicador", "embaixador"):
             ex = (
                 s.query(ms.AgenteExecucao)
                 .filter(ms.AgenteExecucao.agente == agente)
@@ -1607,6 +1611,135 @@ def _cmd_comunicador_estado(args) -> int:
 
 
 # ==========================================================================
+#  EMBAIXADOR
+# ==========================================================================
+_TIPOS_EMBAIXADOR = {
+    "proposta_parceria": ("proposta_parceria", "alto"),
+}
+
+
+def _peca_embaixador(texto: str):
+    from app.compliance import linter
+
+    # proposta_parceria é COLD B2B frio — herda R7 (disclaimer) e R9
+    # (identificação Cosmic Oasis) à letra. tem_optout_carimbado=True porque
+    # o seam de envio carimba o opt-out (RFC 8058), como no cold do
+    # ANGARIADOR (regra 4 do plano E3) — o texto não precisa de repetir o
+    # link checkal.pt/remover para passar R8, mas R7/R9 continuam exigidos.
+    return linter.PecaOutward(
+        texto=texto, canal=linter.Canal.COLD, gerado_por_ia=True,
+        tem_optout_carimbado=True,
+    )
+
+
+def _cmd_embaixador_detetar(args) -> int:
+    import app.models as models
+    from app import embaixador
+    from app.swarm import fila
+
+    lista_dgc, _dgc_carregada = fila.carregar_lista_dgc()
+
+    s = _sessao_leitura()
+    try:
+        log_optout = [linha.email for linha in s.query(models.OptOut)]
+        candidatos = embaixador.detetar_candidatos(
+            s, limiar=args.limiar, max_candidatos=args.max,
+            lista_dgc=lista_dgc, log_optout=log_optout,
+        )
+    finally:
+        s.rollback()
+        s.close()
+
+    _print_json({"candidatos": candidatos, "total": len(candidatos)})
+    return 0
+
+
+def _cmd_embaixador_lint(args) -> int:
+    texto = sys.stdin.read()
+    from app.compliance import linter
+
+    r = linter.lint(_peca_embaixador(texto))
+    _print_json({
+        "aprovado": r.aprovado, "versao": r.versao,
+        "violacoes": [
+            {"regra": v.regra, "razao": v.razao, "trecho": v.trecho}
+            for v in r.violacoes
+        ],
+    })
+    return 0
+
+
+def _cmd_embaixador_enfileirar(args) -> int:
+    import app.models_swarm as ms
+    from app.swarm import fila, tetos
+
+    if args.escalar:
+        with fila.sessao_governacao() as s:
+            tetos.escalar(
+                s, severidade="media", agente="embaixador",
+                mensagem=args.motivo or "escalação sem motivo explícito",
+            )
+        _print_json({"escalado": True})
+        return 0
+
+    if not args.nif:
+        sys.stderr.write("embaixador enfileirar: --nif é obrigatório\n")
+        return 2
+
+    texto = sys.stdin.read() if args.stdin else ""
+    peca = _peca_embaixador(texto)
+    try:
+        with fila.sessao_governacao() as s:
+            evento = ms.EventoAgente(
+                agente="embaixador", tipo="conteudo_proposto",
+                mensagem=f"proposta de parceria proposta ({args.nif})",
+                payload={"tipo": args.tipo, "nif": args.nif, "corpo_texto": texto},
+                criado_em=_agora(),
+            )
+            s.add(evento)
+            s.flush()
+            item = fila.enfileirar(
+                s, tipo=_TIPOS_EMBAIXADOR[args.tipo][0],
+                risco=_TIPOS_EMBAIXADOR[args.tipo][1],
+                agente_origem="embaixador",
+                ref_tipo="evento_agente", ref_id=str(evento.id),
+                resumo=args.resumo or f"proposta_parceria → NIF {args.nif}",
+                peca=peca,
+            )
+            item_id = item.id
+    except fila.LinterReprovado as exc:
+        _print_json({
+            "aprovado": False,
+            "violacoes": [
+                {"regra": v.regra, "razao": v.razao, "trecho": v.trecho}
+                for v in exc.violacoes
+            ],
+        })
+        return 1
+
+    _print_json({"aprovado": True, "revisao_id": item_id})
+    return 0
+
+
+def _cmd_embaixador_estado(args) -> int:
+    import app.models_swarm as ms
+    from sqlalchemy import func
+
+    s = _sessao_leitura()
+    try:
+        revisao = dict(
+            s.query(ms.RevisaoItem.estado, func.count())
+            .filter(ms.RevisaoItem.agente_origem == "embaixador")
+            .group_by(ms.RevisaoItem.estado).all()
+        )
+    finally:
+        s.rollback()
+        s.close()
+    _print_json({"revisao": revisao})
+    return 0
+
+
+# ==========================================================================
 #  Parser + dispatch
 # ==========================================================================
 def _construir_parser() -> argparse.ArgumentParser:
@@ -1629,7 +1762,7 @@ def _construir_parser() -> argparse.ArgumentParser:
     e.add_argument("--msg", required=True)
     e.set_defaults(func=_cmd_maestro_escalar)
     r = sub.add_parser("maestro-retry")
-    r.add_argument("--agente", choices=("angariador", "gestor", "sentinela", "editor", "comunicador"), required=True)
+    r.add_argument("--agente", choices=("angariador", "gestor", "sentinela", "editor", "comunicador", "embaixador"), required=True)
     r.add_argument("--backoff", type=int, required=True)
     r.set_defaults(func=_cmd_maestro_retry)
     g = sub.add_parser("maestro-gate-token")
@@ -1715,6 +1848,26 @@ def _construir_parser() -> argparse.ArgumentParser:
     ce.add_argument("--motivo", default=None)
     ce.set_defaults(func=_cmd_comunicador_enfileirar)
     com_sub.add_parser("estado").set_defaults(func=_cmd_comunicador_estado)
+
+    # EMBAIXADOR
+    emb = sub.add_parser("embaixador")
+    emb_sub = emb.add_subparsers(dest="acao", required=True)
+    ed = emb_sub.add_parser("detetar")
+    ed.add_argument("--limiar", type=int, default=5)
+    ed.add_argument("--max", type=int, default=10, dest="max")
+    ed.set_defaults(func=_cmd_embaixador_detetar)
+    eml = emb_sub.add_parser("lint")
+    eml.add_argument("--stdin", action="store_true", required=True)
+    eml.set_defaults(func=_cmd_embaixador_lint)
+    eme = emb_sub.add_parser("enfileirar")
+    eme.add_argument("--tipo", choices=sorted(_TIPOS_EMBAIXADOR), required=True)
+    eme.add_argument("--stdin", action="store_true")
+    eme.add_argument("--nif", default=None)
+    eme.add_argument("--resumo", default=None)
+    eme.add_argument("--escalar", action="store_true")
+    eme.add_argument("--motivo", default=None)
+    eme.set_defaults(func=_cmd_embaixador_enfileirar)
+    emb_sub.add_parser("estado").set_defaults(func=_cmd_embaixador_estado)
 
     return p
 
