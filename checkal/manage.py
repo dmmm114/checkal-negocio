@@ -420,7 +420,12 @@ def _cmd_maestro_gate_token(args) -> int:
 
     with fila.sessao_governacao() as s:
         token = fila.gerar_token(s, args.fila_id)
-    _print_json({"fila_id": args.fila_id, "token": token})
+    saida = {"fila_id": args.fila_id, "token": token}
+    if config.GATE_BASE_URL:
+        saida["url"] = (
+            f"{config.GATE_BASE_URL.rstrip('/')}/gate/{args.fila_id}?token={token}"
+        )
+    _print_json(saida)
     return 0
 
 

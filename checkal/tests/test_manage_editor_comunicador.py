@@ -279,3 +279,32 @@ def test_maestro_retry_aceita_editor_e_comunicador():
                          "--backoff", "60"]).agente == "editor"
     assert p.parse_args(["maestro-retry", "--agente", "comunicador",
                          "--backoff", "60"]).agente == "comunicador"
+
+
+# ==========================================================================
+#  maestro-gate-token compõe URL do portão (fase 2)
+# ==========================================================================
+def _seed_item_pendente(capsys, monkeypatch) -> int:
+    _stdin(monkeypatch, _POST_OK)
+    assert manage.main(["comunicador", "enfileirar", "--tipo", "post_grupo",
+                        "--stdin"]) == 0
+    return _json_out(capsys)["revisao_id"]
+
+
+def test_gate_token_sem_base_url_nao_tem_url(bd, capsys, monkeypatch):
+    item_id = _seed_item_pendente(capsys, monkeypatch)
+    monkeypatch.setattr(config, "GATE_BASE_URL", "")
+    assert manage.main(["maestro-gate-token", "--fila-id", str(item_id)]) == 0
+    dados = _json_out(capsys)
+    assert dados["token"]
+    assert "url" not in dados
+
+
+def test_gate_token_com_base_url_compoe_url(bd, capsys, monkeypatch):
+    item_id = _seed_item_pendente(capsys, monkeypatch)
+    monkeypatch.setattr(config, "GATE_BASE_URL", "https://exemplo.ts.net:8443/")
+    assert manage.main(["maestro-gate-token", "--fila-id", str(item_id)]) == 0
+    dados = _json_out(capsys)
+    assert dados["url"] == (
+        f"https://exemplo.ts.net:8443/gate/{item_id}?token={dados['token']}"
+    )
