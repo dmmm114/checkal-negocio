@@ -1289,6 +1289,7 @@ def _texto_lint_artigo(artigo: dict):
 
 
 def _cmd_editor_lint(args) -> int:
+    from app import publicador
     from app.compliance import linter
 
     bruto = sys.stdin.read()
@@ -1296,7 +1297,11 @@ def _cmd_editor_lint(args) -> int:
         artigo = json.loads(bruto)
         if not isinstance(artigo, dict):
             raise ValueError("payload tem de ser um objeto JSON")
-    except (ValueError, TypeError):
+        # Mesma whitelist do render (`app.publicador._RE_SLUG`) — recusa aqui,
+        # na ORIGEM, antes de qualquer coisa hostil ser sequer analisada.
+        if not publicador._RE_SLUG.fullmatch(artigo["slug"]):
+            raise ValueError(f"slug inválido: {artigo['slug']!r}")
+    except (ValueError, KeyError, TypeError):
         sys.stderr.write("payload tem de ser JSON do artigo (slug, titulo, seccoes, fontes)\n")
         return 2
 
@@ -1317,6 +1322,7 @@ def _cmd_editor_lint(args) -> int:
 
 def _cmd_editor_enfileirar(args) -> int:
     import app.models_swarm as ms
+    from app import publicador
     from app.compliance import linter
     from app.swarm import fila, tetos
 
@@ -1336,6 +1342,10 @@ def _cmd_editor_enfileirar(args) -> int:
         if not isinstance(artigo, dict):
             raise ValueError("payload tem de ser um objeto JSON")
         slug = artigo["slug"]
+        # Mesma whitelist do render (`app.publicador._RE_SLUG`) — um slug
+        # hostil nunca chega sequer a ser enfileirado (fail-closed na ORIGEM).
+        if not publicador._RE_SLUG.fullmatch(slug):
+            raise ValueError(f"slug inválido: {slug!r}")
         titulo = artigo["titulo"]
     except (ValueError, KeyError, TypeError):
         sys.stderr.write("payload tem de ser JSON do artigo (slug, titulo, seccoes, fontes)\n")

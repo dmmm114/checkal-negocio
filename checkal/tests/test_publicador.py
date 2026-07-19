@@ -13,6 +13,8 @@ from __future__ import annotations
 import re
 from datetime import date
 
+import pytest
+
 from app import publicador
 
 # Baseado no `_ARTIGO_OK` de test_manage_editor_comunicador.py, com
@@ -73,8 +75,10 @@ def test_render_artigo_estrutura_completa():
     from app.compliance.linter import DIVULGACAO_IA, DISCLAIMER_NAO_ACONSELHAMENTO
     assert DIVULGACAO_IA in html
     assert DISCLAIMER_NAO_ACONSELHAMENTO in html
-    # fontes e CTA com data-evento por slug
+    # fontes e CTA com data-evento por slug (header E corpo — a revisão notou
+    # que faltava cobrir o do header)
     assert _ARTIGO["fontes"][0]["url"] in html
+    assert f'data-evento="cta_{_ARTIGO["slug"]}_header"' in html
     assert f'data-evento="cta_{_ARTIGO["slug"]}_corpo"' in html
     # sem scripts inline executáveis (CSP script-src 'self'); ld+json permitido
     scripts = re.findall(r"<script(?![^>]*application/ld\+json)[^>]*>", html)
@@ -101,3 +105,36 @@ def test_render_artigo_sem_data_carimba_hoje():
     artigo = {k: v for k, v in _ARTIGO.items() if k != "data_publicacao"}
     html = publicador.render_artigo(artigo)
     assert f'"datePublished": "{date.today().isoformat()}"' in html
+
+
+# ==========================================================================
+#  Regressão — 2 Critical de XSS apanhados em revisão (2026-07-19)
+# ==========================================================================
+def test_render_recusa_slug_hostil():
+    """O slug é autorado pelo LLM e entra cru em canonical/og:url/data-evento
+    ×2/sitemap — whitelist estrita, não só escape (mata injeção E path
+    traversal de uma vez)."""
+    mau = dict(_ARTIGO)
+    mau["slug"] = '../../evil"><script>x</script>'
+    with pytest.raises(ValueError):
+        publicador.render_artigo(mau)
+
+
+def test_render_titulo_hostil_nao_fecha_script():
+    """O `titulo` entra no JSON-LD via json.dumps (não html.escape) — sem
+    neutralizar `<`/`>`/`&`, um `</script>` no valor fecha o bloco JSON-LD
+    prematuramente e o `<script>` seguinte executa."""
+    mau = dict(_ARTIGO)
+    mau["titulo"] = "Olá </script><script>alert(1)</script>"
+    html_out = publicador.render_artigo(mau)
+    assert "</script><script>alert" not in html_out
+    # e o head só tem scripts src= ou ld+json (regex do teste de estrutura)
+    scripts = re.findall(r"<script(?![^>]*application/ld\+json)[^>]*>", html_out)
+    assert all("src=" in s for s in scripts)
+
+
+def test_sitemap_recusa_slug_hostil(tmp_path):
+    sm = tmp_path / "sitemap.xml"
+    sm.write_text(SITEMAP_BASE)
+    with pytest.raises(ValueError):
+        publicador.atualizar_sitemap(sm, slug="../../evil", lastmod="2026-07-19")

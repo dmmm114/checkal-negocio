@@ -188,6 +188,19 @@ def test_editor_enfileirar_json_invalido_da_2(bd, capsys, monkeypatch):
         assert s.query(ms.RevisaoItem).count() == 0
 
 
+def test_editor_enfileirar_slug_hostil_da_2(bd, capsys, monkeypatch):
+    """Regressão (revisão 2026-07-19, XSS Critical #1): um slug hostil nunca
+    deve sequer entrar na fila — validado na ORIGEM com a mesma whitelist do
+    render (`app.publicador._RE_SLUG`), antes de o artigo ser enfileirado."""
+    mau = dict(_ARTIGO_OK)
+    mau["slug"] = "../x"
+    _stdin(monkeypatch, json.dumps(mau, ensure_ascii=False))
+    rc = manage.main(["editor", "enfileirar", "--tipo", "artigo_seo", "--stdin"])
+    assert rc == 2
+    with db.get_session() as s:
+        assert s.query(ms.RevisaoItem).count() == 0
+
+
 def test_editor_enfileirar_artigo_ofensivo_reprova(bd, capsys, monkeypatch):
     mau = dict(_ARTIGO_OK)
     mau["seccoes"] = [{"h2": "Risco",

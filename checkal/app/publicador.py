@@ -45,6 +45,14 @@ from app.compliance.linter import DISCLAIMER_NAO_ACONSELHAMENTO, DIVULGACAO_IA
 
 __all__ = ["md_para_html", "render_artigo", "atualizar_sitemap"]
 
+# Whitelist estrita do slug — não é só escape. O slug é um segmento de URL
+# AUTORADO PELO LLM (payload do EDITOR) e entra cru em canonical/og:url/
+# data-evento×2/sitemap; uma whitelist mata injeção (aspas, `<`, `>`, `/`) E
+# path traversal (`../`) de uma só vez. Reutilizada por `render_artigo` e
+# `atualizar_sitemap` — e importada por `manage.py` para recusar na ORIGEM
+# (antes de o artigo sequer entrar na fila), não só aqui no render.
+_RE_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
 
 # ==========================================================================
 #  md_para_html — mini-conversor markdown → HTML determinista
@@ -165,8 +173,7 @@ def _data_por_extenso(iso: str) -> str:
 def _json_ld_bloco(titulo: str, data_publicacao: str) -> str:
     headline = json.dumps(titulo, ensure_ascii=False)
     data_str = json.dumps(data_publicacao, ensure_ascii=False)
-    return (
-        '  <script type="application/ld+json">\n'
+    corpo_json = (
         "  {\n"
         '    "@context": "https://schema.org",\n'
         '    "@type": "Article",\n'
@@ -176,9 +183,20 @@ def _json_ld_bloco(titulo: str, data_publicacao: str) -> str:
         '    "author": { "@type": "Organization", "name": "CheckAL" },\n'
         '    "publisher": { "@type": "Organization", "name": "CheckAL", '
         '"url": "https://checkal.pt/" }\n'
-        "  }\n"
-        "  </script>"
+        "  }"
     )
+    # Mitigação </script>: `titulo` chega aqui via json.dumps, NÃO via
+    # html.escape — json.dumps não neutraliza `<`/`>`/`&`, e o parser HTML de
+    # <script> procura a substring literal "</script" mesmo dentro de uma
+    # string JSON válida. Escapes \uXXXX são JSON legal (o valor não muda) e
+    # matam qualquer "</script>" embutido no titulo/data. Aplicado só ao
+    # CORPO do JSON — nunca à tag <script>/</script> real que o envolve.
+    corpo_json = (
+        corpo_json.replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+    )
+    return f'  <script type="application/ld+json">\n{corpo_json}\n  </script>'
 
 
 def _render_seccao(seccao: dict) -> str:
@@ -213,6 +231,10 @@ def render_artigo(artigo: dict) -> str:
     EDITOR não o define hoje; um valor genérico mas honesto).
     """
     slug = artigo["slug"]
+    # Fail-closed: o slug entra cru em URLs/atributos (canonical, og:url,
+    # data-evento×2) — whitelist estrita antes de qualquer interpolação.
+    if not _RE_SLUG.fullmatch(slug):
+        raise ValueError(f"slug inválido: {slug!r}")
     titulo = artigo["titulo"]
     meta_description = artigo.get("meta_description", "")
     data_publicacao = artigo.get("data_publicacao") or date.today().isoformat()
@@ -283,6 +305,9 @@ def atualizar_sitemap(caminho: Path, *, slug: str, lastmod: str) -> None:
     `priority=0.8` (moldura dos artigos, como `porto`/`funchal`). Idempotente:
     chamar duas vezes com o mesmo `slug`/`lastmod` não duplica nem move nada.
     """
+    # Mesma whitelist de `render_artigo` — o slug entra cru na <loc>.
+    if not _RE_SLUG.fullmatch(slug):
+        raise ValueError(f"slug inválido: {slug!r}")
     texto = caminho.read_text(encoding="utf-8")
     loc = f"https://www.checkal.pt/{slug}"
 
