@@ -230,3 +230,21 @@ def test_editor_plano_e_estado_read_only(bd, capsys, monkeypatch):
     plano2 = _json_out(capsys)
     assert len(plano2["artigos"]) == 1
     assert "regulamentos-al-porto" in plano2["artigos"][0]["resumo"]
+
+
+# ==========================================================================
+#  MAESTRO vê os agentes novos
+# ==========================================================================
+def test_maestro_saude_inclui_editor_e_comunicador(bd, capsys):
+    assert manage.main(["maestro-saude"]) == 0
+    dados = _json_out(capsys)
+    assert "editor" in dados["executores"]
+    assert "comunicador" in dados["executores"]
+
+
+def test_maestro_retry_aceita_editor_e_comunicador():
+    p = manage._construir_parser()
+    assert p.parse_args(["maestro-retry", "--agente", "editor",
+                         "--backoff", "60"]).agente == "editor"
+    assert p.parse_args(["maestro-retry", "--agente", "comunicador",
+                         "--backoff", "60"]).agente == "comunicador"

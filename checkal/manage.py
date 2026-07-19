@@ -258,7 +258,7 @@ def _cmd_maestro_saude(args) -> int:
                           "idade_dias": None, "sla_ok": False}
 
         executores = {}
-        for agente in ("angariador", "gestor", "sentinela", "maestro"):
+        for agente in ("angariador", "gestor", "sentinela", "maestro", "editor", "comunicador"):
             ex = (
                 s.query(ms.AgenteExecucao)
                 .filter(ms.AgenteExecucao.agente == agente)
@@ -1552,7 +1552,7 @@ def _construir_parser() -> argparse.ArgumentParser:
     e.add_argument("--msg", required=True)
     e.set_defaults(func=_cmd_maestro_escalar)
     r = sub.add_parser("maestro-retry")
-    r.add_argument("--agente", choices=("angariador", "gestor", "sentinela"), required=True)
+    r.add_argument("--agente", choices=("angariador", "gestor", "sentinela", "editor", "comunicador"), required=True)
     r.add_argument("--backoff", type=int, required=True)
     r.set_defaults(func=_cmd_maestro_retry)
     g = sub.add_parser("maestro-gate-token")
