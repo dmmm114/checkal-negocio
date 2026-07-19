@@ -37,7 +37,30 @@ Subscrição (49€/ano) que vigia o registo RNAL, o seguro obrigatório e os re
 - Página individual `rnt.turismodeportugal.pt/rnt/rnal.aspx?nr=X` é server-rendered (GET simples chega; tem bloco do seguro RC)
 - Mercado: 120k+ registos, ~70k titulares; 56% singular/44% coletiva; multi-AL detêm 56% dos registos; Açores fora do RNAL (fase 2)
 
-## Estado da construção (a 12/07/2026)
+## Estado da construção (a 19/07/2026) — ENXAME LANÇADO NO POLARIS
+
+**Enxame de 4 agentes construído (Fases A–G do prompt-mestre) e EM PRODUÇÃO GATED**
+(commits `a699a51`→`314a737`; **1558 testes verdes, 0 skips**; ver `AGENTES-ENXAME.md`):
+- MAESTRO/ANGARIADOR/GESTOR/SENTINELA como `claude -p` single-shot por systemd timer
+  (nativo, cgroups reais — resolve o OOM). Linter fail-closed R1–R9+RT; fila 1-clique
+  (`revisao_itens`, autor≠aprovador em CHECK); tetos LLM (5€/dia + PAUSA_LLM);
+  Fase G: IfThenPay + `/pagar` + série CKL (LIVE-GATED).
+- **Timers armados a 19/07** (`deploy/polaris/instalar.sh`): varrimento 2×/sem, DRE,
+  dunning, backup + sentinela 4×/dia, maestro digest+governança, angariador, gestor.
+  Desligados à espera de pré-requisitos: suporte×2 (IMAP), token (TOConline).
+- **Espelho nacional completo**: 1.º varrimento 289/289 concelhos, 119.538 registos,
+  0 falhas. **Bootstrap neutralizado** (marcador `bootstrap_baseline` — o angariador
+  só reage a diffs reais). Sentinela verde; smoke real do angariador via claude -p OK.
+- **Gates abertos pelo dono (18/07):** `CHECKAL_PARECER_RGPD_OK=true` (parecer
+  favorável) e `CHECKAL_ANTHROPIC_DPA_OK=true` (enquadramento confirmado; regra nos
+  prompts: dados de SINGULARES só com opt-in; postal admissível — moradas já retidas
+  no espelho `registos`). `CHECKAL_MODO_TESTE=true` até ao ensaio test→live — nada
+  envia/cobra/publica. LLM pela subscrição Claude (CLI login do dono).
+- **Instalação isolada**: tudo no projeto; symlink `/home/diogo/checkal-polaris`;
+  segredos em `deploy/polaris/agente.env` (fora do git). Site em repo próprio
+  (github.com/dmmm114/checkal-site), live em checkal.pt.
+
+## Estado da construção anterior (a 12/07/2026)
 
 **Software 100% construído** — ver `ESTADO-DO-PROJETO.md` (fonte de verdade). Núcleo de compliance
 + FDS 1–6 + swap TOConline + Fase 1 (website consent-first, emails, dashboard admin) + deploy
@@ -62,7 +85,23 @@ sem chaves). Marca final aplicada (✓AL badge). Parecer RGPD recebido e traduzi
   **não materializa lista de envio nem faz scraping** (RATIONALE: "só filtro + prova"). A fatia do
   prefixo `geral@` não é o filtro — o filtro é o NIF; o portão continua a ser o advogado (reutilização).
 
-## Próximos passos (o que falta — depende do dono)
+## Próximos passos (a 19/07/2026)
+
+1. **IfThenPay:** chaves CheckAL **pedidas (à espera)** — subentidade MB + MB Way +
+   antiphishing, callback `checkal.pt/callback/ifthenpay`. Ao chegarem: colar em
+   `deploy/polaris/agente.env`.
+2. **Dono:** comprar **getcheckal.com** (+ chekal.pt/checal.pt) e SMTP cold (NUNCA
+   subdomínio de checkal.pt — reputação); criar **bot Telegram** (digest);
+   **TOConline fica para depois** (decisão 19/07) — série CKL + smoke-test antes da
+   1.ª fatura real; E&O antes de escalar cold; feed DGC antes de qualquer envio frio.
+3. **BUILD seguinte:** endpoint de **aprovação 1-clique** (link do digest → aprovar
+   fila) + **deploy web** do FastAPI (`/pagar` + callback IfThenPay públicos em
+   checkal.pt) — necessário antes de ativar pagamentos.
+4. **Dashboard Polaris:** página "Sala de Controlo" dos agentes — prompt pronto em
+   `deploy/polaris/PROMPT-DASHBOARD.md` (read-only sobre a BD).
+5. Dossier advogado v2 + INPI — mantêm-se (ver lista anterior).
+
+## Próximos passos anteriores (12/07 — histórico)
 
 0. 🚦 [BLOQUEANTE cold] Advogado VALIDA o **dossier v2 (PRONTO** — `dossier-advogado/DOSSIER-CheckAL.html`
    + `EMAIL-ADVOGADO.md`): as 5 minutas + os 3 pontos do parecer (base legal do email/art.10.º n.º 5 —

@@ -74,3 +74,33 @@ advogado→`CHECKAL_PARECER_RGPD_OK=true`, E&O, credenciais `COLD_SMTP_*`, feed 
 Nada foi enviado/cobrado/publicado — falta o deploy + chaves do dono. Documentos legais são
 **minutas** (exigem advogado). Reconciliação v2 pendente: existem dois caminhos de composição de
 email cold (`campanhas/motor` e `emails/prospeccao`) — irrelevante enquanto o cold está desligado.
+
+---
+
+## Sessão 18–19/07/2026 — Enxame de agentes construído e LANÇADO no Polaris
+
+**O que existe agora (commits `a699a51`→`314a737`; 1558 testes verdes, 0 skips):**
+a camada de 4 agentes single-shot (MAESTRO, ANGARIADOR, GESTOR-DE-CLIENTE,
+SENTINELA-SERVIÇO) por cima do backbone determinista — linter fail-closed, fila de
+aprovação 1-clique (autor≠aprovador), tetos de custo LLM com PAUSA_LLM, subcomandos
+`manage.py`, prompts PT-PT, wrapper + units systemd nativas (cgroups reais no
+`claude -p`), e a Fase G de pagamentos (IfThenPay + `/pagar` + série CKL, LIVE-GATED).
+Arquitetura e decisões em `AGENTES-ENXAME.md`.
+
+**Lançado a 19/07:** timers armados no Polaris (instalação isolada no projeto;
+symlink `/home/diogo/checkal-polaris`; segredos em `deploy/polaris/agente.env`,
+fora do git). 1.º varrimento nacional: **289/289 concelhos, 119.538 registos, 0
+falhas**; os 119.538 eventos de bootstrap foram marcados `bootstrap_baseline` (a
+prospeção parte de zero e só reage a diffs reais). Sentinela verde; angariador
+provado de ponta a ponta com o modelo real (no-op limpo + escalação DGC vazia).
+
+**Gates:** parecer RGPD e DPA abertos pelo dono (18/07; dados de singulares só com
+opt-in — regra encodada nos prompts; canal postal admissível, moradas já retidas no
+espelho `registos`). `CHECKAL_MODO_TESTE=true` — **nada envia, cobra ou publica**;
+digests ficam na BD até haver bot Telegram + ensaio test→live.
+
+**Honestidade:** os agentes trabalham e acumulam fila, mas nenhum email/fatura/
+publicação saiu nem pode sair por código. Pendentes externos: chaves IfThenPay
+(pedidas), getcheckal.com + SMTP cold, TOConline (série CKL + smoke-test),
+Telegram, feed DGC, E&O. Pendentes de build: endpoint de aprovação 1-clique e
+deploy web do FastAPI (`/pagar`/callback) — antes de ativar pagamentos.
