@@ -11,7 +11,9 @@ prompt-mestre), todas código e testadas:
     confirmados (RT-Sentinela pré-envio), senão :class:`PreEnvioNaoConfirmado`.
   - NENHUM caminho de agente escreve `estado='aprovado'`: só :func:`aprovar`
     (o dono, com token válido gerado pelo MAESTRO) o faz — e escreve a linha em
-    `aprovacoes` com autor ≠ aprovador (quem PROPÕE nunca APROVA).
+    `aprovacoes` com autor ≠ aprovador (quem PROPÕE nunca APROVA); a
+    auto-aprovação por config escreve `'auto_aprovado'` (nunca `'aprovado'`) e
+    só é servida pelo drain com opt-in explícito.
   - :func:`drain` serve APENAS itens já aprovados, com lease + backoff exponencial
     e cap por passagem, por omissão `config.CAMPANHA_CAP_DIARIO` (ou o `cap`
     do chamador).
@@ -54,6 +56,7 @@ __all__ = [
     "token_bate",
     "aprovar",
     "rejeitar",
+    "auto_aprovar",
     "dgc_ok",
     "carregar_lista_dgc",
     "pode_enviar_frio_com_dgc",
@@ -267,6 +270,34 @@ def rejeitar(session, item_id: int, *, token: str, decidido_por: str = "dono",
     """Rejeita um item (mesmo circuito de validação do que aprovar)."""
     return _decidir(session, item_id, token=token, decidido_por=decidido_por,
                     decisao="rejeitado", nota=nota)
+
+
+def auto_aprovar(session, item_id: int) -> ms.RevisaoItem:
+    """Auto-aprovação por config do dono — escreve `auto_aprovado`, NUNCA `aprovado`.
+
+    Preserva o invariante do módulo ("nenhum caminho de agente escreve
+    'aprovado'"): o estado novo só é servido pelo drain com o opt-in explícito
+    `incluir_auto_aprovado=True`. Exige item `pendente` com `linter_ok=True`.
+    Regista a decisão em `aprovacoes` com decidido_por='auto' (autor≠aprovador
+    mantido — o autor é o agente de origem). O gate de QUANDO auto-aprovar
+    (config AUTO_PUBLICAR_*) é do chamador (publicador), não daqui.
+    """
+    item = session.get(ms.RevisaoItem, item_id)
+    if item is None or item.estado != "pendente":
+        raise TokenInvalido(f"item {item_id} inexistente ou já decidido")
+    if not item.linter_ok:
+        raise TokenInvalido(f"item {item_id} sem linter_ok — não auto-aprovável")
+    autor = item.agente_origem or "desconhecido"
+    session.add(ms.Aprovacao(
+        revisao_item_id=item.id, autor=autor, decidido_por="auto",
+        decisao="auto_aprovado", token_usado=None, nota="auto-publicação por config",
+        criado_em=_agora(),
+    ))
+    item.estado = "auto_aprovado"
+    item.decidido_em = _agora()
+    item.decidido_por = "auto"
+    session.flush()
+    return item
 
 
 # ==========================================================================

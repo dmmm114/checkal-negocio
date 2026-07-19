@@ -230,6 +230,54 @@ def test_rejeitar_regista_decisao(bd):
 
 
 # ==========================================================================
+#  (3b) auto-aprovação por config — escreve auto_aprovado, NUNCA aprovado
+# ==========================================================================
+def test_auto_publicar_default_fail_closed():
+    assert config.AUTO_PUBLICAR_ARTIGO_SEO is False
+
+
+def test_auto_aprovar_escreve_auto_aprovado_nunca_aprovado(bd):
+    with db.get_session() as s:
+        item = _enfileirar_ok(s)
+        s.flush()
+        out = fila.auto_aprovar(s, item.id)
+        assert out.estado == "auto_aprovado"          # NUNCA 'aprovado'
+        apr = s.query(ms.Aprovacao).one()
+        assert apr.decidido_por == "auto"
+        assert apr.autor == item.agente_origem        # autor≠aprovador preservado
+        assert apr.decisao == "auto_aprovado"
+
+
+def test_auto_aprovar_recusa_nao_pendente(bd):
+    with db.get_session() as s:
+        item_id = _aprovado(s)
+
+    with pytest.raises(fila.TokenInvalido):
+        with db.get_session() as s:
+            fila.auto_aprovar(s, item_id)
+
+    with db.get_session() as s:
+        assert s.get(ms.RevisaoItem, item_id).estado == "aprovado"
+        assert s.query(ms.Aprovacao).count() == 1  # só a aprovação original
+
+
+def test_auto_aprovar_recusa_linter_nok(bd):
+    with db.get_session() as s:
+        item = _enfileirar_ok(s)
+        s.flush()
+        item.linter_ok = False
+        item_id = item.id
+
+    with pytest.raises(fila.TokenInvalido):
+        with db.get_session() as s:
+            fila.auto_aprovar(s, item_id)
+
+    with db.get_session() as s:
+        assert s.get(ms.RevisaoItem, item_id).estado == "pendente"
+        assert s.query(ms.Aprovacao).count() == 0
+
+
+# ==========================================================================
 #  (4) drain — lease/backoff, só sobre aprovados, cap diário
 # ==========================================================================
 def _aprovado(s, **kw) -> int:

@@ -299,6 +299,12 @@ PAUSA_LLM_PATH = Path(_env("CHECKAL_PAUSA_LLM_PATH", "/run/checkal/PAUSA_LLM"))
 LISTA_DGC_PATH = _env("CHECKAL_LISTA_DGC_PATH", "")
 DGC_MAX_IDADE_DIAS = int(_env("CHECKAL_DGC_MAX_IDADE_DIAS", "30"))
 
+# 🚦 Autonomia gradual do PUBLICADOR (fase 3) — fail-closed: o dono promove
+# um tipo de artefacto a auto-publicação SÓ quando o historial for limpo.
+# post_grupo não tem flag: o dono cola sempre à mão (spec §6.3, YAGNI).
+AUTO_PUBLICAR_ARTIGO_SEO = _env_bool("CHECKAL_AUTO_PUBLICAR_ARTIGO_SEO", False)
+PUBLICADOR_CAP_PASSAGEM = int(_env("CHECKAL_PUBLICADOR_CAP_PASSAGEM", "2"))
+
 
 def anthropic_dpa_ok() -> bool:
     """O DPA comercial da Anthropic está assinado? (live-gate dos agentes LLM)."""
