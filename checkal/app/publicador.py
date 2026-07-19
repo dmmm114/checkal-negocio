@@ -15,6 +15,21 @@ staging com `npx wrangler` PINADO. `post_grupo` é sempre no-op (o dono cola à
 mão). Nada aqui corre git/wrangler diretamente — tudo passa pelo seam
 `executar` injetável (testes usam fakes; NUNCA rede/processos reais em teste).
 
+Parte 3 (fase FB, FB2): publicação de `post_pagina` na Página de Facebook da
+marca via Graph API oficial (:func:`publicar_facebook`), live-gated por
+`config.facebook_ativo()` — sem `CHECKAL_FACEBOOK_PAGE_ID`/`_PAGE_TOKEN`
+configurados, o `tipos` do drain nem inclui `post_pagina`: os itens aprovados
+ficam intactos à espera (sem lease, sem churn de backoff), e o relatório live
+sinaliza essa espera com `"facebook": "por configurar"` (contados por um
+SELECT read-only, nunca um `falhado` artificial). Auto-aprovação simétrica à
+dos artigos via `config.AUTO_PUBLICAR_POST_PAGINA` (mesmo filtro por tipo
+OBRIGATÓRIO de `fila.auto_aprovar` — ver o aviso TYPE-AGNOSTIC no seu
+docstring). Em ensaio, os `post_pagina` elegíveis só aparecem no relatório
+(`"posts_pagina"`) — zero rede, zero drain, mesmo padrão do resto do ensaio.
+`publicar_facebook` é o seam de rede (default `httpx.post`, injetável nos
+testes); a mensagem de erro de uma falha HTTP é truncada e NUNCA inclui o
+token de acesso.
+
 Auditoria-chave (`docs/superpowers/plans/2026-07-19-fase3-publicador.md`
 §F3.3): o molde é `site/porto.html`. Os blocos que não variam de artigo para
 artigo (skip-link, header com o logo SVG inline, o bloco CTA do corpo, o
@@ -52,7 +67,9 @@ from pathlib import Path
 
 from app.compliance.linter import DISCLAIMER_NAO_ACONSELHAMENTO, DIVULGACAO_IA
 
-__all__ = ["md_para_html", "render_artigo", "atualizar_sitemap", "correr"]
+__all__ = [
+    "md_para_html", "render_artigo", "atualizar_sitemap", "publicar_facebook", "correr",
+]
 
 # Whitelist estrita do slug — não é só escape. O slug é um segmento de URL
 # AUTORADO PELO LLM (payload do EDITOR) e entra cru em canonical/og:url/
@@ -359,6 +376,11 @@ def atualizar_sitemap(caminho: Path, *, slug: str, lastmod: str) -> None:
 # ==========================================================================
 _TIPOS_PUBLICAVEIS = ("artigo_seo", "post_grupo")
 
+# Ensaio (read-only, F3.4) mostra os `post_pagina` elegíveis SEMPRE — é só
+# diagnóstico, sem drain nem rede, por isso não precisa do live-gate de
+# `config.facebook_ativo()` (esse gate é só sobre o que o drain LIVE serve).
+_TIPOS_ENSAIO = _TIPOS_PUBLICAVEIS + ("post_pagina",)
+
 # rsync: nunca leva o `.git` aninhado, o estado do wrangler, docs internos nem
 # as ferramentas de manutenção — e `functions/` fica de fora porque vai à
 # parte, como pasta IRMÃ de `dist/` (é assim que o Cloudflare Pages a exige).
@@ -413,6 +435,87 @@ def _carregar_artigo(session, item) -> dict:
     return evento.payload["artigo"]
 
 
+def _carregar_corpo_texto(session, item) -> str:
+    """Carrega `corpo_texto` do payload do `EventoAgente` referido por
+    `item.ref_id` — o mesmo padrão de :func:`_carregar_artigo`, mas para
+    `post_pagina`: o payload do COMUNICADOR (`manage._cmd_comunicador_enfileirar`)
+    é `{"tipo": "post_pagina", "corpo_texto": ..., ...}`, sem a chave `"artigo"`.
+
+    Levanta `ValueError` nas mesmas condições (ref ausente/não-numérico, evento
+    inexistente, ou payload sem `corpo_texto` não vazio) — a exceção vira
+    `falhado` + backoff dentro do `processador` do `fila.drain`.
+    """
+    import app.models_swarm as ms
+
+    if not item.ref_id:
+        raise ValueError(f"item {item.id} (post_pagina) sem ref_id")
+    try:
+        evento_id = int(item.ref_id)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"item {item.id}: ref_id {item.ref_id!r} não é um id de EventoAgente"
+        ) from exc
+    evento = session.get(ms.EventoAgente, evento_id)
+    if (
+        evento is None
+        or not isinstance(evento.payload, dict)
+        or not evento.payload.get("corpo_texto")
+    ):
+        raise ValueError(
+            f"item {item.id}: EventoAgente {item.ref_id!r} inexistente ou sem "
+            "payload['corpo_texto']"
+        )
+    return evento.payload["corpo_texto"]
+
+
+def publicar_facebook(mensagem: str, *, page_id: str, token: str, http_post=None) -> str:
+    """Publica `mensagem` na Página de Facebook via Graph API oficial.
+
+    POST `https://graph.facebook.com/v21.0/{page_id}/feed`, corpo form-encoded
+    `{"message": mensagem, "access_token": token}`. Resposta HTTP 200 com JSON
+    `{"id": ...}` ⇒ devolve esse id (o id do post criado). Qualquer outro caso
+    — status ≠ 200, JSON inválido, ou JSON sem `"id"` — levanta `RuntimeError`
+    com o corpo da resposta TRUNCADO (300 carateres); o `token` é removido
+    desse corpo antes de entrar na mensagem de erro (defesa em profundidade —
+    a Graph API não costuma ecoar o token de acesso, mas um log/mensagem de
+    erro nunca deve poder vazá-lo).
+
+    Live-gated A MONTANTE: esta função não decide SE deve publicar
+    (`config.facebook_ativo()` é responsabilidade de quem chama, em
+    `correr()`) — aqui é só o seam de rede, puro no sentido de que não lê
+    config nem BD. `http_post` é injetável nos testes (fakes; NUNCA rede real
+    em teste); o default é `httpx.post` com `timeout=30` segundos.
+    """
+    if http_post is None:
+        import httpx  # import tardio: só quando de facto se liga em produção
+
+        http_post = httpx.post
+
+    resposta = http_post(
+        f"https://graph.facebook.com/v21.0/{page_id}/feed",
+        data={"message": mensagem, "access_token": token},
+        timeout=30,
+    )
+    status = getattr(resposta, "status_code", None)
+    post_id = None
+    if status == 200:
+        try:
+            corpo = resposta.json()
+        except ValueError:
+            corpo = None
+        if isinstance(corpo, dict):
+            post_id = corpo.get("id")
+    if status == 200 and post_id:
+        return post_id
+
+    corpo_texto = (getattr(resposta, "text", "") or "")[:300]
+    if token:
+        corpo_texto = corpo_texto.replace(token, "***")
+    raise RuntimeError(
+        f"Graph API /{page_id}/feed falhou (status={status}): {corpo_texto}"
+    )
+
+
 def _publicar_no_cloudflare(site_dir: Path, executar) -> None:
     """Commit+push no repo aninhado `site_dir` + deploy de staging (wrangler
     PINADO). Todos os passos passam por `executar` (injetável) — nada aqui
@@ -448,39 +551,53 @@ def correr(
     site_dir: Path | str | None = None,
     ensaio_dir: Path | str | None = None,
     executar=None,
+    http_post=None,
 ) -> dict:
     """A passagem do PUBLICADOR — chamada pelo job `manage.py publicador`.
 
     **Modo ensaio** (`config.CHECKAL_MODO_TESTE=True`): NUNCA drena — um
     dry-run que drenasse marcaria itens `feito` sem os publicar de facto,
     perdendo-os. Faz um SELECT read-only dos itens `aprovado`/`auto_aprovado`
-    de tipo `artigo_seo`/`post_grupo`, renderiza os artigos para `ensaio_dir`
-    e devolve `{"modo": "ensaio", "artigos": [...], "posts": N}`. Zero
-    `fila.drain`, zero escrita na BD, zero escrita em `site_dir`, zero comando
-    executado. Um item `artigo_seo` malformado (payload em falta/inválido, ou
-    recusado pelo próprio `render_artigo` — slug hostil, esquema de fonte não
-    permitido) não rebenta a passagem: fica em `artigos` como
+    de tipo `artigo_seo`/`post_grupo`/`post_pagina`, renderiza os artigos para
+    `ensaio_dir` e devolve `{"modo": "ensaio", "artigos": [...], "posts": N,
+    "posts_pagina": [{"id", "resumo"}, ...]}`. Zero `fila.drain`, zero escrita
+    na BD, zero escrita em `site_dir`, zero comando/rede executado (os
+    `post_pagina` elegíveis aparecem sempre no relatório, mesmo sem
+    `config.facebook_ativo()` — é só diagnóstico read-only, o live-gate é só
+    sobre o drain LIVE). Um item `artigo_seo` malformado (payload em falta/
+    inválido, ou recusado pelo próprio `render_artigo` — slug hostil, esquema
+    de fonte não permitido) não rebenta a passagem: fica em `artigos` como
     `{"item_id": ..., "erro": str(exc)}` e os restantes itens continuam a
     renderizar normalmente (diagnóstico tolerante — é read-only por natureza).
 
     **Modo live**: (a) se `config.AUTO_PUBLICAR_ARTIGO_SEO`, auto-aprova (via
-    `fila.auto_aprovar`) os `artigo_seo` `pendente`s com `linter_ok` — SÓ esse
-    tipo (o filtro por tipo é responsabilidade de quem chama `auto_aprovar`,
-    não da função); (b) drena `artigo_seo`/`post_grupo` aprovados +
-    auto-aprovados (`fila.drain`, cap `config.PUBLICADOR_CAP_PASSAGEM`) — tudo
-    dentro de UMA `fila.sessao_governacao()`; (c) por item: `post_grupo` é
-    no-op (o dono cola sempre à mão — o `drain` marca `feito`); `artigo_seo`
-    renderiza, escreve `{slug}.html`, atualiza o sitemap e publica (git
-    commit+push + deploy Cloudflare via staging), POR ITEM: o render/commit
-    são idempotentes por slug (reescrever o mesmo ficheiro e tentar comitar
-    sem nada staged são ambos no-ops seguros — ver o guard do commit vazio em
-    `_processar`). Isto NÃO é auto-retry: o `drain` só re-serve itens já
-    `aprovado`/`auto_aprovado` cujo `nao_antes_de`/`lease_ate` já passou — um
-    item `falhado` fica `falhado` até alguém o repor manualmente a `aprovado`
-    (ver HANDOFF fase 3).
+    `fila.auto_aprovar`) os `artigo_seo` `pendente`s com `linter_ok`; se
+    `config.AUTO_PUBLICAR_POST_PAGINA`, auto-aprova (mesma via) os
+    `post_pagina` `pendente`s com `linter_ok` — cada auto-aprovação SÓ apanha
+    o SEU tipo (o filtro por tipo é responsabilidade de quem chama
+    `auto_aprovar`, não da função — ela é TYPE-AGNOSTIC); (b) drena
+    `artigo_seo`/`post_grupo` aprovados + auto-aprovados sempre, e
+    `post_pagina` SÓ quando `config.facebook_ativo()` (sem page id + token,
+    `post_pagina` nem entra nos `tipos` do drain — os itens aprovados ficam
+    intactos à espera, sem lease; o relatório sinaliza com `"facebook": "por
+    configurar"` quando há pelo menos um, contado por um SELECT read-only)
+    (`fila.drain`, cap `config.PUBLICADOR_CAP_PASSAGEM`) — tudo dentro de UMA
+    `fila.sessao_governacao()`; (c) por item: `post_grupo` é no-op (o dono
+    cola sempre à mão — o `drain` marca `feito`); `artigo_seo` renderiza,
+    escreve `{slug}.html`, atualiza o sitemap e publica (git commit+push +
+    deploy Cloudflare via staging), POR ITEM: o render/commit são idempotentes
+    por slug (reescrever o mesmo ficheiro e tentar comitar sem nada staged são
+    ambos no-ops seguros — ver o guard do commit vazio em `_processar`);
+    `post_pagina` carrega `corpo_texto` do `EventoAgente` e publica via
+    `publicar_facebook` (Graph API). Isto NÃO é auto-retry: o `drain` só
+    re-serve itens já `aprovado`/`auto_aprovado` cujo `nao_antes_de`/
+    `lease_ate` já passou — um item `falhado` fica `falhado` até alguém o
+    repor manualmente a `aprovado` (ver HANDOFF fase 3).
 
     `executar(cmd, **kw)` é o seam injetável (testes) — o default embrulha
     `subprocess.run(cmd, check=True, capture_output=True, text=True, **kw)`.
+    `http_post` é o seam de rede de `publicar_facebook` (testes) — o default
+    é `httpx.post`.
     """
     import app.config as config
     import app.db as db
@@ -498,17 +615,21 @@ def correr(
         ensaio_dir.mkdir(parents=True, exist_ok=True)  # só criado quando é mesmo usado
         artigos: list[dict] = []
         posts = 0
+        posts_pagina: list[dict] = []
         with db.get_session() as s:
             itens = (
                 s.query(ms.RevisaoItem)
                 .filter(ms.RevisaoItem.estado.in_(("aprovado", "auto_aprovado")))
-                .filter(ms.RevisaoItem.tipo.in_(_TIPOS_PUBLICAVEIS))
+                .filter(ms.RevisaoItem.tipo.in_(_TIPOS_ENSAIO))
                 .order_by(ms.RevisaoItem.criado_em, ms.RevisaoItem.id)
                 .all()
             )
             for item in itens:
                 if item.tipo == "post_grupo":
                     posts += 1
+                    continue
+                if item.tipo == "post_pagina":
+                    posts_pagina.append({"id": item.id, "resumo": item.resumo})
                     continue
                 try:
                     artigo = _carregar_artigo(s, item)
@@ -525,7 +646,10 @@ def correr(
                     # passagem; fica no relatório com o erro, e os restantes itens
                     # continuam a ser processados.
                     artigos.append({"item_id": item.id, "erro": str(exc)})
-        return {"modo": "ensaio", "artigos": artigos, "posts": posts}
+        return {
+            "modo": "ensaio", "artigos": artigos, "posts": posts,
+            "posts_pagina": posts_pagina,
+        }
 
     hoje = date.today().isoformat()
     publicados: list[dict] = []
@@ -533,6 +657,13 @@ def correr(
     def _processar(item) -> None:
         if item.tipo == "post_grupo":
             return  # no-op — o dono cola sempre à mão; o drain marca 'feito'.
+        if item.tipo == "post_pagina":
+            corpo = _carregar_corpo_texto(s, item)
+            publicar_facebook(
+                corpo, page_id=config.FACEBOOK_PAGE_ID, token=config.FACEBOOK_PAGE_TOKEN,
+                http_post=http_post,
+            )
+            return  # publicado — o drain marca 'feito'.
         artigo = _carregar_artigo(s, item)
         slug = artigo["slug"]
         html_final = render_artigo(artigo)
@@ -557,6 +688,12 @@ def correr(
 
         publicados.append({"item_id": item.id, "slug": slug})
 
+    facebook_ativo = config.facebook_ativo()
+    # post_pagina só entra nos tipos servidos pelo drain quando há page id +
+    # token — sem config, os itens aprovados nem são leased (ficam intactos
+    # à espera; nota "facebook": "por configurar" no relatório, abaixo).
+    tipos_live = _TIPOS_PUBLICAVEIS + (("post_pagina",) if facebook_ativo else ())
+
     with fila.sessao_governacao() as s:
         if config.AUTO_PUBLICAR_ARTIGO_SEO:
             pendentes = (
@@ -569,8 +706,31 @@ def correr(
             for item in pendentes:
                 fila.auto_aprovar(s, item.id)
 
+        if config.AUTO_PUBLICAR_POST_PAGINA:
+            pendentes_pagina = (
+                s.query(ms.RevisaoItem)
+                .filter(ms.RevisaoItem.tipo == "post_pagina",
+                        ms.RevisaoItem.estado == "pendente",
+                        ms.RevisaoItem.linter_ok.is_(True))
+                .all()
+            )
+            for item in pendentes_pagina:
+                fila.auto_aprovar(s, item.id)
+
+        # Nota "por configurar": SELECT read-only, só quando facebook está
+        # inativo (senão o drain já os serve — ver `tipos_live` acima). Nunca
+        # marca nada 'falhado'; é só uma contagem para o relatório.
+        post_pagina_por_configurar = 0
+        if not facebook_ativo:
+            post_pagina_por_configurar = (
+                s.query(ms.RevisaoItem)
+                .filter(ms.RevisaoItem.tipo == "post_pagina",
+                        ms.RevisaoItem.estado.in_(("aprovado", "auto_aprovado")))
+                .count()
+            )
+
         servidos = fila.drain(
-            s, "publicador", tipos=_TIPOS_PUBLICAVEIS,
+            s, "publicador", tipos=tipos_live,
             cap=config.PUBLICADOR_CAP_PASSAGEM, incluir_auto_aprovado=True,
             processador=_processar,
         )
@@ -578,4 +738,9 @@ def correr(
             1 for i in servidos if i.tipo == "post_grupo" and i.estado == "feito"
         )
 
-    return {"modo": "live", "publicados": publicados, "posts_fechados": posts_fechados}
+    relatorio = {
+        "modo": "live", "publicados": publicados, "posts_fechados": posts_fechados,
+    }
+    if post_pagina_por_configurar:
+        relatorio["facebook"] = "por configurar"
+    return relatorio

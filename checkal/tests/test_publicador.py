@@ -573,3 +573,331 @@ def test_correr_live_retry_apos_falha_nao_bloqueia_no_commit_vazio(bd, tmp_path,
 
     with db.get_session() as s:
         assert s.get(ms.RevisaoItem, item_id).estado == "feito"
+
+
+# ==========================================================================
+#  FB2 — publicar_facebook + drain/ensaio de post_pagina (fase FB, 19/07)
+#  Live-gated por config.facebook_ativo(): sem PAGE_ID/PAGE_TOKEN, o drain
+#  nem inclui post_pagina nos tipos servidos — SEM rede real em teste, o
+#  seam `http_post` é sempre um fake.
+# ==========================================================================
+_POST_PAGINA_OK = (
+    "Novo regulamento municipal do Porto para o Alojamento Local — resumo em "
+    "5 pontos.\n1) Âmbito. 2) Prazos. 3) Registos. 4) Vistorias. 5) Onde ler.\n"
+    "Fonte oficial: https://www.cm-porto.pt/regulamento-al\n"
+    "Preparado com apoio de IA."
+)
+
+# Mesmo texto COLD conforme de test_manage_agentes.py/test_publicador (acima)
+# — reutilizado no teste de auto-aprovação type-agnostic.
+_TEXTO_COLD_OK_FB = (
+    "Bom dia,\n\nO CheckAL vigia o registo, o seguro e os regulamentos do concelho "
+    "do vosso Alojamento Local. Conteúdo preparado com apoio de inteligência "
+    "artificial (IA).\n\nInformação, não aconselhamento jurídico.\n"
+    "Para não voltar a ser contactado: checkal.pt/remover\n"
+    "O CheckAL é operado por Cosmic Oasis, Lda."
+)
+
+
+def _semear_post_pagina(
+    s, *, agente_origem: str = "comunicador", estado_pendente: bool = False,
+    texto: str | None = None,
+) -> int:
+    """Enfileira um `post_pagina` conforme com o payload no `EventoAgente`
+    exatamente como `manage._cmd_comunicador_enfileirar` o faz
+    (`payload={"tipo": "post_pagina", "corpo_texto": ...}`) e, por omissão,
+    aprova-o já (token + `fila.aprovar`)."""
+    texto = texto if texto is not None else _POST_PAGINA_OK
+    evento = ms.EventoAgente(
+        agente=agente_origem, tipo="conteudo_proposto",
+        mensagem="post_pagina proposto",
+        payload={"tipo": "post_pagina", "corpo_texto": texto},
+        criado_em=_agora(),
+    )
+    s.add(evento)
+    s.flush()
+    peca = PecaOutward(texto=texto, canal=Canal.POST_PAGINA, gerado_por_ia=True)
+    item = fila.enfileirar(
+        s, tipo="post_pagina", risco="alto", agente_origem=agente_origem,
+        ref_tipo="evento_agente", ref_id=str(evento.id),
+        resumo="post_pagina proposto",
+        peca=peca,
+    )
+    s.flush()
+    if not estado_pendente:
+        token = fila.gerar_token(s, item.id)
+        fila.aprovar(s, item.id, token=token, decidido_por="dono")
+    return item.id
+
+
+class _RespostaFacebookFake:
+    def __init__(self, *, status_code: int = 200, corpo_json=None, texto: str = ""):
+        self.status_code = status_code
+        self._corpo_json = corpo_json
+        self.text = texto
+
+    def json(self):
+        if self._corpo_json is None:
+            raise ValueError("resposta sem JSON")
+        return self._corpo_json
+
+
+def _fake_http_post(
+    chamadas: list, *, status_code: int = 200, post_id: str = "123_456",
+    texto_erro: str = "",
+):
+    """Fake de `http_post` de `publicar_facebook`: acumula os pedidos em
+    `chamadas` (nunca toca rede real) e devolve 200/{"id": post_id} por
+    omissão, ou `status_code`/`texto_erro` explícitos (para os testes de
+    falha)."""
+    def _post(url, *, data=None, timeout=None, **kw):
+        chamadas.append({"url": url, "data": data, "timeout": timeout})
+        if status_code == 200:
+            return _RespostaFacebookFake(status_code=200, corpo_json={"id": post_id})
+        return _RespostaFacebookFake(status_code=status_code, texto=texto_erro)
+    return _post
+
+
+# --------------------------------------------------------------------------
+#  publicar_facebook — unidade, sem BD (só o seam de rede)
+# --------------------------------------------------------------------------
+def test_publicar_facebook_sucesso_devolve_id_e_envia_mensagem():
+    chamadas: list = []
+    post_id = publicador.publicar_facebook(
+        "Olá página",
+        page_id="987654321",
+        token="TOKEN-SECRETO",
+        http_post=_fake_http_post(chamadas, post_id="999_111"),
+    )
+    assert post_id == "999_111"
+    assert len(chamadas) == 1
+    assert chamadas[0]["url"] == "https://graph.facebook.com/v21.0/987654321/feed"
+    assert chamadas[0]["data"] == {"message": "Olá página", "access_token": "TOKEN-SECRETO"}
+    assert chamadas[0]["timeout"] == 30
+
+
+def test_publicar_facebook_erro_http_levanta_sem_vazar_token():
+    chamadas: list = []
+    http_post = _fake_http_post(
+        chamadas, status_code=400,
+        texto_erro='{"error": {"message": "token TOKEN-SECRETO inválido"}}',
+    )
+    with pytest.raises(RuntimeError) as exc:
+        publicador.publicar_facebook(
+            "Olá página", page_id="987654321", token="TOKEN-SECRETO", http_post=http_post,
+        )
+    assert "TOKEN-SECRETO" not in str(exc.value)
+
+
+def test_publicar_facebook_sem_id_na_resposta_levanta():
+    chamadas: list = []
+
+    def _post(url, *, data=None, timeout=None, **kw):
+        chamadas.append(data)
+        return _RespostaFacebookFake(status_code=200, corpo_json={"algo": "sem id"})
+
+    with pytest.raises(RuntimeError):
+        publicador.publicar_facebook(
+            "Olá página", page_id="987654321", token="T", http_post=_post,
+        )
+
+
+# --------------------------------------------------------------------------
+#  correr() live — drain de post_pagina live-gated por facebook_ativo()
+# --------------------------------------------------------------------------
+def test_correr_live_publica_post_pagina_com_facebook_ativo(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    monkeypatch.setattr(config, "FACEBOOK_PAGE_ID", "987654321")
+    monkeypatch.setattr(config, "FACEBOOK_PAGE_TOKEN", "TOKEN-SECRETO")
+    with db.get_session() as s:
+        item_id = _semear_post_pagina(s)
+
+    site_dir = _site_fake(tmp_path)
+    chamadas_git: list = []
+    chamadas_fb: list = []
+    rel = publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas_git),
+        http_post=_fake_http_post(chamadas_fb),
+    )
+
+    assert rel["modo"] == "live"
+    assert "facebook" not in rel                      # nada por configurar
+    assert len(chamadas_fb) == 1
+    assert chamadas_fb[0]["data"]["message"] == _POST_PAGINA_OK
+    assert chamadas_fb[0]["data"]["access_token"] == "TOKEN-SECRETO"
+    # post_pagina é publicação pura via Graph API — nenhum git/wrangler.
+    assert chamadas_git == []
+
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "feito"
+        assert item.lease_ate is None
+
+
+def test_correr_live_sem_facebook_config_nao_drena_post_pagina(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    assert config.facebook_ativo() is False            # fail-closed por omissão
+    with db.get_session() as s:
+        item_id = _semear_post_pagina(s)
+
+    site_dir = _site_fake(tmp_path)
+    chamadas_fb: list = []
+    rel = publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar([]),
+        http_post=_fake_http_post(chamadas_fb),
+    )
+
+    assert rel["modo"] == "live"
+    assert rel["facebook"] == "por configurar"
+    assert chamadas_fb == []                           # zero rede
+
+    # item fica intacto — nem foi leased (drain nem o serviu).
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "aprovado"
+        assert item.lease_ate is None
+        assert item.tentativas == 0
+
+
+def test_correr_live_post_pagina_erro_http_marca_falhado(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    monkeypatch.setattr(config, "FACEBOOK_PAGE_ID", "987654321")
+    monkeypatch.setattr(config, "FACEBOOK_PAGE_TOKEN", "TOKEN-SECRETO")
+    with db.get_session() as s:
+        item_id = _semear_post_pagina(s)
+
+    site_dir = _site_fake(tmp_path)
+    rel = publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar([]),
+        http_post=_fake_http_post([], status_code=400, texto_erro="erro"),
+    )
+
+    assert rel["modo"] == "live"
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "falhado"
+        assert item.tentativas == 1
+        assert item.nao_antes_de is not None
+        assert item.lease_ate is None
+
+
+def test_correr_live_auto_aprova_post_pagina_sob_flag(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    monkeypatch.setattr(config, "AUTO_PUBLICAR_POST_PAGINA", True)
+    monkeypatch.setattr(config, "FACEBOOK_PAGE_ID", "987654321")
+    monkeypatch.setattr(config, "FACEBOOK_PAGE_TOKEN", "TOKEN-SECRETO")
+    with db.get_session() as s:
+        item_id = _semear_post_pagina(s, estado_pendente=True)
+
+    site_dir = _site_fake(tmp_path)
+    publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar([]),
+        http_post=_fake_http_post([]),
+    )
+
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "feito"                  # pendente → auto_aprovado → feito
+        assert item.decidido_por == "auto"
+        apr = s.query(ms.Aprovacao).filter(ms.Aprovacao.revisao_item_id == item_id).one()
+        assert apr.decisao == "auto_aprovado"
+
+
+def test_correr_live_auto_aprova_post_pagina_ignora_outros_tipos(bd, tmp_path, monkeypatch):
+    """Espelha `test_correr_live_auto_aprova_ignora_outros_tipos`: sob
+    `AUTO_PUBLICAR_POST_PAGINA=True`, um `post_grupo` e um `cold_email`
+    pendentes com `linter_ok` NUNCA são auto-aprovados — só `post_pagina`
+    (filtro por tipo OBRIGATÓRIO — `fila.auto_aprovar` é TYPE-AGNOSTIC)."""
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    monkeypatch.setattr(config, "AUTO_PUBLICAR_POST_PAGINA", True)
+
+    with db.get_session() as s:
+        post_item = fila.enfileirar(
+            s, tipo="post_grupo", risco="medio", camada_risco=2,
+            agente_origem="comunicador", resumo="Post sobre o regulamento do Porto",
+            peca=PecaOutward(texto=_POST_OK, canal=Canal.POST_SOCIAL),
+        )
+        cold_item = fila.enfileirar(
+            s, tipo="cold_email", risco="alto", agente_origem="angariador",
+            resumo="cold d0 → geral@sul.pt",
+            peca=PecaOutward(
+                texto=_TEXTO_COLD_OK_FB, canal=Canal.COLD, tem_optout_carimbado=True,
+            ),
+        )
+        post_id, cold_id = post_item.id, cold_item.id
+        assert post_item.estado == "pendente" and post_item.linter_ok is True
+        assert cold_item.estado == "pendente" and cold_item.linter_ok is True
+
+    site_dir = _site_fake(tmp_path)
+    chamadas: list = []
+    publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas),
+        http_post=_fake_http_post([]),
+    )
+
+    with db.get_session() as s:
+        assert s.get(ms.RevisaoItem, post_id).estado == "pendente"
+        assert s.get(ms.RevisaoItem, cold_id).estado == "pendente"
+    assert chamadas == []
+
+
+def test_correr_live_regressao_artigo_e_grupo_intactos_com_post_pagina_na_fila(
+    bd, tmp_path, monkeypatch,
+):
+    """Regressão de conjunto: um `post_pagina` aprovado na fila (sem config
+    de Facebook) não pode interferir na publicação normal de `artigo_seo`/
+    `post_grupo` — mesma passagem, três tipos coexistem."""
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    with db.get_session() as s:
+        artigo_id = _semear_artigo(s)
+        post_grupo_id = _semear_post_grupo(s)
+        post_pagina_id = _semear_post_pagina(s)
+
+    site_dir = _site_fake(tmp_path)
+    rel = publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar([]),
+        http_post=_fake_http_post([]),
+    )
+
+    assert rel["facebook"] == "por configurar"
+    with db.get_session() as s:
+        assert s.get(ms.RevisaoItem, artigo_id).estado == "feito"
+        assert s.get(ms.RevisaoItem, post_grupo_id).estado == "feito"
+        item_pagina = s.get(ms.RevisaoItem, post_pagina_id)
+        assert item_pagina.estado == "aprovado"
+        assert item_pagina.lease_ate is None
+
+
+# --------------------------------------------------------------------------
+#  Ensaio — post_pagina elegível aparece no relatório, zero rede/drain
+# --------------------------------------------------------------------------
+def test_correr_ensaio_lista_post_pagina_sem_tocar_rede(bd, tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", True)
+    with db.get_session() as s:
+        item_id = _semear_post_pagina(s)
+
+    chamadas_fb: list = []
+
+    def _post_nunca_chamado(*a, **kw):
+        chamadas_fb.append((a, kw))
+        raise AssertionError("ensaio não deve tocar a rede")
+
+    rel = publicador.correr(
+        site_dir=tmp_path / "site", ensaio_dir=tmp_path / "ensaio",
+        executar=lambda cmd, **kw: (_ for _ in ()).throw(AssertionError("sem comandos em ensaio")),
+        http_post=_post_nunca_chamado,
+    )
+
+    assert rel["modo"] == "ensaio"
+    assert rel["posts_pagina"] == [{"id": item_id, "resumo": "post_pagina proposto"}]
+    assert chamadas_fb == []
+
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "aprovado"               # ensaio não drena
