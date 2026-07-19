@@ -312,6 +312,47 @@ def test_drain_cap_alinhado_com_campanha_cap_diario(bd, monkeypatch):
         assert len(fila.drain(s, "angariador")) == 3
 
 
+def test_drain_filtra_por_tipos(bd):
+    with db.get_session() as s:
+        id_alvo = _aprovado(s, tipo="cold_email", ref_id="1")
+        id_outro = _aprovado(s, tipo="artigo_seo", ref_id="2", resumo="outro tipo")
+
+    with db.get_session() as s:
+        servidos = fila.drain(s, "angariador", tipos={"cold_email"})
+        assert [i.id for i in servidos] == [id_alvo]
+
+    # O item de outro tipo fica intacto — 'aprovado', sem lease.
+    with db.get_session() as s:
+        outro = s.get(ms.RevisaoItem, id_outro)
+        assert outro.estado == "aprovado"
+        assert outro.lease_ate is None
+
+
+def test_drain_cap_proprio_desacoplado_do_campanha_cap(bd, monkeypatch):
+    monkeypatch.setattr(config, "CAMPANHA_CAP_DIARIO", 1)
+    with db.get_session() as s:
+        for i in range(3):
+            _aprovado(s, ref_id=str(i), resumo=f"draft {i}")
+
+    with db.get_session() as s:
+        assert len(fila.drain(s, "angariador", cap=2)) == 2
+
+
+def test_drain_auto_aprovado_so_com_opt_in(bd):
+    with db.get_session() as s:
+        item = _enfileirar_ok(s)
+        s.flush()
+        item.estado = "auto_aprovado"
+        item_id = item.id
+
+    with db.get_session() as s:
+        assert fila.drain(s, "angariador") == []
+
+    with db.get_session() as s:
+        servidos = fila.drain(s, "angariador", incluir_auto_aprovado=True)
+        assert [i.id for i in servidos] == [item_id]
+
+
 # ==========================================================================
 #  (5) gate DGC fail-closed
 # ==========================================================================

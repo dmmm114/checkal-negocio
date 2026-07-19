@@ -13,7 +13,8 @@ prompt-mestre), todas código e testadas:
     (o dono, com token válido gerado pelo MAESTRO) o faz — e escreve a linha em
     `aprovacoes` com autor ≠ aprovador (quem PROPÕE nunca APROVA).
   - :func:`drain` serve APENAS itens já aprovados, com lease + backoff exponencial
-    e cap por passagem alinhado com `config.CAMPANHA_CAP_DIARIO`.
+    e cap por passagem, por omissão `config.CAMPANHA_CAP_DIARIO` (ou o `cap`
+    do chamador).
   - Gate DGC fail-closed (:func:`dgc_ok` / :func:`pode_enviar_frio_com_dgc`):
     lista de oposição vazia/estagnada ⇒ trata-se como se TODOS estivessem
     opostos — recusa, mesmo com os restantes gates abertos.
@@ -276,28 +277,38 @@ def drain(
     agente: str,
     limite: int | None = None,
     processador: Callable[[ms.RevisaoItem], object] | None = None,
+    *,
+    tipos: Iterable[str] | None = None,
+    cap: int | None = None,
+    incluir_auto_aprovado: bool = False,
 ) -> list[ms.RevisaoItem]:
     """Serve (e opcionalmente processa) itens `aprovado` do `agente`, com lease.
 
     Padrão da fila de trabalho (HARNESS(obs) §b): seleciona elegíveis
-    (`aprovado`, sem backoff pendente, sem lease vivo), marca `a_correr` +
-    `lease_ate = now+15min`, e — se `processador` for dado — executa cada item:
-    sucesso ⇒ `feito`; exceção ⇒ `tentativas+1` + backoff exponencial
-    (`falhado`) até `max_tentativas` ⇒ `morto` (a escalar ao MAESTRO). O cap por
-    passagem é `min(limite, config.CAMPANHA_CAP_DIARIO)`.
+    (`aprovado` — ou também `auto_aprovado` com `incluir_auto_aprovado=True`,
+    sem backoff pendente, sem lease vivo), marca `a_correr` + `lease_ate =
+    now+15min`, e — se `processador` for dado — executa cada item: sucesso ⇒
+    `feito`; exceção ⇒ `tentativas+1` + backoff exponencial (`falhado`) até
+    `max_tentativas` ⇒ `morto` (a escalar ao MAESTRO). `tipos`, se dado, filtra
+    por `RevisaoItem.tipo` (evita que um consumidor apanhe itens de outros).
+    O cap por passagem é `min(limite, base)`, onde `base` é `cap` (se dado)
+    ou, por omissão, `config.CAMPANHA_CAP_DIARIO`.
 
     A idempotência de domínio (UNIQUEs das peças/faturas) é a rede final: um
     lease expirado pode re-servir um item, nunca duplicar o efeito externo.
     """
     agora = _agora()
-    cap = config.CAMPANHA_CAP_DIARIO if limite is None else min(limite, config.CAMPANHA_CAP_DIARIO)
+    base = config.CAMPANHA_CAP_DIARIO if cap is None else cap
+    cap_final = base if limite is None else min(limite, base)
 
-    candidatos = (
+    estados = ("aprovado", "auto_aprovado") if incluir_auto_aprovado else ("aprovado",)
+    query = (
         session.query(ms.RevisaoItem)
-        .filter(ms.RevisaoItem.estado == "aprovado")
-        .order_by(ms.RevisaoItem.criado_em, ms.RevisaoItem.id)
-        .all()
+        .filter(ms.RevisaoItem.estado.in_(estados))
     )
+    if tipos is not None:
+        query = query.filter(ms.RevisaoItem.tipo.in_(tuple(tipos)))
+    candidatos = query.order_by(ms.RevisaoItem.criado_em, ms.RevisaoItem.id).all()
 
     def _sem_tz(dt: datetime | None) -> datetime | None:
         if dt is None:
@@ -306,7 +317,7 @@ def drain(
 
     servidos: list[ms.RevisaoItem] = []
     for item in candidatos:
-        if len(servidos) >= cap:
+        if len(servidos) >= cap_final:
             break
         nao_antes = _sem_tz(item.nao_antes_de)
         if nao_antes is not None and nao_antes > agora:
