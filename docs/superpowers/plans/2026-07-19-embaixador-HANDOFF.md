@@ -7,7 +7,10 @@
 ## Para ativar o EMBAIXADOR
 
 1. `sudo /home/diogo/checkal-polaris/deploy/polaris/instalar.sh`
-   → instala o `checkal-embaixador.timer` (Ter 10:00; idempotente para o resto).
+   → instala o `checkal-embaixador.timer` (Ter 10:00). ⚠️ Se ainda não correste o
+   instalador desde as fases 1-3, este passo também ativa PELA PRIMEIRA VEZ os
+   timers do editor/comunicador/publicador e o checkal-web — tudo atrás dos
+   gates, mas o gasto LLM dos agentes começa aí (ver handoff da fase 1).
    Na próxima terça o agente deteta candidatos (423 gestores multi-AL com 5+ ALs
    e email genérico na tua BD) e redige 1-3 propostas para a fila — que aprovas
    no portão como os artigos.
@@ -17,7 +20,8 @@
    (parecer RGPD + `CHECKAL_MODO_TESTE=false` + SMTP getcheckal.com):
    aprovar uma proposta hoje deixa-a `aprovado` na fila à espera do seam de
    envio. Quando ligares o SMTP/parecer, o envio consome a fila. Até lá, podes
-   copiar o texto aprovado e enviar à mão (o painel "Para publicar" mostra-o).
+   enviar à mão: copia o texto no painel "Para publicar" ANTES de aprovares
+   (o painel só mostra itens pendentes — depois de decidires, sai de lá).
 
 ## Para ativar o atendimento (respostas automáticas)
 
@@ -27,7 +31,8 @@
    `sudo systemctl enable --now checkal-cron-suporte.timer checkal-gestor-suporte.timer`)
    passa a ler o correio, triar (agora com a categoria pré-vendas: "quanto
    custa?" recebe resposta com preços canónicos + convite ao check grátis) e:
-   em modo teste, os rascunhos ficam na fila para aprovares; em modo live,
+   ATENÇÃO: em modo teste o cron autónomo é no-op total (o leitor IMAP nem
+   arranca) — os rascunhos na fila vêm só da passagem do GESTOR; em modo live,
    respostas factuais/pré-venda saem sozinhas e o sensível escala SEMPRE para ti.
 5. **Caixa `comercial@checkal.pt`** — criar (o formulário do site ganhou a opção
    "Informações e preços (pré-venda)" que aponta para lá; até existir, essas
