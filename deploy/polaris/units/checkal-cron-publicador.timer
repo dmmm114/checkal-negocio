@@ -1,0 +1,9 @@
+[Unit]
+Description=CheckAL cron publicador (15 em 15 min)
+[Timer]
+OnCalendar=*:0/15
+RandomizedDelaySec=60
+Persistent=true
+Unit=checkal-cron@publicador.service
+[Install]
+WantedBy=timers.target

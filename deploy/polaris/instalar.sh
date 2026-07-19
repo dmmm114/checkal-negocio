@@ -8,7 +8,7 @@ systemctl daemon-reload
 
 # Crons deterministas do backbone (LIVE-GATED: sem chaves nada envia/cobra):
 systemctl enable --now checkal-cron-varrimento.timer checkal-cron-dre.timer \
-  checkal-cron-dunning.timer checkal-cron-backup.timer
+  checkal-cron-dunning.timer checkal-cron-backup.timer checkal-cron-publicador.timer
 
 # Agentes (fase 1 do rollout):
 systemctl enable --now checkal-sentinela.timer checkal-maestro-digest.timer \
