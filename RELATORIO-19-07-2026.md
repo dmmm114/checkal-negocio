@@ -115,9 +115,9 @@ qualidade independentes, com re-verificação adversária. Apanhados e fechados:
 
 ## 4. Estado técnico final
 
-- **Repo `checkal-polaris`** (master): 51 commits hoje; suite **1675 verdes, 0 skips**.
-  ⚠️ **55 commits à frente do origin** (github: dmmm114/checkal-negocio) — sem backup remoto do trabalho de hoje.
-- **Repo `site/`** (main): 3 commits à frente do origin (README + contacto).
+- **Repo `checkal-polaris`** (master): ~60 commits hoje; suite **1675 verdes, 0 skips**.
+  ✅ Backup feito: push para origin (dmmm114/checkal-negocio) completo.
+- **Repo `site/`** (main): ✅ push feito (README + contacto).
 - **Dashboard Agent OS**: em produção (100.72.204.114:8100, funnel 443) com 7
   cartões + painel "Para publicar"; fonte e deployment sincronizados.
 - **Specs/planos/handoffs**: `docs/superpowers/` (4 specs, 5 planos, 4 handoffs).
@@ -129,7 +129,7 @@ qualidade independentes, com re-verificação adversária. Apanhados e fechados:
 
 ### 5.1 Ativação imediata (~20 min, precisa de sudo interativo)
 
-- [ ] **Backup primeiro (recomendo vivamente):** `cd /home/diogo/checkal-polaris && git push origin master && git -C site push origin main`
+- [x] **Backup** — ✅ feito (ambos os repos no GitHub; repete `git push` quando fizeres alterações novas)
 - [ ] `sudo /home/diogo/checkal-polaris/deploy/polaris/instalar.sh`
       → ativa TUDO de uma vez: timers do editor/comunicador/embaixador/publicador
       + o serviço web do portão. ⚠️ O gasto LLM dos agentes novos começa aqui
