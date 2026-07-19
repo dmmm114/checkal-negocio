@@ -135,3 +135,21 @@ Cloudflare via staging com wrangler PINADO e validação do bundle. Em MODO_TEST
 adversária; a revisão apanhou e fechou 2 XSS críticos, 1 bug de retry (commit vazio),
 tokens não-ASCII (TypeError→fail-closed) e a rotação de tokens que matava os links
 do digest. Handoffs do dono em `docs/superpowers/plans/2026-07-19-fase*-HANDOFF.md`.
+
+## Sessão 19/07/2026 (noite) — 7.º agente EMBAIXADOR + atendimento pré-vendas
+
+**EMBAIXADOR 🤵** (canal GTM n.º 2 — parcerias): deteção compliance-gated de
+gestores multi-AL (SÓ coletivas 5/6 com email genérico, autoridade =
+`nif.e_enderecavel`, opt-out cruzado, dedupe canónico por NIF; universo real:
+423 candidatos 5+/1.024 2+) em `app/embaixador.py`; propostas B2B
+(`proposta_parceria`, Canal.COLD, camada 4) na fila atrás do gate; timer Ter
+10:00; 7.º cartão no dashboard EM PRODUÇÃO. Envio real fica atrás dos gates do
+cold (parecer+SMTP) — handoff próprio.
+
+**Atendimento pré-vendas**: categoria `pre_venda` na triagem (responde com tom
+"inspetor amigo" + CTA check grátis; sensível continua a escalar SEMPRE), FAQ
+alinhada à tabela canónica completa do PRICING, regex de salvaguarda refinada
+(prescrição jurídica escala mesmo com qualificadores/plurais; descrição do
+produto já não escala), bloco pré-vendas no prompt do gestor, opção
+"comercial" no formulário do site (caixa comercial@ por criar — handoff).
+Suite: 1650 verdes. Handoffs: `docs/superpowers/plans/2026-07-19-embaixador-HANDOFF.md`.
