@@ -26,3 +26,9 @@ checkal/data/*
 
 # Estado transitório de ferramentas (mantém o conteúdo do brainstorm, ignora runtime)
 .superpowers/**/state/
+
+# Cache do Wrangler (Cloudflare) — estado de ferramenta, não versionar
+.wrangler/
+
+# O site vive em repo próprio (github.com/dmmm114/checkal-site) — não embutir aqui
+site/
