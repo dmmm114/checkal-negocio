@@ -1,7 +1,7 @@
 # CheckAL — Estado do projeto (fonte de verdade)
 
-> Atualizado 12/07/2026. Software **100% construído e testado**, tudo **LIVE-GATED** (nada
-> envia/cobra/liga sem as chaves do dono). **1344 testes verdes, 0 skips.** ~16k linhas de app.
+> Atualizado 19/07/2026. Software **100% construído e testado**, tudo **LIVE-GATED** (nada
+> envia/cobra/liga sem as chaves do dono). **1616 testes verdes, 0 skips.** ~16k linhas de app.
 > **Dossier do advogado v2 fechado** (`dossier-advogado/DOSSIER-CheckAL.html`) — ver secções no fim.
 
 ## O que está construído
@@ -104,3 +104,34 @@ publicação saiu nem pode sair por código. Pendentes externos: chaves IfThenPa
 (pedidas), getcheckal.com + SMTP cold, TOConline (série CKL + smoke-test),
 Telegram, feed DGC, E&O. Pendentes de build: endpoint de aprovação 1-clique e
 deploy web do FastAPI (`/pagar`/callback) — antes de ativar pagamentos.
+
+## Sessão 19/07/2026 (tarde) — Enxame de AQUISIÇÃO: 6 agentes, portão 1-clique, PUBLICADOR
+
+**Fase 1 — agentes de mercado (spec+planos em `docs/superpowers/`):** o enxame passou
+de 4 para **6 agentes**: EDITOR (artigos SEO consent-first, JSON estruturado, 2×/sem)
+e COMUNICADOR (posts "serviço público" para grupos de FB, camada 2 — o dono cola à
+mão, diário 07:10). Canal novo `POST_SOCIAL` no linter (sem frase de IA por decisão
+do dono; R4 obrigatório), subcomandos `editor`/`comunicador` no manage.py, prompts
+nas 2 árvores, wrapper + timers. Tetos recalibrados (defaults 25/10; operacional 40).
+
+**Fase 2 — portão 1-clique (o elo que faltava):** `fila.aprovar/rejeitar` ganharam o
+1.º chamador real: rotas `/gate/{item_id}` GET/POST na app web (token = credencial,
+constant-time sobre bytes, single-use, idempotente entre passagens da governança),
+`maestro-gate-token` devolve `url` (CHECKAL_GATE_BASE_URL, fail-closed), digest com
+URLs cruas clicáveis no Telegram, serviço `checkal-web.service` (uvicorn 127.0.0.1:8600;
+exposição tailscale 8443 = passo do dono). Dashboard Agent OS: 6 cartões + painel
+"Para publicar" (`GET /api/checkal/fila`, nunca expõe token) — EM PRODUÇÃO.
+
+**Fase 3 — PUBLICADOR (o braço que publica):** `app/publicador.py` determinista:
+render byte-fiel ao molde do site (frases canónicas importadas do linter; slug
+whitelist anti-XSS/traversal; JSON-LD imune a `</script>`), sitemap idempotente,
+drain filtrado por tipos com cap próprio, auto-aprovação opt-in fail-closed
+(`auto_aprovado`, nunca `aprovado`), git+push no repo aninhado do site, deploy
+Cloudflare via staging com wrangler PINADO e validação do bundle. Em MODO_TESTE é
+**ensaio read-only** (não drena — nada se perde). Timer `checkal-cron@publicador`
+15/15 min. E2E verificado (3 cenários PASS, zero escrita fora do esperado).
+
+**Processo:** cada tarefa com implementador + revisão dupla + re-verificação
+adversária; a revisão apanhou e fechou 2 XSS críticos, 1 bug de retry (commit vazio),
+tokens não-ASCII (TypeError→fail-closed) e a rotação de tokens que matava os links
+do digest. Handoffs do dono em `docs/superpowers/plans/2026-07-19-fase*-HANDOFF.md`.
