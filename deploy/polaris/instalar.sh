@@ -13,6 +13,7 @@ systemctl enable --now checkal-cron-varrimento.timer checkal-cron-dre.timer \
 # Agentes (fase 1 do rollout):
 systemctl enable --now checkal-sentinela.timer checkal-maestro-digest.timer \
   checkal-maestro-governanca.timer checkal-angariador.timer checkal-gestor.timer \
+  checkal-editor.timer checkal-comunicador.timer \
   checkal-reset-pausa-llm.timer
 
 # DESLIGADOS de propósito (ativar quando os pré-requisitos existirem):

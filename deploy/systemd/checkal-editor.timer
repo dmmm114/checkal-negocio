@@ -1,0 +1,14 @@
+# EDITOR — 2×/semana (seg/qui 05:00), ~2h após o varrimento nacional (03:00)
+# para trabalhar sobre dados frescos. DISABLED até o dono ativar.
+[Unit]
+Description=CheckAL EDITOR — passagem editorial (conteúdo SEO consent-first)
+
+[Timer]
+OnCalendar=Mon,Thu 05:00
+RandomizedDelaySec=300
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@editor.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=CheckAL agente editor
+[Timer]
+OnCalendar=Mon,Thu 05:00
+RandomizedDelaySec=180
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@editor.service
+[Install]
+WantedBy=timers.target

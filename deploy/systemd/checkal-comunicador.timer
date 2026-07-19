@@ -1,0 +1,14 @@
+# COMUNICADOR — diário 07:10, ANTES do digest do Maestro (07:50): os posts do
+# dia entram no digest e no painel "Para publicar". DISABLED até o dono ativar.
+[Unit]
+Description=CheckAL COMUNICADOR — posts para grupos (rascunhos p/ o dono colar)
+
+[Timer]
+OnCalendar=*-*-* 07:10
+RandomizedDelaySec=180
+Persistent=true
+AccuracySec=60
+Unit=checkal-agente@comunicador.service
+
+[Install]
+WantedBy=timers.target
