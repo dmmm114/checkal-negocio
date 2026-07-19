@@ -19,6 +19,7 @@ que cada agente single-shot usa (sem shell livre, sem SQL cru):
     GESTOR     gestor {onboarding-tarefas | relatorio-mensal-compor |
                dunning-estado | suporte-triar --stdin}
     SENTINELA  sentinela verificar
+    EDITOR     editor {plano | lint --stdin | enfileirar --tipo artigo_seo --stdin | estado}
     COMUNICADOR comunicador {lint --stdin | enfileirar --tipo T --stdin | estado}
 
 Regras duras (código, não disciplina): leituras abrem a BD em READ-ONLY
@@ -1247,6 +1248,175 @@ def _cmd_sentinela_verificar(args) -> int:
 
 
 # ==========================================================================
+#  EDITOR
+# ==========================================================================
+_TIPOS_EDITOR = {
+    "artigo_seo": ("artigo_seo", "alto"),
+}
+
+
+def _texto_lint_artigo(artigo: dict):
+    """Compõe (texto_a_lintar, url_fonte, excerto) a partir do JSON do artigo.
+
+    O render final (PUBLICADOR, fase 3) embute no template as fontes, o
+    disclaimer e a frase canónica de divulgação de IA — lintamos aqui o texto
+    COMO SERÁ PUBLICADO, apensando esses blocos garantidos pelo template
+    (mesmo princípio do `tem_optout_carimbado` no cold: o seam carimba).
+    """
+    from app.compliance import linter
+
+    partes = [artigo.get("titulo", "")]
+    for seccao in artigo.get("seccoes", []):
+        partes.append(seccao.get("h2", ""))
+        partes.append(seccao.get("corpo_md", ""))
+    fontes = artigo.get("fontes", [])
+    urls = " · ".join(f.get("url", "") for f in fontes if f.get("url"))
+    partes.append(f"Fontes: {urls}")
+    partes.append(
+        "Informação de monitorização a partir de dados públicos; "
+        "não constitui aconselhamento jurídico."
+    )
+    partes.append(linter.DIVULGACAO_IA)
+    texto = "\n\n".join(p for p in partes if p)
+    primeira = fontes[0] if fontes else {}
+    return texto, primeira.get("url"), primeira.get("excerto")
+
+
+def _cmd_editor_lint(args) -> int:
+    from app.compliance import linter
+
+    bruto = sys.stdin.read()
+    try:
+        artigo = json.loads(bruto)
+        texto, url_fonte, excerto = _texto_lint_artigo(artigo)
+    except (ValueError, TypeError, AttributeError):
+        sys.stderr.write("payload tem de ser JSON do artigo (slug, titulo, seccoes, fontes)\n")
+        return 2
+    r = linter.lint(linter.PecaOutward(
+        texto=texto, canal=linter.Canal.PAGINA_PUBLICA,
+        url_fonte=url_fonte, excerto=excerto, gerado_por_ia=True,
+    ))
+    _print_json({
+        "aprovado": r.aprovado, "versao": r.versao,
+        "violacoes": [
+            {"regra": v.regra, "razao": v.razao, "trecho": v.trecho}
+            for v in r.violacoes
+        ],
+    })
+    return 0
+
+
+def _cmd_editor_enfileirar(args) -> int:
+    import app.models_swarm as ms
+    from app.compliance import linter
+    from app.swarm import fila, tetos
+
+    bruto = sys.stdin.read() if args.stdin else ""
+
+    if args.escalar:
+        with fila.sessao_governacao() as s:
+            tetos.escalar(
+                s, severidade="media", agente="editor",
+                mensagem=args.motivo or "escalação sem motivo explícito",
+            )
+        _print_json({"escalado": True})
+        return 0
+
+    try:
+        artigo = json.loads(bruto)
+        slug = artigo["slug"]
+        titulo = artigo["titulo"]
+        texto, url_fonte, excerto = _texto_lint_artigo(artigo)
+    except (ValueError, KeyError, TypeError, AttributeError):
+        sys.stderr.write("payload tem de ser JSON do artigo (slug, titulo, seccoes, fontes)\n")
+        return 2
+
+    peca = linter.PecaOutward(
+        texto=texto, canal=linter.Canal.PAGINA_PUBLICA,
+        url_fonte=url_fonte, excerto=excerto, gerado_por_ia=True,
+    )
+    try:
+        with fila.sessao_governacao() as s:
+            evento = ms.EventoAgente(
+                agente="editor", tipo="conteudo_proposto",
+                mensagem=f"artigo proposto (/{slug})",
+                payload={"tipo": args.tipo, "artigo": artigo},
+                criado_em=_agora(),
+            )
+            s.add(evento)
+            s.flush()
+            item = fila.enfileirar(
+                s, tipo=_TIPOS_EDITOR[args.tipo][0],
+                risco=_TIPOS_EDITOR[args.tipo][1],
+                agente_origem="editor",
+                ref_tipo="evento_agente", ref_id=str(evento.id),
+                resumo=f"artigo_seo /{slug} — {titulo}"[:200],
+                peca=peca,
+            )
+            item_id = item.id
+    except fila.LinterReprovado as exc:
+        _print_json({
+            "aprovado": False,
+            "violacoes": [
+                {"regra": v.regra, "razao": v.razao, "trecho": v.trecho}
+                for v in exc.violacoes
+            ],
+        })
+        return 1
+
+    _print_json({"aprovado": True, "revisao_id": item_id})
+    return 0
+
+
+def _cmd_editor_plano(args) -> int:
+    import app.models as models
+    import app.models_swarm as ms
+    from sqlalchemy import func
+
+    s = _sessao_leitura()
+    try:
+        top = (
+            s.query(models.Registo.concelho, func.count())
+            .group_by(models.Registo.concelho)
+            .order_by(func.count().desc())
+            .limit(15).all()
+        )
+        artigos = [
+            {"id": i.id, "estado": i.estado, "resumo": i.resumo,
+             "criado_em": i.criado_em}
+            for i in s.query(ms.RevisaoItem)
+            .filter(ms.RevisaoItem.tipo == "artigo_seo")
+            .order_by(ms.RevisaoItem.criado_em.desc()).limit(20)
+        ]
+    finally:
+        s.rollback()
+        s.close()
+    _print_json({
+        "top_concelhos": [{"concelho": c, "registos": n} for c, n in top],
+        "artigos": artigos,
+    })
+    return 0
+
+
+def _cmd_editor_estado(args) -> int:
+    import app.models_swarm as ms
+    from sqlalchemy import func
+
+    s = _sessao_leitura()
+    try:
+        revisao = dict(
+            s.query(ms.RevisaoItem.estado, func.count())
+            .filter(ms.RevisaoItem.agente_origem == "editor")
+            .group_by(ms.RevisaoItem.estado).all()
+        )
+    finally:
+        s.rollback()
+        s.close()
+    _print_json({"revisao": revisao})
+    return 0
+
+
+# ==========================================================================
 #  COMUNICADOR
 # ==========================================================================
 _TIPOS_COMUNICADOR = {
@@ -1430,6 +1600,21 @@ def _construir_parser() -> argparse.ArgumentParser:
     sen = sub.add_parser("sentinela")
     sen_sub = sen.add_subparsers(dest="acao", required=True)
     sen_sub.add_parser("verificar").set_defaults(func=_cmd_sentinela_verificar)
+
+    # EDITOR
+    edi = sub.add_parser("editor")
+    edi_sub = edi.add_subparsers(dest="acao", required=True)
+    edi_sub.add_parser("plano").set_defaults(func=_cmd_editor_plano)
+    el = edi_sub.add_parser("lint")
+    el.add_argument("--stdin", action="store_true", required=True)
+    el.set_defaults(func=_cmd_editor_lint)
+    ee = edi_sub.add_parser("enfileirar")
+    ee.add_argument("--tipo", choices=sorted(_TIPOS_EDITOR), required=True)
+    ee.add_argument("--stdin", action="store_true")
+    ee.add_argument("--escalar", action="store_true")
+    ee.add_argument("--motivo", default=None)
+    ee.set_defaults(func=_cmd_editor_enfileirar)
+    edi_sub.add_parser("estado").set_defaults(func=_cmd_editor_estado)
 
     # COMUNICADOR
     com = sub.add_parser("comunicador")
