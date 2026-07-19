@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 import subprocess
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy import create_engine
@@ -240,25 +240,45 @@ def _site_fake(tmp_path):
 
 
 class _ResultadoFake:
-    def __init__(self, stdout: str = "") -> None:
+    def __init__(self, stdout: str = "", returncode: int = 0) -> None:
         self.stdout = stdout
+        self.returncode = returncode
 
 
 def _texto_cmd(cmd) -> str:
     return " ".join(cmd) if isinstance(cmd, (list, tuple)) else str(cmd)
 
 
-def _fake_executar(chamadas: list, *, falha_wrangler: bool = False):
-    """Fake de `executar`: acumula os cmds em `chamadas`; devolve um objeto
-    com `.stdout` contendo "Uploading Functions bundle" quando o cmd é o
-    wrangler — ou levanta `CalledProcessError` nesse passo, se pedido (para o
+def _fake_executar(
+    chamadas: list, *, falha_wrangler: bool = False,
+    diff_returncode: int = 1, wrangler_stdout: str | None = None,
+):
+    """Fake de `executar`: acumula os cmds em `chamadas`.
+
+    `git diff --cached --quiet` devolve `.returncode=diff_returncode` — por
+    omissão 1 (HÁ staged changes ⇒ o guard do commit vazio deixa o `git
+    commit` acontecer, o caminho normal de uma publicação nova). Os testes de
+    retry passam `diff_returncode=0` (nada staged — a 1.ª tentativa já
+    comitou) para provar que a 2.ª passagem salta o `commit` mas continua para
+    o push+deploy.
+
+    O wrangler devolve `.stdout` com "Uploading Functions bundle" (sucesso)
+    por omissão, ou o `wrangler_stdout` explícito (para o teste do marcador
+    ausente), ou levanta `CalledProcessError` se `falha_wrangler=True` (para o
     teste de falha de deploy). Nunca toca em git/wrangler/rede reais."""
     def _exec(cmd, **kw):
         chamadas.append(cmd)
-        if "wrangler" in _texto_cmd(cmd):
+        texto = _texto_cmd(cmd)
+        if "diff" in texto and "--cached" in texto:
+            return _ResultadoFake(returncode=diff_returncode)
+        if "wrangler" in texto:
             if falha_wrangler:
                 raise subprocess.CalledProcessError(1, cmd, output="", stderr="deploy falhou")
-            return _ResultadoFake(stdout="Uploading Functions bundle\n✨ Deployment complete\n")
+            stdout = (
+                wrangler_stdout if wrangler_stdout is not None
+                else "Uploading Functions bundle\n✨ Deployment complete\n"
+            )
+            return _ResultadoFake(stdout=stdout)
         return _ResultadoFake(stdout="")
     return _exec
 
@@ -381,3 +401,80 @@ def test_deploy_falha_marca_falhado_com_backoff(bd, tmp_path, monkeypatch):
         assert item.tentativas == 1
         assert item.nao_antes_de is not None               # backoff futuro
         assert item.lease_ate is None
+
+
+def test_deploy_sem_marcador_wrangler_marca_falhado(bd, tmp_path, monkeypatch):
+    """O wrangler pode sair com código 0 sem ter concluído o deploy — a única
+    prova positiva aceite é a linha "Uploading Functions bundle" no stdout.
+    Ausente ⇒ RuntimeError ⇒ o drain marca 'falhado' (cobre o ramo de
+    validação em `_publicar_no_cloudflare`, distinto do CalledProcessError do
+    teste de falha "dura")."""
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    with db.get_session() as s:
+        item_id = _semear_artigo(s)
+
+    site_dir = _site_fake(tmp_path)
+    chamadas: list = []
+    publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas, wrangler_stdout="Success! Deployed.\n"),
+    )
+
+    comandos = [_texto_cmd(c) for c in chamadas]
+    assert any("wrangler" in c and "pages deploy" in c for c in comandos)
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "falhado"
+        assert item.tentativas == 1
+        assert item.nao_antes_de is not None
+        assert item.lease_ate is None
+
+
+def test_correr_live_retry_apos_falha_nao_bloqueia_no_commit_vazio(bd, tmp_path, monkeypatch):
+    """Cenário de recuperação (a preocupação Important da revisão): 1.ª
+    passagem falha no wrangler (item fica 'falhado', mas o `git add`+`commit`
+    já correram — o working tree do site já está comitado). O dono repõe o
+    item a 'aprovado' à mão (não há auto-retry no drain — mesmo padrão de
+    `test_drain_processador_falha_backoff_e_morto` em test_swarm_fila.py). Na
+    2.ª passagem já não há nada staged (`diff --cached --quiet` devolve 0): o
+    guard do commit vazio TEM de saltar o `git commit` — sem ele, o commit
+    vazio rebentaria e bloquearia push+deploy para sempre. Push e deploy
+    continuam a correr sempre; o wrangler agora dá certo ⇒ item 'feito'."""
+    monkeypatch.setattr(config, "CHECKAL_MODO_TESTE", False)
+    with db.get_session() as s:
+        item_id = _semear_artigo(s)
+
+    site_dir = _site_fake(tmp_path)
+
+    # 1.ª passagem: falha no wrangler ⇒ 'falhado' + backoff (git add+commit
+    # já tinham corrido antes de o wrangler rebentar).
+    chamadas1: list = []
+    publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas1, falha_wrangler=True),
+    )
+    with db.get_session() as s:
+        item = s.get(ms.RevisaoItem, item_id)
+        assert item.estado == "falhado"
+        assert item.tentativas == 1
+        # Reposição manual — o drain não re-serve 'falhado' sozinho.
+        item.nao_antes_de = datetime.now(timezone.utc) - timedelta(minutes=1)
+        item.lease_ate = None
+        item.estado = "aprovado"
+
+    # 2.ª passagem: nada staged (diff --cached --quiet ⇒ 0) e o wrangler já
+    # funciona ⇒ SEM git commit, COM push+deploy, item 'feito'.
+    chamadas2: list = []
+    publicador.correr(
+        site_dir=site_dir, ensaio_dir=tmp_path / "ensaio",
+        executar=_fake_executar(chamadas2, diff_returncode=0),
+    )
+
+    comandos2 = [_texto_cmd(c) for c in chamadas2]
+    assert any(c.startswith("git -C") and " diff " in c for c in comandos2)
+    assert not any(c.startswith("git -C") and " commit " in c for c in comandos2)
+    assert any(c.startswith("git -C") and " push " in c for c in comandos2)
+    assert any("wrangler" in c and "pages deploy" in c for c in comandos2)
+
+    with db.get_session() as s:
+        assert s.get(ms.RevisaoItem, item_id).estado == "feito"

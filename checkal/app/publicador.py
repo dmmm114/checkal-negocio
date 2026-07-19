@@ -360,8 +360,16 @@ _WRANGLER_VERSAO = "wrangler@4.111.0"  # PINADA — `npx wrangler` sem pin flutu
 def _executar_padrao(cmd, **kw):
     """Default do parâmetro `executar` de :func:`correr` — `subprocess.run`
     real. Injetável: os testes passam sempre um fake (nenhum corre git/
-    wrangler/rede de verdade)."""
-    return subprocess.run(cmd, check=True, capture_output=True, text=True, **kw)
+    wrangler/rede de verdade). `check`/`capture_output`/`text` são só
+    DEFAULTS — o chamador pode substituí-los via `**kw` (o guard do commit
+    vazio em `_processar` passa `check=False` ao `git diff --cached --quiet`,
+    cujo returncode 1 é esperado e nunca deve levantar `CalledProcessError`);
+    por isso usa `setdefault`, não um `check=True` fixo que colidiria com um
+    `check` recebido em `kw`."""
+    kw.setdefault("check", True)
+    kw.setdefault("capture_output", True)
+    kw.setdefault("text", True)
+    return subprocess.run(cmd, **kw)
 
 
 def _carregar_artigo(session, item) -> dict:
@@ -447,9 +455,13 @@ def correr(
     dentro de UMA `fila.sessao_governacao()`; (c) por item: `post_grupo` é
     no-op (o dono cola sempre à mão — o `drain` marca `feito`); `artigo_seo`
     renderiza, escreve `{slug}.html`, atualiza o sitemap e publica (git
-    commit+push + deploy Cloudflare via staging), POR ITEM — idempotente por
-    slug: um re-serviço após lease expirado sobrescreve, nunca duplica o
-    efeito externo.
+    commit+push + deploy Cloudflare via staging), POR ITEM: o render/commit
+    são idempotentes por slug (reescrever o mesmo ficheiro e tentar comitar
+    sem nada staged são ambos no-ops seguros — ver o guard do commit vazio em
+    `_processar`). Isto NÃO é auto-retry: o `drain` só re-serve itens já
+    `aprovado`/`auto_aprovado` cujo `nao_antes_de`/`lease_ate` já passou — um
+    item `falhado` fica `falhado` até alguém o repor manualmente a `aprovado`
+    (ver HANDOFF fase 3).
 
     `executar(cmd, **kw)` é o seam injetável (testes) — o default embrulha
     `subprocess.run(cmd, check=True, capture_output=True, text=True, **kw)`.
@@ -464,10 +476,10 @@ def correr(
         Path(ensaio_dir) if ensaio_dir is not None
         else (config.DATA_DIR / "publicador-ensaio")
     )
-    ensaio_dir.mkdir(parents=True, exist_ok=True)
     executar = executar or _executar_padrao
 
     if config.CHECKAL_MODO_TESTE:
+        ensaio_dir.mkdir(parents=True, exist_ok=True)  # só criado quando é mesmo usado
         artigos: list[dict] = []
         posts = 0
         with db.get_session() as s:
@@ -506,7 +518,18 @@ def correr(
         atualizar_sitemap(site_dir / "sitemap.xml", slug=slug, lastmod=hoje)
 
         executar(["git", "-C", str(site_dir), "add", f"{slug}.html", "sitemap.xml"])
-        executar(["git", "-C", str(site_dir), "commit", "-m", f"artigo: /{slug} (publicador)"])
+        # Guard do commit vazio: um re-serviço (após reposição manual de um
+        # item 'falhado' a 'aprovado') pode encontrar o working tree já
+        # comitado da tentativa anterior — `git commit` sem nada staged sai
+        # com erro e bloquearia o push+deploy para sempre. `diff --cached
+        # --quiet` devolve 1 quando HÁ staged changes (commit necessário) e 0
+        # quando NÃO há; `check=False` porque um returncode 1 aqui é o
+        # caminho normal, não uma falha. Push e deploy correm SEMPRE.
+        diff = executar(
+            ["git", "-C", str(site_dir), "diff", "--cached", "--quiet"], check=False,
+        )
+        if getattr(diff, "returncode", 1) != 0:
+            executar(["git", "-C", str(site_dir), "commit", "-m", f"artigo: /{slug} (publicador)"])
         executar(["git", "-C", str(site_dir), "push", "origin", "main"])
         _publicar_no_cloudflare(site_dir, executar)
 
